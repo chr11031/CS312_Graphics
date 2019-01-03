@@ -58,7 +58,7 @@ void processUserInputs(bool & playing)
  * Renders a point to the screen with the
  * appropriate coloring
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & frame, Vertex* v, VBO* attrs, VBO * const uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, VBO* attrs, VBO * const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -67,7 +67,7 @@ void DrawPoint(Buffer2D<PIXEL> & frame, Vertex* v, VBO* attrs, VBO * const unifo
  * Renders a line to the screen with the
  * appropriate coloring
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & frame, Vertex* line, VBO* attrs, VBO* const uniforms, FragmentShader* const frag)
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, VBO* attrs, VBO* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -184,8 +184,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-		// Your code goes here
-		
+        TestDrawPixel(frame);
+
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
