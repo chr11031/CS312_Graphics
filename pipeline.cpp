@@ -1,6 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include "coursesolutions.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -239,8 +238,6 @@ int main()
 
         // Refresh Screen
         clearScreen(frame);
-
-        SOL_TestDrawPixel(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

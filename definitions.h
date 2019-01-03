@@ -22,6 +22,9 @@
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 
+// Max # of vertices after clipping
+#define MAX_VERTICES 8 
+
 // Camera values
 #define CAM_INCREMENT 0.01
 #define STEP_INCREMENT 1
@@ -340,16 +343,11 @@ void DrawPrimitive(PRIMITIVES prim,
 
 
 
-
-
-
 /*********************************************************************************************************
  * NOTE: Everything that follows below will be used last for the 
  * software renderer. You are encouraged to review/study it but
  * you do not need work on this code.
 ********************************************************************************************************/
-
-
 
 
 
@@ -423,17 +421,9 @@ Vertex vertBetweenVerts(const Vertex & first, const Vertex & last, const double 
     rv.y = first.y + (along * (last.y - first.y));
     rv.z = first.z + (along * (last.z - first.z));
     rv.w = first.w + (along * (last.w - first.w));
-
-    double startZ = first.z / first.w;
-    double endZ = last.z / last.w;
-    rv.z = (startZ + (along * (endZ - startZ)));
-    rv.z *= rv.w;
-
     return rv;
 }
 
-
-#define MAX_VERTICES 8 // Max # of vertices after clipping
 /*************************************************************
  * CLIP_VERTICES:
  * Depending on our view type - clip to the frustrum that 
@@ -604,12 +594,7 @@ void ClipVertices(Vertex const inputVerts[], VBO const inputAttrs[], const int &
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
     }
-
 
 
     // Clip against Y
@@ -658,10 +643,6 @@ void ClipVertices(Vertex const inputVerts[], VBO const inputAttrs[], const int &
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
     }
 
     // Setup Pointers
@@ -707,10 +688,6 @@ void ClipVertices(Vertex const inputVerts[], VBO const inputAttrs[], const int &
 
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
-        }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
         }
     }
 
@@ -760,10 +737,6 @@ void ClipVertices(Vertex const inputVerts[], VBO const inputAttrs[], const int &
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
     }
 
     // Setup Pointers
@@ -810,17 +783,11 @@ void ClipVertices(Vertex const inputVerts[], VBO const inputAttrs[], const int &
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
     }
 
     // Final number of output vertices
     numClipped = numOut;  
 }
-
-
 
 /*************************************************************
  * NORMALIZE VERTICES
