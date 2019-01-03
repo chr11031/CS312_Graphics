@@ -292,13 +292,13 @@ class VertexShader
         // Get, Set implicit
         void (*VertShader)(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms);
 
-        // Assumes simple monotone RED shader
+        // Assumes simple pass-through vertex shader
         VertexShader()
         {
             VertShader = DefaultVertShader;
         }
 
-        // Initialize with a fragment callback
+        // Initialize with a vertex shader callback
         VertexShader(void (*VertSdr)(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms))
         {
             setShader(VertSdr);
