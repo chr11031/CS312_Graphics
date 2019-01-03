@@ -195,45 +195,17 @@ void DrawPrimitive(PRIMITIVES prim,
     VBO transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
-    // After implementing the projection transform, uncomment the functions:
-    //      1) 'ClipVertices(...)'
-    //      2) 'NormalizeVertices(...)'
-    //      3) 'ViewTransformVertices(...)'
-    // And remove the loop code tagged as 'Bypass loop'
-
-    // Clip to our frustrum
-    Vertex clippedVerts[MAX_VERTICES];
-    VBO clippedAttrs[MAX_VERTICES];
-    int numClipped; 
-    //ClipVertices(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
-
-    // Normalization
-    //NormalizeVertices(clippedVerts, numClipped);
-
-    // View Transform
-    Vertex viewVerts[MAX_VERTICES];
-    VBO viewAttrs[MAX_VERTICES];
-    int numView;
-    //ViewTransformVertices(target, clippedVerts, clippedAttrs, numClipped, viewVerts, viewAttrs, numView);
-
-    // 'Bypass loop' (used while we don't have clipping, view transform enabled)
-    for(numView = 0; numView < numIn; numView++)
-    {
-        viewVerts[numView] = transformedVerts[numView];
-        viewAttrs[numView] = transformedAttrs[numView];
-    }
-
     // Vertex Interpolation & Fragment Drawing
     switch(prim)
     {
         case POINT:
-            DrawPoint(target, viewVerts, viewAttrs, uniforms, frag);
+            DrawPoint(target, transformedVerts, transformedAttrs, uniforms, frag);
             break;
         case LINE:
-            DrawLine(target, viewVerts, viewAttrs, uniforms, frag);
+            DrawLine(target, transformedVerts, transformedAttrs, uniforms, frag);
             break;
         case TRIANGLE:
-            DrawTriangle(target, viewVerts, viewAttrs, uniforms, frag);
+            DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
     }
 }
 
