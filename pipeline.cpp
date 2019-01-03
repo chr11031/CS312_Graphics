@@ -50,60 +50,8 @@ void processUserInputs(bool & playing)
         {
             playing = false;
         }
-
-        // Camera Rotation
-        if(e.type == SDL_MOUSEMOTION)
-        {
-            int cur = SDL_ShowCursor(SDL_QUERY);
-            if(cur == SDL_DISABLE)
-            {
-                mouseX = e.motion.xrel;
-                mouseY = e.motion.yrel;
-                camYaw   -= (mouseX * CAM_INCREMENT);
-                camPitch -= (mouseY * CAM_INCREMENT);
-            }
-        }
-
-        // Hide-Show mouse
-        if(e.type == SDL_MOUSEBUTTONDOWN)
-        {
-            int cur = SDL_ShowCursor(SDL_QUERY);
-            if(cur == SDL_DISABLE)
-            {
-                SDL_ShowCursor(SDL_ENABLE);
-                SDL_SetRelativeMouseMode(SDL_FALSE);
-            }
-            else
-            {
-                SDL_ShowCursor(SDL_DISABLE);
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-            }
-        }
-
-        // Camera Translation
-        if(e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
-        {
-            camZ += (cos((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            camX -= (sin((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
-        {
-            camZ -= (cos((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            camX += (sin((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
-        {
-            camX -= (cos((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            camZ -= (sin((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
-        {
-            camX += (cos((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            camZ += (sin((camYaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
     }
 }
-
 
 /****************************************
  * DRAW_POINT
@@ -148,11 +96,8 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         for(int i = 0; i < numIn; i++)
         {
             transformedVerts[i] = inputVerts[i];
+            transformedAttrs[i] = inputAttrs[i];
         }
-    }
-    else
-    {
-        // Your Vertex Shader Callback goes here
     }
 }
 
