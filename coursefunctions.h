@@ -75,6 +75,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 }
         }
 
+
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
@@ -85,8 +86,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         }
 
 
-
-        // Upscale/match to screen
+        // Upscale/blit to screen
         for(int y = 0; y < h; y++)
         {
                 for(int x = 0; x < w; x++)
@@ -152,8 +152,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 10, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'VBO pointAttributes'
-
+        // Your Code goes here for 'pointAttributes'
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -167,55 +166,54 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         * 6 Flat color triangles below
         *************************************************/
         Vertex verts[3];
-        Attributes attributes[3];
+        Attributes attr[3];
         verts[0] = {100, 150, 1, 1};
         verts[1] = {150, 60, 1, 1};
         verts[2] = {50, 60, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
-
+        DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 110, 1, 1};
         verts[1] = {250, 60, 1, 1};
         verts[2] = {250, 150, 1, 1};
         PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
+        DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 150, 1, 1};
         verts[1] = {450, 60, 1, 1};
         verts[2] = {350, 110, 1, 1};
         PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
+        DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 250, 1, 1};
         verts[1] = {60, 350, 1, 1};
         verts[2] = {150, 350, 1, 1};
         PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
+        DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {210, 260, 1, 1};
         verts[1] = {260, 340, 1, 1};
         verts[2] = {310, 310, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
+        DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 310, 1, 1};
         verts[1] = {430, 350, 1, 1};
         verts[2] = {470, 260, 1, 1};
         PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'VBO attributes'
+        // Your color code goes here for 'attr'
 
-        DrawPrimitive(TRIANGLE, target, verts, attributes);
+        DrawPrimitive(TRIANGLE, target, verts, attr);
 }
 
 
@@ -234,7 +232,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 60, 1, 1};
         colorTriangle[2] = {50, 60, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'VBO colorAttributes'
+        // Your color code goes here for 'colorAttributes'
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
@@ -253,7 +251,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 260, 1, 1};
         imageTriangle[2] = {350, 260, 1, 1};
         double coordinates[3][2] = { {1,1}, {1,0}, {0,0} };
-        // Your texture coordinate code goes here for 'VBO imageAttributes'
+        // Your texture coordinate code goes here for 'imageAttributes'
 
         BufferImage myImage("image.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
@@ -297,7 +295,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,1/divA}, {0/divB,0/divB}, {1/divB,0/divB}, {1/divA,1/divA} };
-        // Your texture coordinate code goes here for 'VBO imageAttributesA, imageAttributesB'
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
@@ -329,7 +327,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         colorTriangle[2] = { 50, 60, 1, 1};
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
-        // Your code for VBO 'colorAttributes' goes here
+        // Your code for 'colorAttributes' goes here
 
         FragmentShader myColorFragShader;
 
@@ -417,7 +415,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0,1}, {1,1}, {1,0}, {0,0} };
-        // Your texture coordinate code goes here for 'VBO imageAttributesA, imageAttributesB'
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
