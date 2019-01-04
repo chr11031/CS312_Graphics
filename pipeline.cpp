@@ -35,7 +35,7 @@ void SendFrame(SDL_Texture* GPU_OUTPUT, SDL_Renderer * ren, SDL_Surface* frameBu
  * Updates the state of the application based on:
  * keyboard, mouse, touch screen, gamepad inputs. 
  ************************************************************/
-void processUserInputs(bool & playing)
+void processUserInputs(bool & running)
 {
     SDL_Event e;
     int mouseX;
@@ -44,11 +44,11 @@ void processUserInputs(bool & playing)
     {
         if(e.type == SDL_QUIT) 
         {
-            playing = false;
+            running = false;
         }
         if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) 
         {
-            playing = false;
+            running = false;
         }
     }
 }
@@ -58,7 +58,7 @@ void processUserInputs(bool & playing)
  * Renders a point to the screen with the
  * appropriate coloring
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, VBO* attrs, VBO * const uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -67,7 +67,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, VBO* attrs, VBO * const unif
  * Renders a line to the screen with the
  * appropriate coloring
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, VBO* attrs, VBO* const uniforms, FragmentShader* const frag)
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, Attributes* attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -77,7 +77,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, VBO* attrs, VBO* const uni
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* triangle, VBO* attrs, VBO* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* triangle, Attributes* attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -87,8 +87,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* triangle, VBO* attrs, VBO* c
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], VBO const inputAttrs[], const int& numIn, 
-                                 VBO* const uniforms, Vertex transformedVerts[], VBO transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
+                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
     if(vert == NULL)
@@ -113,8 +113,8 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const VBO inputAttrs[],
-                   VBO* const uniforms,
+                   const Attributes inputAttrs[],
+                   Attributes* const uniforms,
                    FragmentShader* const frag,                   
                    VertexShader* const vert,
                    Buffer2D<double>* zBuf)
@@ -136,7 +136,7 @@ void DrawPrimitive(PRIMITIVES prim,
 
     // Vertex shader 
     Vertex transformedVerts[MAX_VERTICES];
-    VBO transformedAttrs[MAX_VERTICES];
+    Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
     // Vertex Interpolation & Fragment Drawing

@@ -150,7 +150,7 @@ void CADView(Buffer2D<PIXEL> & target)
 void TestDrawPixel(Buffer2D<PIXEL> & target)
 {
         Vertex vert = {10, 10, 1, 1};
-        VBO pointAttributes;
+        Attributes pointAttributes;
         PIXEL color = 0xffff0000;
         // Your Code goes here for 'VBO pointAttributes'
 
@@ -167,7 +167,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         * 6 Flat color triangles below
         *************************************************/
         Vertex verts[3];
-        VBO attributes[3];
+        Attributes attributes[3];
         verts[0] = {100, 150, 1, 1};
         verts[1] = {150, 60, 1, 1};
         verts[2] = {50, 60, 1, 1};
@@ -229,7 +229,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         * 1. Interpolated color triangle
         *************************************************/
         Vertex colorTriangle[3];
-        VBO colorAttributes[3];
+        Attributes colorAttributes[3];
         colorTriangle[0] = {250, 400, 1, 1};
         colorTriangle[1] = {450, 60, 1, 1};
         colorTriangle[2] = {50, 60, 1, 1};
@@ -239,7 +239,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
 
-        VBO colorUniforms;
+        Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
@@ -248,7 +248,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
          * 2. Interpolated image triangle
         ****************************************************/
         Vertex imageTriangle[3];
-        VBO imageAttributes[3];
+        Attributes imageAttributes[3];
         imageTriangle[0] = {425, 400, 1, 1};
         imageTriangle[1] = {500, 260, 1, 1};
         imageTriangle[2] = {350, 260, 1, 1};
@@ -258,7 +258,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         BufferImage myImage("image.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
-        VBO imageUniforms;
+        Attributes imageUniforms;
         // Your code for the uniform goes here
 
         FragmentShader myImageFragShader;
@@ -285,13 +285,13 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
                          {(1200  / divA) + 256, (-1500 / divA) + 256, divA, 1.0/divA }};
 
         Vertex verticesImgA[3];
-        VBO imageAttributesA[3];
+        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        VBO imageAttributesB[3];
+        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
@@ -302,7 +302,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
-        VBO imageUniforms;
+        Attributes imageUniforms;
         // Your code for the uniform goes here
 
         FragmentShader fragImg;
@@ -323,7 +323,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         * 1. Interpolated color triangle
         *************************************************/
         Vertex colorTriangle[3];
-        VBO colorAttributes[3];
+        Attributes colorAttributes[3];
         colorTriangle[0] = { 250, 400, 1, 1};
         colorTriangle[1] = { 450, 60, 1, 1};
         colorTriangle[2] = { 50, 60, 1, 1};
@@ -333,7 +333,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         FragmentShader myColorFragShader;
 
-        VBO colorUniforms;
+        Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
@@ -405,13 +405,13 @@ void TestPipeline(Buffer2D<PIXEL> & target)
                           {-20,20, 50, 1}};
 
         Vertex verticesImgA[3];
-        VBO imageAttributesA[3];
+        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        VBO imageAttributesB[3];
+        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
@@ -422,7 +422,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
-        VBO imageUniforms;
+        Attributes imageUniforms;
         // Your code for the uniform goes here
 
         FragmentShader fragImg;

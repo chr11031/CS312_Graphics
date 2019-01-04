@@ -214,26 +214,26 @@ class BufferImage : public Buffer2D<PIXEL>
 };
 
 /***************************************************
- * VARIABLE_BUFFER_OBJECT (shadows OpenGL VBO)
+ * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
- * primitive OR per-vertex attributes. Will be 
+ * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
-class VBO
+class Attributes
 {      
     public:
         // Obligatory empty constructor
-        VBO() {}
+        Attributes() {}
 
-        // Needed by clipping (linearly interpolated VBO between two others)
-        VBO(const VBO & first, const VBO & second, const double & valueBetween)
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
 };	
 
 // Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const VBO & attr, const VBO & uniforms)
+void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
@@ -250,7 +250,7 @@ class FragmentShader
     public:
  
         // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, const VBO & attr, const VBO & uniforms);
+        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         FragmentShader()
@@ -259,24 +259,24 @@ class FragmentShader
         }
 
         // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, const VBO & attr, const VBO & uniforms))
+        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(FragSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, const VBO & attr, const VBO & uniforms))
+        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             FragShader = FragSdr;
         }
 };
 
 // Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms)
+void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
-    attrOut = attrIn;
+    attrOut = vertAttr;
 }
 
 /**********************************************************
@@ -290,7 +290,7 @@ class VertexShader
 {
     public:
         // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms);
+        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         VertexShader()
@@ -299,13 +299,13 @@ class VertexShader
         }
 
         // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms))
+        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(VertSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, VBO & attrOut, const Vertex & vertIn, const VBO & attrIn, const VBO & uniforms))
+        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             VertShader = VertSdr;
         }
@@ -319,8 +319,8 @@ class VertexShader
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const VBO inputAttrs[],
-                   VBO* const uniforms = NULL,
+                   const Attributes inputAttrs[],
+                   Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);             
