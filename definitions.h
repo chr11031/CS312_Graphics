@@ -292,7 +292,7 @@ class VertexShader
         // Get, Set implicit
         void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
 
-        // Assumes simple monotone RED shader
+        // Assumes simple pass-through vertex shader
         VertexShader()
         {
             VertShader = DefaultVertShader;
