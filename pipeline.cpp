@@ -67,7 +67,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  * Renders a line to the screen with the
  * appropriate coloring
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, Attributes* attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -77,7 +77,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* line, Attributes* attrs, Attribu
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* triangle, Attributes* attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
