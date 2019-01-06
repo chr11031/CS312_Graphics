@@ -136,10 +136,10 @@ void CADView(Buffer2D<PIXEL> & target)
         {
                 for(int xSrc = xStartSrc; xSrc < xLimitSrc; xSrc++)
                 {
-                        target[ySrc][xSrc]                 = topLeft[ySrc][xSrc];
-                        target[ySrc][xSrc+halfWid]         = topRight[ySrc][xSrc];
-                        target[ySrc+halfHgt][xSrc]         = botLeft[ySrc][xSrc];
-                        target[ySrc+halfHgt][xSrc+halfWid] = botRight[ySrc][xSrc];
+                        target[ySrc][xSrc]                 = botLeft[ySrc][xSrc];
+                        target[ySrc][xSrc+halfWid]         = botRight[ySrc][xSrc];
+                        target[ySrc+halfHgt][xSrc]         = topLeft[ySrc][xSrc];
+                        target[ySrc+halfHgt][xSrc+halfWid] = topRight[ySrc][xSrc];
                 }
         }
 }
