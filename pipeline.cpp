@@ -56,7 +56,7 @@ void processUserInputs(bool & running)
 /****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
- * appropriate coloring
+ * appropriate coloring.
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
@@ -64,8 +64,8 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * Renders a line to the screen with the
- * appropriate coloring
+ * DRAW_TRIANGLE
+ * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
@@ -103,7 +103,7 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
 
 /***************************************************************************
  * DRAW_PRIMITIVE
- * Processes the indiecated PRIMITIVES type through pipeline stages of:
+ * Processes the indicated PRIMITIVES type through pipeline stages of:
  *  1) Vertex Transformation
  *  2) Clipping
  *  3) Normalization

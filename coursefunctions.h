@@ -152,7 +152,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'
+        // Your Code goes here for 'pointAttributes'       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -283,13 +283,13 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
                          {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
 
         Vertex verticesImgA[3];
-        VBO imageAttributesA[3];
+        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        VBO imageAttributesB[3];
+        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];

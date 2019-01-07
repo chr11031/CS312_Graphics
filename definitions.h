@@ -9,7 +9,7 @@
 
 /******************************************************
  * DEFINES:
- * Macros for universal variables/hook-ups
+ * Macros for universal variables/hook-ups.
  *****************************************************/
 #define WINDOW_NAME "Pipeline"
 #define S_WIDTH     512
