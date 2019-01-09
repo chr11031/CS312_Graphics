@@ -223,7 +223,6 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-    PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
         PIXEL color;
