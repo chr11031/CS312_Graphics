@@ -152,12 +152,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-<<<<<<< HEAD
         // Your Code goes here for 'pointAttributes'
         pointAttributes.color = color;       
-=======
-	pointAttributes.color = color;
->>>>>>> 390681bf0aa20a3f11377e1ac2696ed9c3d0ef68
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }

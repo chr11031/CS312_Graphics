@@ -60,10 +60,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-<<<<<<< HEAD
     // Your code goes here
-=======
->>>>>>> 390681bf0aa20a3f11377e1ac2696ed9c3d0ef68
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
@@ -188,12 +185,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-<<<<<<< HEAD
         // Your code goes here
         TestDrawPixel(frame);
-=======
-    	TestDrawPixel(frame);
->>>>>>> 390681bf0aa20a3f11377e1ac2696ed9c3d0ef68
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
