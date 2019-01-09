@@ -231,6 +231,8 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        PIXEL color;
 };	
 
 // Example of a fragment shader
