@@ -3,6 +3,16 @@
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
+#include <iostream>
+
+/***************************************************
+ * Checks whether the number is within the grid
+ * bounndaries
+ **************************************************/
+bool isLegal(int num) {
+        return (num >= 0 && num < 64);     
+}
+
 /***************************************************
  * Team Activity for week #1.
  * When working on this activity be sure to 
@@ -61,7 +71,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
-                        int gridY = mouseY / scaleFactor;
+                        int gridY = gridH - mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
                         {
                                 // Dead
@@ -79,10 +89,39 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                for (int x = 0; x < gridW; x++) {
+                        for (int y = 0; y < gridH; y++) {
 
-                // Wait a half-second between iterations
-                SDL_Delay(500);
+                                int aliveNeighbors = 0;
+                                for (int tmpx = x-1; tmpx <= x+1; tmpx++) {
+                                        for (int tmpy = y-1; tmpy <= y+1; tmpy++) {
+                                                if (!(tmpx == x && tmpy == y) // Don't count yourself as a neighbor
+                                                && (tmpx >= 0 && tmpx < gridW && tmpy >= 0 && tmpy < gridH) // Don't go off the edge of the array
+                                                && grid[tmpx][tmpy]) { // Is the neighbor cell alive?
+                                                                aliveNeighbors++;
+                                                }
+                                        }
+                                }
+
+                                if (grid[x][y]) {
+                                        // This cell is alive
+                                        gridTmp[x][y] = (!(aliveNeighbors < 2 || aliveNeighbors > 3));
+                                } else {
+                                        // This cell is dead
+                                        gridTmp[x][y] = (aliveNeighbors == 3);
+                                }
+                        }
+                }
+
+                // Copy to the grid
+                for (int x = 0; x < gridW; x++) {
+                        for (int y = 0; y < gridH; y++) {
+                                grid[x][y] = gridTmp[x][y];
+                        }
+                }
+
+                // Wait a 10th of a second between iterations
+                SDL_Delay(100);
         }
 
 
