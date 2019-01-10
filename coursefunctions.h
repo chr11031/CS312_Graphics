@@ -99,7 +99,9 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                                                                 // do nothing if checking the original square.
                                                         }
                                                         else
+                                                        {
                                                                 count++;
+                                                        }
                                                 }
                                         }
                                 }
