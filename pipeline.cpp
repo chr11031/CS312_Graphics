@@ -178,6 +178,8 @@ int main()
     bool running = true;
     while(running) 
     {           
+        //GameOfLife(frame);
+        
         // Handle user inputs
         processUserInputs(running);
 
@@ -185,6 +187,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
+        TestDrawPixel(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

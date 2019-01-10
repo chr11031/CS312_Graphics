@@ -60,6 +60,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -78,11 +79,60 @@ void GameOfLife(Buffer2D<PIXEL> & target)
 
         // Advance the simulation after pressing 'g'
         if(!isSetup)
-        {
-                // Your Code goes here
+        {       
+            int pixelNeighbors = 0;
 
-                // Wait a half-second between iterations
-                SDL_Delay(500);
+            // Your Code goes here
+            for (int gridY = 0; gridY < gridH; gridY++)
+            {
+                for (int gridX = 0; gridX < gridW; gridX++)
+                {
+                    if(gridX > 0 && gridY > 0)
+                        pixelNeighbors = grid[gridY + 1][gridX - 1] +
+                                            grid[gridY + 1][gridX]     +
+                                            grid[gridY + 1][gridX + 1] +
+                                            grid[gridY][gridX - 1]     +
+                                            grid[gridY][gridX + 1]     +
+                                            grid[gridY - 1][gridX - 1] +
+                                            grid[gridY - 1][gridX]     +
+                                            grid[gridY - 1][gridX + 1];
+                    else if (gridX == 0 && gridY > 0)
+                        pixelNeighbors = grid[gridY + 1][gridX]     +
+                                            grid[gridY + 1][gridX + 1] +
+                                            grid[gridY][gridX + 1]     +
+                                            grid[gridY - 1][gridX]     +
+                                            grid[gridY - 1][gridX + 1];
+                    else if (gridX == gridW && gridY > 0)
+                        pixelNeighbors = grid[gridY + 1][gridX - 1] +
+                                            grid[gridY + 1][gridX]     +
+                                            grid[gridY][gridX - 1]     +
+                                            grid[gridY - 1][gridX - 1] +
+                                            grid[gridY - 1][gridX];
+                    else if (gridX > 0 && gridY == 0)
+                        pixelNeighbors = grid[gridY + 1][gridX - 1] +
+                                            grid[gridY + 1][gridX]     +
+                                            grid[gridY + 1][gridX + 1] +
+                                            grid[gridY][gridX - 1]     +
+                                            grid[gridY][gridX + 1];
+                    else if (gridX > 0 && gridY == gridH)
+                        pixelNeighbors = grid[gridY][gridX - 1]     +
+                                            grid[gridY][gridX + 1]     +
+                                            grid[gridY - 1][gridX - 1] +
+                                            grid[gridY - 1][gridX]     +
+                                            grid[gridY - 1][gridX + 1];
+
+
+                    if (grid[gridY][gridX] == 1 && pixelNeighbors <= 1)
+                        grid[gridY][gridX] = 0;
+                    else if (grid[gridY][gridX] == 1 && pixelNeighbors >= 4)
+                        grid[gridY][gridX] = 0;
+                    else if (grid[gridY][gridX] == 0 && pixelNeighbors == 3)
+                        grid[gridY][gridX] = 1;
+                }
+            }
+
+            // Wait a half-second between iterations
+            SDL_Delay(500);
         }
 
 
@@ -152,7 +202,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        // Your Code goes here for 'pointAttributes'
+        pointAttributes.color = color;
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
