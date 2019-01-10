@@ -180,12 +180,13 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
+        GameOfLife(frame);
         
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
