@@ -186,6 +186,7 @@ int main()
         clearScreen(frame);
 
         TestDrawPixel(frame);
+        //GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
