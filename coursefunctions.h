@@ -80,11 +80,81 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                int counter = 0;
+                for (int y = 0; y < 64; y++)
+                {
+                        for(int x = 0; x < 64; x++)
+                        {
+                                if (grid[y][x] == 1)
+                                {
+                                        if (grid[y+1][x] == 1)
+                                        counter++;
+                                        if (grid[y-1][x] == 1)
+                                        counter++;
+                                        if (grid[y][x-1] == 1)
+                                        counter++;
+                                        if (grid[y][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x-1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x-1] == 1)
+                                        counter++;
 
+                                        switch (counter)
+                                        {
+                                            case 0:
+                                            case 1:
+                                            grid[y][x] = 0;
+                                            break;
+                                            case 2:
+                                            case 3:
+                                            grid[y][x] = 1;
+                                            break;
+                                            default:
+                                            grid[y][x] = 0;
+                                            break;
+                                        }
+                                        counter = 0;
+                                }
+                                else
+                                {
+                                        if (grid[y+1][x] == 1)
+                                        counter++;
+                                        if (grid[y-1][x] == 1)
+                                        counter++;
+                                        if (grid[y][x-1] == 1)
+                                        counter++;
+                                        if (grid[y][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x-1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x-1] == 1)
+                                        counter++;
+
+                                        switch (counter)
+                                        {
+                                            case 3:
+                                            grid[y][x] = 1;
+                                            break;
+                                            default:
+                                            grid[y][x] = 0;
+                                            break;
+                                        }
+                                        counter = 0;
+                                }
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
-
 
         // Upscale/blit to screen
         for(int y = 0; y < h; y++)
@@ -152,7 +222,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
