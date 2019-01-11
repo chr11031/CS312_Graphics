@@ -1,5 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
+//#include "SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
@@ -223,6 +224,8 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        PIXEL color;
+
         // Obligatory empty constructor
         Attributes() {}
 
