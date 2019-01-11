@@ -27,6 +27,17 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         static int gridH = 64; 
         static int grid[64][64];
         static int gridTmp[64][64];
+        static int neighbors[8][2] =
+        {
+                {0, 1},
+                {0, -1},
+                {1, 0},
+                {-1, 0},
+                {1, -1},
+                {1, 1},
+                {-1, -1},
+                {-1, 1}
+        };
 
         // Setup small grid, temporary grid from previous iteration
         for(int y = 0; y < gridH; y++)
@@ -60,6 +71,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -79,7 +91,24 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                for (int y = 0; y < gridH; y++)
+                {
+                        for (int x = 0; x < gridW; x++)
+                        {
+                                int num_alive = 0;
+                                int num_dead = 0;
+
+                                for (int i = 0; i < 8; i++)
+                                {
+                                        int yi = y + neighbors[i][0];
+                                        int xi = x + neighbors[i][1];
+                                        if (yi < gridH && yi >= 0 && xi < gridW && xi >= 0)
+                                                gridTmp[yi][xi] == 1 ? num_alive++ : num_dead++;
+                                }
+
+                                grid[y][x] = gridTmp[y][x] == 1 && num_alive == 2 || num_alive == 3 ? 1 : 0;
+                        }
+                }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -152,7 +181,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
