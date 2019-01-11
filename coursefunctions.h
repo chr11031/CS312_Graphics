@@ -15,6 +15,7 @@
  * When you finish this activity be sure to 
  * uncomment these functions again!!!
  **************************************************/
+
 void GameOfLife(Buffer2D<PIXEL> & target)
 {
         // 'Static's are initialized exactly once
@@ -61,7 +62,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
-                        int gridY = mouseY / scaleFactor;
+                        int gridY = gridH - mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
                         {
                                 // Dead
@@ -79,10 +80,47 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                for(int x = 0; x < gridW; x++)
+                {
+                        for (int y = 0; y < gridH; y++)
+                        {
+                                        int neighbors = 0;
+                                        if(grid[x-1][y-1] == 1)
+                                                neighbors++;
+                                        if(grid[x-1][y] == 1)
+                                                neighbors++;
+                                        if(grid[x-1][y+1] == 1)
+                                                neighbors++;
+                                        if(grid[x][y-1] == 1)
+                                                neighbors++;
+                                        if(grid[x][y+1] == 1)
+                                                neighbors++;
+                                        if(grid[x+1][y-1] == 1)
+                                                neighbors++;
+                                         if(grid[x+1][y] == 1)
+                                                neighbors++;
+                                         if(grid[x+1][y+1] == 1)
+                                                 neighbors++;
+                                        //checks 
+                                        if (neighbors == 0 || neighbors == 1)
+                                                gridTmp[x][y] = 0;
+                                        else if(neighbors == 3)
+                                                gridTmp[x][y] = 1;
+                                        else if(neighbors >= 4)
+                                                gridTmp[x][y] = 0;
+                        }
+                }
 
+                //convert to real grid
+                for (int x = 0; x < gridW ; x++)
+                {
+                        for (int y = 0; y < gridH; y++)
+                        {
+                                grid[x][y] = gridTmp[x][y];
+                        }
+                }
                 // Wait a half-second between iterations
-                SDL_Delay(500);
+                SDL_Delay(200);
         }
 
 
