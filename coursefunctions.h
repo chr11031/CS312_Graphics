@@ -59,6 +59,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 if(holdDown && isSetup)
                 {
                         // Clicking the mouse changes a pixel's color
+                        mouseY = S_HEIGHT - mouseY;
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
@@ -80,6 +81,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                //TODO draw to screen
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -152,7 +154,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        // Your Code goes here for 'pointAttributes'
+        pointAttributes.color = color;
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
