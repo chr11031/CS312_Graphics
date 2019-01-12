@@ -242,7 +242,7 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
-/*******************************************************
+/****************************************************** *
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
  * function for shading pixels. See 'DefaultFragShader'

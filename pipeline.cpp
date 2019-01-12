@@ -47,7 +47,7 @@ void processUserInputs(bool & running)
             running = false;
         }
         if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) 
-        { 
+        {  
             running = false;
         }
     }

@@ -120,7 +120,7 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);
         static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
-        static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
+        static Buffer2D<PIXEL> botRight(halfWid, halfHgt); 
 
 
         // Your code goes here 
