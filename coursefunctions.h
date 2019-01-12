@@ -112,7 +112,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
  * NOTE: Assumes that the resolution is an even 
  * value in both dimensions.
  **************************************************/
-void CADView(Buffer2D<PIXEL> & target)
+void CADView(Buffer2D<PIXEL> & target) 
 {
         // Each CAD Quadrant
         static int halfWid = target.width()/2;
