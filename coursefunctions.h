@@ -60,6 +60,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -79,7 +80,72 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                int gridN[64][64];
+
+                //Stores the neighbor information in a temp grid
+                for(int y = 0; y < 64; y++)
+                {
+                        for(int x = 0; x < 64; x++)
+                        {
+                                int neighbors = 0;
+
+                                //Checks if neighbors are alive
+
+                                //North West
+                                if(grid[y+1][x+1] == 1)
+                                        neighbors++;
+                                //North
+                                if(grid[y+1][x] == 1)
+                                        neighbors++;
+                                //North East
+                                if(grid[y+1][x-1] == 1)
+                                        neighbors++;
+                                //West
+                                if(grid[y][x+1] == 1)
+                                        neighbors++;
+                                //East
+                                if(grid[y][x-1] == 1)
+                                        neighbors++;
+                                //South West
+                                if(grid[y-1][x+1] == 1)
+                                        neighbors++;
+                                //South
+                                if(grid[y-1][x] == 1)
+                                        neighbors++;
+                                //South East
+                                if(grid[y-1][x-1] == 1)
+                                        neighbors++;
+
+                                //Sets the current location on the neighbor grid to the value
+                                //of neighbors
+                                gridN[y][x] = neighbors;
+                        }
+                }
+
+                //Uses the neighbor grid to make changes to the main grid
+                for(int y = 0; y < 64; y++)
+                {
+                        for(int x = 0; x < 64; x++)
+                        {
+                                // Neighbor logic based off of neighbors
+
+                                // Any live cell with fewer than two live neighbors dies, as if by underpopulation.
+                                if (grid[y][x] == 1 && gridN[y][x] < 2)
+                                        grid[y][x] = 0;
+
+                                // Any live cell with two or three live neighbors lives on to the next generation.
+                                if (grid[y][x] == 1 && (gridN[y][x] == 3 || gridN[y][x] == 2))
+                                        grid[y][x] = 1;
+
+                                // Any live cell with more than three live neighbors dies, as if by overpopulation.
+                                if (grid[y][x] == 1 && gridN[y][x] > 3)
+                                        grid[y][x] = 0;
+
+                                // Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+                                if (grid[y][x] == 0 && gridN[y][x] == 3)
+                                        grid[y][x] = 1;
+                        }
+                }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
