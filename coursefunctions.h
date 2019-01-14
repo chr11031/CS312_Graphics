@@ -1,7 +1,11 @@
 #include "definitions.h"
+#include <iostream> 
+using namespace std;
+
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
+
 
 /***************************************************
  * Team Activity for week #1.
@@ -60,6 +64,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -75,11 +80,59 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 }
         }
 
-
+        int numNeighbor = 0;
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                //TODO: Look to see if your logic can be better
+                for(int x = 0; x < 64; x++)
+                {
+                        for(int y = 0; y < 64; y++)
+                        {
+                                for(int i = 0; i < 8; i++)
+                                {
+                                        if(grid[y - 1][x - 1] == 1 || grid[y + 1][x + 1] == 1 || grid[y][x + 1] == 1 || grid[y + 1][x] == 1 || grid[y][x - 1] == 1 || grid[y -1][x] == 1)
+                                        {
+                                                numNeighbor++;
+                                                cout << "numNeighbor  = " << numNeighbor << endl;
+                                        }
+
+                                        
+                                        if(numNeighbor > 4) // if 4 neighbors it dies
+                                        {
+                                                
+                                                grid[y][x] = 0;
+                                        }
+                                        // If 2 or live neihbors, it remains alive and if 3 neighbors it becomes alive
+                                        else if (numNeighbor == 2 || numNeighbor == 3)
+                                        {
+                                                grid[y][x] = 1;
+                                        }
+                                        // If 1 or 0 neighbors are alive it will die
+                                        else if (numNeighbor < 1)
+                                        {
+                                                grid[y][x] = 0;
+                                        }
+
+                                        /*
+                                        switch (numNeighbor)
+                                        {
+                                                case 0:
+                                                case 1:
+                                                        grid[y][x] = 0;
+                                                        break;
+                                                case 2:
+                                                case 3:
+                                                        grid[y][x] = 1;
+                                                        break;
+                                                case 4:
+                                                        grid[y][x] = 0;
+                                                        break;
+                                        }
+                                        */
+                                }
+                        }
+                }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);

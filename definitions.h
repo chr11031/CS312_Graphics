@@ -50,7 +50,7 @@ struct Vertex
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
  * and depth buffers. Can be described as frames or 
- * 2D arrays ot type 'T' encapsulated in an object.
+ * 2D arrays of type 'T' encapsulated in an object.
  *****************************************************/
 template <class T>
 class Buffer2D 

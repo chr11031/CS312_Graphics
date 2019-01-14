@@ -1,5 +1,7 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <iostream>
+using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
@@ -60,7 +62,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    //TODO: write how a point is drawn on the screen
 }
 
 /****************************************
@@ -179,12 +181,12 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
-        // Your code goes here
+        GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
