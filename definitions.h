@@ -224,10 +224,9 @@ class Attributes
 {      
     public:
   
-        PIXEL color;
-
         // Obligatory empty constructor
         Attributes() {}
+        PIXEL color;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
