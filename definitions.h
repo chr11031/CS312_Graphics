@@ -1,6 +1,5 @@
 #define SDL_MAIN_HANDLED
-#include "SDL2/SDL.h"
-//#include "SDL.h"
+#include "/Users/ronaldmunoz/Documents/College/Winter 2019/CS 312 - Conputer Graphics/SDL2-2.0.9/include/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
@@ -15,7 +14,7 @@
 #define WINDOW_NAME "Pipeline"
 #define S_WIDTH     512
 #define S_HEIGHT    512
-#define PIXEL       Uint32
+#define PIXEL       Uint32 
 #define ABS(in) (in > 0 ? (in) : -(in))
 #define SWAP(TYPE, FIRST, SECOND) { TYPE tmp = FIRST; FIRST = SECOND; SECOND = tmp; }
 #define MIN(A,B) A < B ? A : B

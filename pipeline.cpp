@@ -3,7 +3,7 @@
 
 /***********************************************
  * CLEAR_SCREEN
- * Sets the screen to the indicated color value.
+ * Sets the screen to the indicated color valueBte
  **********************************************/
 void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
 {
@@ -181,13 +181,14 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
+        GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
