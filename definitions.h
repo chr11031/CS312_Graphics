@@ -64,7 +64,7 @@ class Buffer2D
         void setupInternal()
         {
             // Allocate pointers for column references
-            grid = (T**)malloc(sizeof(T*) * h);                
+            grid = (T**)malloc(sizeof(T*) * h);                 
             for(int r = 0; r < h; r++)
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
@@ -225,6 +225,8 @@ class Attributes
     public:
         // Obligatory empty constructor
         Attributes() {}
+
+        PIXEL color;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
