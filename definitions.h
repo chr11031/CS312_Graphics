@@ -221,8 +221,9 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
+{   
     public:
+        PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
 
@@ -230,6 +231,7 @@ class Attributes
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
+            
         }
 };	
 
