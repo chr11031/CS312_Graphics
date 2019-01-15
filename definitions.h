@@ -223,6 +223,8 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        PIXEL color;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -233,14 +235,14 @@ class Attributes
         }
 };	
 
-// Example of a fragment shader
+// Example of a fragment shader 
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
 }
 
-/*******************************************************
+/****************************************************** *
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
  * function for shading pixels. See 'DefaultFragShader'
