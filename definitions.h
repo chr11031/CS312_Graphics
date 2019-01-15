@@ -218,7 +218,7 @@ class BufferImage : public Buffer2D<PIXEL>
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
  * primitive as a whole OR per-vertex. Will be 
- * designed/implemented by the programmer. 
+ * designed/implemented by the programmer.
  **************************************************/
 class Attributes
 {      
@@ -231,6 +231,9 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        /// My Code
+        PIXEL color;
 };	
 
 // Example of a fragment shader
