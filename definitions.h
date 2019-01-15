@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED
-#include "SDL2/SDL.h"
+#include "C:/MinGW/include/SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
@@ -225,6 +225,7 @@ class Attributes
     public:
         // Obligatory empty constructor
         Attributes() {}
+        PIXEL color;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
