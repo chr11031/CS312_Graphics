@@ -59,6 +59,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 if(holdDown && isSetup)
                 {
                         // Clicking the mouse changes a pixel's color
+                        mouseY =  S_HEIGHT - mouseY;
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
@@ -79,8 +80,76 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
-
+                // Your Code goes here 
+                //TODO 
+                bool ALIVE = false;
+                bool DEAD = false;
+                int ALIVE_count = 0;
+                for (int i = 0; i < h; i++)
+                {
+                        for (int j = 0; j < w; j++)
+                        {
+                                if(grid[i][j] == 1)
+                                {
+                                        ALIVE == true;
+                                }
+                                /*Checks neighbors for life*/
+                                 if(grid[i-1][j+1] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i][j+1] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i+1][j+1] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i-1][j] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i+1][j] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i-1][j-1] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i][j-1] == ALIVE)
+                                {
+                                        ALIVE_count++;
+                                }
+                                if(grid[i+1][j-1])
+                                {
+                                        ALIVE_count++;
+                                }
+                                
+                                /*Rule Section*/
+                                /*Death by loneliness. 0 or 1 neighbors.*/
+                                if (grid[i][j] == ALIVE && (ALIVE_count == 0 || ALIVE_count == 1))
+                                {
+                                        grid[i][j] == DEAD;
+                                }
+                                /*Live to next generation. 2 or 3 neighbors.*/
+                                else if(grid[i][j] == ALIVE && (ALIVE_count == 2 || ALIVE_count == 3))
+                                {
+                                        grid[i][j] == ALIVE;
+                                }
+                                /*Death by overcrowding. More than 3 neighbors.*/
+                                else if (grid[i][j] == ALIVE && ALIVE_count > 3)
+                                {
+                                        grid[i][j] == DEAD;
+                                }
+                                /*Birth. Exactly 3 neighbors.*/
+                                else if (grid[i][j] == ALIVE && ALIVE_count ==3)
+                                {
+                                        grid[i][j] == ALIVE;
+                                }
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
@@ -152,7 +221,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        // Your Code goes here for 'pointAttributes'
+        pointAttributes.color = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
