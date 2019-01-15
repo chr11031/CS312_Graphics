@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED
-#include "SDL2/SDL.h"
+#include "/usr/local/include/SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
@@ -231,6 +231,7 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+        PIXEL color;
 };	
 
 // Example of a fragment shader
