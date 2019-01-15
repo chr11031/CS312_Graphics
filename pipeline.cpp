@@ -3,6 +3,7 @@
 
 /***********************************************
  * CLEAR_SCREEN
+ * 
  * Sets the screen to the indicated color value.
  **********************************************/
 void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
@@ -60,7 +61,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -184,7 +185,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // Your code goes here
+        TestDrawPixel(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
