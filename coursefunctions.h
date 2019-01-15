@@ -80,7 +80,25 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                int count;
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {
+                                count = grid[y-1][x] + grid[y][x-1] + grid[y+1][x] +
+                                        grid[y][x+1] + grid[y-1][x+1] + grid[y+1][x-1] +
+                                        grid[y-1][x-1] + grid[y+1][x+1];
 
+                                if ((count < 2) || (count > 3))
+                                {
+                                        grid[y][x] = 0;
+                                }
+                                else if ((grid[y][x] == 0) && (count == 3))
+                                {
+                                        grid[y][x] = 1;
+                                }
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
@@ -152,7 +170,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;     
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
