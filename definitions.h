@@ -229,8 +229,10 @@ class Attributes
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
-            // Your code goes here when clipping is implemented
+            // Your Code goes here after clipping is done
         }
+
+        PIXEL color;
 };	
 
 // Example of a fragment shader
