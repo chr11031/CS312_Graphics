@@ -60,6 +60,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -80,7 +81,42 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
-
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {
+                                int count = 0;
+                                int tempy = y - 1;
+                                for (tempy; tempy <= y + 1; tempy++)
+                                { 
+                                        int tempx = x - 1;
+                                        for (tempx; tempx <= x + 1; tempx++)
+                                        {
+                                                if (gridTmp[tempy][tempx] == 1)
+                                                {
+                                                        if(tempy == y && tempx == x)
+                                                        {
+                                                                // do nothing if checking the original square.
+                                                        }
+                                                        else
+                                                                count++;
+                                                }
+                                        }
+                                }
+                                // Anything with 0, 1, or 4 or more neighbors dies.
+                                if (count < 2 || count > 3)
+                                {
+                                        // dead
+                                        grid[y][x] = 0;
+                                }
+                                // The only way to resurrect is if there are exactly 3 neighbors.
+                                else if (count == 3)
+                                {
+                                        // alive
+                                        grid[y][x] = 1;
+                                }
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
@@ -152,7 +188,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
