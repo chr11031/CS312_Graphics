@@ -79,7 +79,37 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Bound triangle
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Don't try to draw off screen
+    maxX = MIN(maxX, S_WIDTH - 1);
+    maxY = MIN(maxY, S_HEIGHT - 1);
+    minX = MAX(minX, 0);
+    minY = MAX(minY, 0);
+
+    Vertex v1 = { triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y };
+    Vertex v2 = { triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y };
+    Vertex p;
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            p.x = x - triangle[0].x; 
+            p.y = y - triangle[0].y;
+
+            float u = determinate(v1, v2);
+            float s = determinate(p, v2) / u;
+            float t = determinate(v1, p) / u;
+
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+                target[(int)y][(int)x] = attrs[0].color;
+        }
+    }
 }
 
 /**************************************************************
@@ -185,7 +215,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
