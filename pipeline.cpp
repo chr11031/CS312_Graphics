@@ -61,7 +61,7 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Set our pixel according to the attribute value!
-    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -185,8 +185,8 @@ int main()
         // Refresh Screen
         //clearScreen(frame);
 
-        //TestDrawPixel(frame);
-        GameOfLife(frame);
+        TestDrawPixel(frame);
+        //GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
