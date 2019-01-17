@@ -211,7 +211,6 @@ int main()
         // Your code goes here
         // GameOfLife(frame);
         TestDrawTriangle(frame);
-
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
