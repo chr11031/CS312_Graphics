@@ -66,7 +66,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -74,6 +74,10 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+float crossProduct(Vertex v1, Vertex v2)
+{
+    return v1.x * v2.y - v1.y * v2.x;
+}
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -81,7 +85,34 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    Vertex v1 = triangle[0];
+    Vertex v2 = triangle[1];
+    Vertex v3 = triangle[2];
+    int maxX = MAX3(v1.x, v2.x, v3.x);
+    int minX = MIN3(v1.x, v2.x, v3.x);
+    int maxY = MAX3(v1.y, v2.y, v3.y);
+    int minY = MIN3(v1.y, v2.y, v3.y);
+
+    /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    Vertex vs1 = {v2.x - v1.x, v2.y - v1.y, 1, 1};
+    Vertex vs2 = {v3.x - v1.x, v3.y - v1.y,1 ,1};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+        Vertex q {x - v1.x, y - v1.y};
+
+        float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+        float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+        if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+        { /* inside triangle */
+            Vertex v = {x,y,1,1};
+            DrawPoint(target, &v, attrs, uniforms, frag);
+        }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,12 +217,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
-<<<<<<< HEAD
-        //GameOfLife(frame);
-=======
-      // GameOfLife(frame);
->>>>>>> d772b32054b5f5a96a8385dc8553fcb21ed8e70c
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
