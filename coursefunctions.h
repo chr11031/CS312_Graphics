@@ -59,7 +59,6 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 if(holdDown && isSetup)
                 {
                         // Clicking the mouse changes a pixel's color
-                        mouseY =  S_HEIGHT - mouseY;
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
@@ -80,76 +79,76 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here 
+                // Your Code goes here
                 //TODO 
                 bool ALIVE = false;
                 bool DEAD = false;
                 int ALIVE_count = 0;
-                for (int i = 0; i < h; i++)
+                for (int i = 0; i < gridH; i++)
                 {
-                        for (int j = 0; j < w; j++)
+                        for (int j = 0; j < gridW; j++)
                         {
                                 if(grid[i][j] == 1)
                                 {
-                                        ALIVE == true;
-                                }
-                                /*Checks neighbors for life*/
-                                 if(grid[i-1][j+1] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i][j+1] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i+1][j+1] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i-1][j] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i+1][j] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i-1][j-1] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i][j-1] == ALIVE)
-                                {
-                                        ALIVE_count++;
-                                }
-                                if(grid[i+1][j-1])
-                                {
-                                        ALIVE_count++;
+                                        /*Checks neighbors for life*/
+                                        if(grid[i-1][j+1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i][j+1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i+1][j+1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i-1][j] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i+1][j] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i-1][j-1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i][j-1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
+                                        if(grid[i+1][j-1] == 1)
+                                        {
+                                                ALIVE_count++;
+                                        }
                                 }
                                 
                                 /*Rule Section*/
                                 /*Death by loneliness. 0 or 1 neighbors.*/
-                                if (grid[i][j] == ALIVE && (ALIVE_count == 0 || ALIVE_count == 1))
+                                if (grid[i][j] == 1 && (ALIVE_count == 0 || ALIVE_count == 1))
                                 {
-                                        grid[i][j] == DEAD;
+                                        grid[i][j] = 0;
                                 }
                                 /*Live to next generation. 2 or 3 neighbors.*/
-                                else if(grid[i][j] == ALIVE && (ALIVE_count == 2 || ALIVE_count == 3))
+                                else if(grid[i][j] == 1 && (ALIVE_count == 2 || ALIVE_count == 3))
                                 {
-                                        grid[i][j] == ALIVE;
+                                        grid[i][j] = 1;
                                 }
                                 /*Death by overcrowding. More than 3 neighbors.*/
-                                else if (grid[i][j] == ALIVE && ALIVE_count > 3)
+                                else if (grid[i][j] == 1 && ALIVE_count > 3)
                                 {
-                                        grid[i][j] == DEAD;
+                                        grid[i][j] = 0;
                                 }
                                 /*Birth. Exactly 3 neighbors.*/
-                                else if (grid[i][j] == ALIVE && ALIVE_count ==3)
+                                else if (grid[i][j] == 1 && ALIVE_count ==3)
                                 {
-                                        grid[i][j] == ALIVE;
+                                        grid[i][j] = 1;
                                 }
                         }
                 }
+
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
@@ -221,8 +220,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'
-        pointAttributes.color = color;       
+        // Your Code goes here for 'pointAttributes'  
+        pointAttributes.color = color;     
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -242,6 +241,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        attr[0].color = colors1[0];
+        attr[1].color = colors1[1];
+        attr[2].color = colors1[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -250,6 +252,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {250, 362, 1, 1};
         PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        attr[0].color = colors2[0];
+        attr[1].color = colors2[1];
+        attr[2].color = colors2[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -258,6 +263,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {350, 402, 1, 1};
         PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        attr[0].color = colors3[0];
+        attr[1].color = colors3[1];
+        attr[2].color = colors3[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -266,6 +274,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {150, 162, 1, 1};
         PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        attr[0].color = colors4[0];
+        attr[1].color = colors4[1];
+        attr[2].color = colors4[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -274,6 +285,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        attr[0].color = colors5[0];
+        attr[1].color = colors5[1];
+        attr[2].color = colors5[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -282,6 +296,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {470, 252, 1, 1};
         PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        attr[0].color = colors6[0];
+        attr[1].color = colors6[1];
+        attr[2].color = colors6[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -412,7 +429,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)

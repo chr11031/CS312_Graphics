@@ -71,6 +71,27 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    for (float t = 0; t < 1; t += .01)
+    {
+        int x = ((int)triangle[0].x)*(1.0 - t) + ((int)triangle[1].x)*t;
+        int y = ((int)triangle[0].y)*(1.0 - t) + ((int)triangle[1].y)*t;
+        target[y][x] = attrs[0].color;
+    }
+
+    for (float t = 1; t < 2; t += .01)
+    {
+        int x = ((int)triangle[1].x)*(1.-t) + ((int)triangle[2].x)*t;
+        int y = ((int)triangle[1].y)*(1.-t) + ((int)triangle[2].y)*t;
+        target[y][x] = attrs[1].color;
+    }
+
+    for (float t=2; t<3; t+=.01)
+    {
+        int x = ((int)triangle[2].x)*(1.-t) + ((int)triangle[0].x)*t;
+        int y = ((int)triangle[2].y)*(1.-t) + ((int)triangle[0].y)*t;
+        target[y][x] = attrs[2].color;
+    }
+
 }
 
 /*************************************************************
@@ -80,7 +101,11 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
+
+    DrawLine(target, triangle, attrs, uniforms, frag);
 }
 
 /**************************************************************
@@ -186,7 +211,9 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        //GameOfLife(frame);
+        //TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
