@@ -74,6 +74,24 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+int MaxNum(const int & num1, const int & num2)
+{
+    return (num1 > num2) ? num1 : num2;
+}
+
+int MinNum(const int & num1, const int & num2)
+{
+    return (num1 < num2) ? num1 : num2;
+}
+/*************************************************************
+ * CROSS_PRODUCT
+ * Finds the crossproduct of two vectors
+ ************************************************************/
+float CrossProduct(const Vertex & v1, const Vertex & v2)
+{
+    return (v1.x*v2.y) - (v1.y*v2.x);
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -81,7 +99,41 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+Vertex q;
+Vertex vs1;
+Vertex vs2;
+//Find the difference between the different points of the triangle, or the vectors
+vs1.x = (int)triangle[1].x - (int)triangle[0].x;
+vs1.y = (int)triangle[1].y - (int)triangle[0].y;
+vs2.x = (int)triangle[2].x - (int)triangle[0].x;
+vs2.y = (int)triangle[2].y - (int)triangle[0].y;
+
+    //Finds the maximum and minimum bounding boxes for the triangle
+int maxX = MaxNum((int)triangle[0].x, MaxNum((int)triangle[1].x, (int)triangle[2].x));
+int minX = MinNum((int)triangle[0].x, MinNum((int)triangle[1].x, (int)triangle[2].x));
+int maxY = MaxNum((int)triangle[0].y, MaxNum((int)triangle[1].y, (int)triangle[2].y));
+int minY = MinNum((int)triangle[0].y, MinNum((int)triangle[1].y, (int)triangle[2].y));
+
+    //Check every pixel in this bounding box and fill it in if it's within the triangle
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            //Finds the difference between the current pixel under inspection and a vertex of the triangle
+            q.x = x - (int)triangle[0].x;
+            q.y = y - (int)triangle[0].y;
+
+            //Finds the cross product of each vector to insure that the pixel under inspection 
+            //vector is pointing between the two vectors of the triangles
+            float s = (float)CrossProduct(q, vs2) / CrossProduct(vs1, vs2);
+            float t = (float)CrossProduct(vs1, q) / CrossProduct(vs1, vs2);
+
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            { /* inside triangle */
+            target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +238,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-		  TestDrawPixel(frame);
+		TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
