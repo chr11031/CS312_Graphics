@@ -81,11 +81,13 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms = NULL, FragmentShader* const frag = NULL)
 {
+    // Get the max and min boundaries of the triangle
     int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));
     int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));
     int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));
     int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));
 
+    // Vertexes for the cross product computations
     Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
     Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
 
@@ -93,6 +95,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     {
         for (int x = minX; x <= maxX; x++)
         {
+            // Use cross product to check if the pixel coordinates are in the bounds of the triangle.
             Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
 
             float s = ((q.x*vs2.y)-(vs2.x*q.y)) / ((vs1.x*vs2.y)-(vs2.x*vs1.y));
