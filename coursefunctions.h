@@ -80,6 +80,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+		// pointAttributes.color = color;
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
