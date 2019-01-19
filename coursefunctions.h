@@ -210,7 +210,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
-        // Only uses the first color (color[0]) for now but we'll set all of them anyway.
+        // Only uses the first color (color[0]) for now but we'll set all of them anyway
         attr[0].color = colors1[0];
         attr[1].color = colors1[1];
         attr[2].color = colors1[2];

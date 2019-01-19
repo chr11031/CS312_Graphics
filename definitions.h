@@ -237,7 +237,7 @@ class Attributes
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // Output our shader color value, in this case red
+    // Output our shader color value, in this case red.
     fragment = 0xffff0000;
 }
 

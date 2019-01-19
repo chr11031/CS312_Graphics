@@ -124,7 +124,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             q->y = y - triangle->y;
 
             // find the cross products of the three outside vectors with
-            // the vector pointing to the point to be drawn.
+            // the vector pointing to the point to be drawn
             float ted = crossProduct(q, vs1) / crossProduct(vs3, vs2);
             float rufus = crossProduct(q, vs2) / crossProduct(vs3, vs2);
             float bill = crossProduct(q, vs3) / crossProduct(vs3, vs2);
