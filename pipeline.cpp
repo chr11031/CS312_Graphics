@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -60,7 +61,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Set our pixel according to the attribute value      
+    // Set the dot to our given attribute    
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
@@ -73,6 +74,15 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/**************************************************************
+ * CROSS_PRODUCT
+ * Calculates the cross product of two vertecies.
+ *************************************************************/
+float crossProduct(Vertex a, Vertex b)
+{
+    return (a.x * b.y) - (a.y * b.x);
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -80,7 +90,42 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+
+   // Bounding box
+   int xMax = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));
+   int yMax = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));
+   int xMin = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));
+   int yMin = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));
+
+   // Span vertecies
+   Vertex vs1;
+   vs1.x = triangle[1].x - triangle[0].x;
+   vs1.y = triangle[1].y - triangle[0].y;
+
+   Vertex vs2;
+   vs2.x = triangle[2].x - triangle[0].x;
+   vs2.y = triangle[2].y - triangle[0].y;
+
+   // Check every point in the bounding box
+   for (int x = xMin; x <= xMax; x++)
+   {
+        for (int y = yMin; y <= yMax; y++)
+        {
+             Vertex q;
+             q.x = x - triangle[0].x;
+             q.y = y - triangle[0].y;
+
+            float s = crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            // If in the triangle
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            { 
+                //DrawPoint(target, triangle, attrs, nullptr, nullptr);
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }   
 }
 
 /**************************************************************
@@ -183,10 +228,10 @@ int main()
         processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
-        // Draw a dot
-        TestDrawPixel(frame);
+        // Test our Triangle
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
