@@ -76,13 +76,53 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*************************************************************
+ * CROSS_PRODUCT
+ * Calculate the cross product given two vertices
+ * Note: only calculates the determinant for now
+ ************************************************************/
+float crossProduct(Vertex* const vertex1, Vertex* const vertex2)
+{
+    return ((*vertex1).x * (*vertex2).y) - ((*vertex2).x * (*vertex1).y);
+}
+
+/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Create a bounding box for the triangle
+    // If the pixel is out of bounds then it can be ignored
+    int maxX = MAX3(triangle[0].x,triangle[1].x,triangle[2].x);
+    int minX = MIN3(triangle[0].x,triangle[1].x,triangle[2].x);
+    int maxY = MAX3(triangle[0].y,triangle[1].y,triangle[2].y);
+    int minY = MIN3(triangle[0].y,triangle[1].y,triangle[2].y);
+
+    // Length of left side of triangle in x and y directions
+    Vertex vs1 = Vertex{triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y,1,1};
+    // Length of right side of triangle in x and y directions
+    Vertex vs2 = Vertex{triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y,1,1};
+
+    // Loop through all the pixels in the bounding box, if inside triangle draw the pixel
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            // Difference between one of the vertices and the values x and y in iteration
+            Vertex v1 = Vertex{x - triangle[0].x, y - triangle[0].y, 1, 1};
+
+            float s = crossProduct(&v1, &vs2) / crossProduct(&vs1, &vs2);
+            float t = crossProduct(&vs1, &v1) / crossProduct(&vs1, &vs2);
+
+            if (( s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                // Color in the pixel with the appropriate color
+                target[(int)y][(int)x] = attrs[0].color;
+            }
+        }
+    }
+
 }
 
 /**************************************************************
@@ -188,8 +228,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
-
+        TestDrawTriangle(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
