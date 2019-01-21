@@ -74,6 +74,11 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+float CrossProduct(Vertex const v1, Vertex const v2)
+{
+    return ((v1.x * v2.y) - (v1.y * v2.x));
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -81,7 +86,49 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
+    //create the bounding box with the max and min x, y values
+    float maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    float minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    float maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    float minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    Vertex vect01 = {
+        triangle[1].x - triangle[0].x,
+        triangle[1].y - triangle[0].y,
+        1,
+        1
+    };
+    
+    Vertex vect02 = {
+        triangle[2].x - triangle[0].x,
+        triangle[2].y - triangle[0].y,
+        1,
+        1
+    };
+
+    for(int i = minX; i <= maxX; i++)
+    {
+        for(int j = minY; j <=maxY; j++)
+        {
+            Vertex v = {
+                i - triangle[0].x,
+                j - triangle[0].y,
+                1,
+                1
+            };
+
+            float det1 = (float)CrossProduct(v, vect02) / CrossProduct(vect01, vect02);
+            float det2 = (float)CrossProduct(vect01, v) / CrossProduct(vect01, vect02);
+        
+            if ((det1 >= 0) && (det2 >= 0) && (det1 + det2 <= 1))
+            {
+                target[j][i] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +233,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
