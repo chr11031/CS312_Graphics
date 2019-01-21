@@ -80,6 +80,14 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {
+                                bool isAlive = gridTmp[y][x];
+                                int numNeigh = 0;
+                        }
+                }
                 //TODO 
                 bool ALIVE = false;
                 bool DEAD = false;
@@ -250,7 +258,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
         attr[0].color = colors2[0];
         attr[1].color = colors2[1];
@@ -261,7 +269,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors3[3] = {0x000000ff, 0x000000ff, 0x000000ff};
         // Your color code goes here for 'attr'
         attr[0].color = colors3[0];
         attr[1].color = colors3[1];
@@ -272,7 +280,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
         attr[0].color = colors4[0];
         attr[1].color = colors4[1];
@@ -294,7 +302,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors6[3] = {0x000000ff, 0x000000ff, 0x000000ff};
         // Your color code goes here for 'attr'
         attr[0].color = colors6[0];
         attr[1].color = colors6[1];
