@@ -102,7 +102,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                                         } else if(count >= 4){
                                                 grid[y][x] = 0;
                                         }
-                                        grid[y][x] = gridTmp[y][(x + 1 + 64) % 64];
+                                        //grid[y][x] = gridTmp[y][(x + 1 + 64) % 64];
 
                                 }else if (grid[y][x] == 0){
                                         if(count == 3){
@@ -128,7 +128,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                         if(grid[yScal][xScal] == 0)
                         {
                                 // Dead Color
-                                target[y][x] = 0x000000;
+                                target[y][x] = 0xff000000;
                         }
                         else
                         {
@@ -375,7 +375,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)

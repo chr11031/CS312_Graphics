@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED
-#include "/Users/ronaldmunoz/Documents/College/Winter 2019/CS 312 - Conputer Graphics/SDL2-2.0.9/include/SDL.h"
+#include "/Users/ronaldmunoz/Documents/College/Winter 2019/CS 312 - Computer Graphics/SDL2-2.0.9/include/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
