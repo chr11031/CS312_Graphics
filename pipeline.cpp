@@ -74,6 +74,10 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/**********************************************************************
+ * CrossProduct
+ * computes the cross product (also the determinant) of a 2X2 matrix
+ **********************************************************************/
 float CrossProduct(Vertex const v1, Vertex const v2)
 {
     return ((v1.x * v2.y) - (v1.y * v2.x));
@@ -86,15 +90,13 @@ float CrossProduct(Vertex const v1, Vertex const v2)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
-    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
     //create the bounding box with the max and min x, y values
     float maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
     float minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     float maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
     float minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
+    //establish 2 vertices
     Vertex vect01 = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
@@ -109,6 +111,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
         1
     };
 
+    //loop through and compute determinants
     for(int i = minX; i <= maxX; i++)
     {
         for(int j = minY; j <=maxY; j++)
@@ -123,6 +126,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             float det1 = (float)CrossProduct(v, vect02) / CrossProduct(vect01, vect02);
             float det2 = (float)CrossProduct(vect01, v) / CrossProduct(vect01, vect02);
         
+            //draw the pixel if inside the triangle
             if ((det1 >= 0) && (det2 >= 0) && (det1 + det2 <= 1))
             {
                 target[j][i] = attrs[0].color;
