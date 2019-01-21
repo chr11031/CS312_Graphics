@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -54,6 +55,16 @@ void processUserInputs(bool & running)
 }
 
 /****************************************
+ * CROSS_PRODUCT
+ * Take two vectors and find their cross 
+ * product.
+ ***************************************/
+float crossProduct(const Vertex & vert1, const Vertex & vert2)
+{
+    return (vert1.x * vert2.y) - (vert1.y * vert2.x);
+}
+
+/****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
  * appropriate coloring.
@@ -65,7 +76,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -81,6 +92,38 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    // Code adapted from www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+    // This is known as the BaryCentric Algorithm. 
+    // Find the bounding box of the triangle, test each point in the box to see if it is in the triangle, if so, draw that pixel.
+    int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x)); // Find the max x vertex by searching through the verticies of the triangle
+    int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x)); // Find the min x vertex by searching through the verticies of the triangle
+    int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y)); // Find the max y vertex by searching through the verticies of the triangle
+    int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y)); // Find the min y vertex by searching through the verticies of the triangle
+
+    // Create the verticies that we want to draw with
+    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+
+    // Start looping through the bounding box to determine what to draw
+    for (int y = minY; y <= maxY; ++y)
+    {
+        for (int x = minX; x <= maxX; ++x)
+        {
+            // Create vertex used for the Cross Products
+            Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+
+            // Find the Cross Products needed to test location of the pixel in question
+            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            // Test to see if the pixel in question is within the triangle
+            if((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                // It is within the triangle, so plot it...
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -185,10 +228,15 @@ int main()
         // Refresh Screen
         //clearScreen(frame);
 
-        // Your code goes here
+        /********** Your code goes here **********/
+        /* Uncomment to run the Game Of Life code *
         GameOfLife(frame);
         TestDrawPixel(frame);
 
+        /* Uncomment to run the Project 2 - Triangle Rasterization code */
+        TestDrawTriangle(frame);
+
+        /********** End of my code area **********/
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
