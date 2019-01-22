@@ -1,5 +1,18 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
+
+/***********************************************
+ * Cross_PRODUCT
+ **********************************************/
+double crossProduct(Vertex v1, Vertex v2)
+{
+    double result;
+
+    result = (v1.x * v2.y) - (v1.y * v2.x);
+    return result;
+}
+
 
 /***********************************************
  * CLEAR_SCREEN
@@ -60,7 +73,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -77,9 +90,32 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag) //changed Attributes* attrs
 {
-    // Your code goes here
+    int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
+    int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+    int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
+    int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+
+    Vertex vs1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
+    Vertex vs2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y), 1, 1};
+
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            Vertex q = {(x - triangle[0].x), (y - triangle[0].y), 1, 1};
+
+            float s = (float) crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = (float) crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            { /* inside triangle */
+                target[(int)y][(int)x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -179,12 +215,13 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
         // Your code goes here
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
