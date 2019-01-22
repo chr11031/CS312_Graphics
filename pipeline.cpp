@@ -70,7 +70,23 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
+    float x = triangle[0].x;
+    float y = triangle[0].y;
+    float length;
 
+    float avx = std::abs(triangle[1].x - x);
+    float avy = std::abs(triangle[1].y - y);
+    (avx < avy) ? length = avy : length = avx;
+
+    int dx = (triangle[1].x - x) / length;
+    int dy = (triangle[1].y - y) / length;
+
+    for (int i = x; i < x + dx; i++)
+    {
+        target[(int)std::round(y)][(int)std::round(x)] = attrs[0].color;
+        x += dx;
+        y += dy;
+    }
 }
 
 /*************************************************************
@@ -95,9 +111,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     v2.y = triangle[2].y - triangle[0].y;
 
     // Iteration for bounding box
-    for (int x = xMin; x < xMax; x++)
+    for (int x = left; x < right; x++)
     {
-        for (int y = yMin; y < yMax; y++)
+        for (int y = bottom; y < top; y++)
         {
             // Variable vertex for cross products
             Vertex v3;
