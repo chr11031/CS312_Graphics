@@ -1,6 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
