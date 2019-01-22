@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -69,7 +70,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+
 }
 
 /*************************************************************
@@ -79,7 +80,39 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Bounding Box
+    int top = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
+    int bottom = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+    int right = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
+    int left = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+
+    //Vertices for cross products of triangle
+    Vertex v1;
+    v1.x = triangle[1].x - triangle[0].x;
+    v1.y = triangle[1].y - triangle[0].y;
+    Vertex v2;
+    v2.x = triangle[2].x - triangle[0].x; 
+    v2.y = triangle[2].y - triangle[0].y;
+
+    // Iteration for bounding box
+    for (int x = xMin; x < xMax; x++)
+    {
+        for (int y = yMin; y < yMax; y++)
+        {
+            // Variable vertex for cross products
+            Vertex v3;
+            v3.x = x - triangle[0].x;
+            v3.y = y - triangle[0].y;
+
+            // Cross product calculations
+            float s = (v3.x * v2.y - v3.y * v2.x) / (v1.x * v2.y - v1.y * v2.x);
+            float t = (v1.x * v3.y - v1.y * v3.x) / (v1.x * v2.y - v1.y * v2.x);
+
+            // Draw
+            if((s >= 0) && (t >= 0) && (s + t <= 1))
+                target[y][x] = attrs[0].color;
+        }
+    }
 }
 
 /**************************************************************
@@ -184,7 +217,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
