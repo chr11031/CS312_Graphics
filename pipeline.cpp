@@ -53,6 +53,20 @@ void processUserInputs(bool & running)
     }
 }
 
+/*************************************************************
+ * CROSS_PRODUCT
+ * Does the determinant function AD-BC. Essential 
+ * building block for most of drawing.
+ ************************************************************/
+float crossProduct(Vertex v1, Vertex v2)
+{
+    float ad = v1.x * v2.y;
+    float bc = v1.y * v2.x;
+    float determinant = ad - bc;
+
+    return determinant;
+}
+
 /****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
@@ -60,7 +74,8 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Set our pixel according to the attribute value!       
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -77,9 +92,37 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms = NULL, FragmentShader* const frag = NULL)
 {
-    // Your code goes here
+    // gives us the four corners of the bounding box for the triangle
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // these are the vectors of two of the sides
+    Vertex v1 = (Vertex){triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1}; // vert 1, vert 2
+    Vertex v2 = (Vertex){triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1}; // vert 1, vert 3
+
+    // a loop to iterate through every pixel within our bounding box
+    for (int x = minX; x <= maxX; x++) // starting at the leftmost side
+    {
+        for (int y = minY; y <= maxY; y++) // starting at the bottomost side
+        {
+            Vertex v3 = (Vertex){x - triangle[0].x, y - triangle[0].y, 1, 1}; // vert 1 to our incrementing point
+
+            // now we do the crossproduct of the moving vert (v3, which is being incremented) and constant verts (v1 & v2) and put them in respect to the original crossproduct by dividing by the crossproduct of v1 and v2
+            float a = crossProduct(v3, v2) / crossProduct(v1, v2);
+            float b = crossProduct(v1, v3) / crossProduct(v1, v2);
+
+            // now we are checking to see if the area ratio (a or b) are positive, then we see if combined they equal or are less than the actual triangle area
+            if ((a >= 0) && (b >= 0) && (a + b <= 1))
+            {
+                Vertex inTriangle = (Vertex){x, y, 1, 1};
+                DrawPoint(target, &inTriangle, attrs, NULL, NULL);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -184,7 +227,23 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // Your code goes here
+        // Test Draw
+        // TestDrawPixel(frame);
+        // GameOfLife(frame); // to run this, comment out other draw function, clearscreen, and processuserinputs
+        TestDrawTriangle(frame);
+
+        // THIS IS MY TESTING CODE
+        Vertex verts[3];
+        Attributes attr[3];
+        PIXEL colors1[3] = {0xffff00ff, 0xffff00ff, 0xffff00ff};
+        verts[0] = (Vertex){100, 100, 1, 1};
+        verts[1] = (Vertex){200, 20, 1, 1};
+        verts[2] = (Vertex){120, 120, 1, 1};
+        for (int i = 0; i < 3; i++)
+        {
+                attr[i].color = colors1[i];
+        }
+        DrawTriangle(frame, verts, attr);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
