@@ -120,10 +120,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
 
     //By finding the max and min of both are x and y axis we can find the outer box of the triangle. 
-    int maxX = fmax((int)triangle[0].x, fmax((int)triangle[1].x, (int)triangle[2].x));
-    int minX = fmin((int)triangle[0].x, fmin((int)triangle[1].x, (int)triangle[2].x));
-    int maxY = fmax((int)triangle[0].y, fmax((int)triangle[1].y, (int)triangle[2].y));
-    int minY = fmin((int)triangle[0].y, fmin((int)triangle[1].y, (int)triangle[2].y));
+    int maxX = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+    int minX = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+    int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+    int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
 
     //Finding the vertex lines between two points
     Vertex vs1;
@@ -157,6 +157,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             }    
         }
     }
+    
 }
 
 /**************************************************************
@@ -262,8 +263,6 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        //GameOfLife(frame);
-        //TestDrawPixel(frame);
         TestDrawTriangle(frame);
 
         // Push to the GPU
