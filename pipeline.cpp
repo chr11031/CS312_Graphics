@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -81,6 +82,45 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    // Create a bounding box using the vertices
+    // Far right
+    int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
+    // Far left
+    int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+    // Very top
+    int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
+    // Very bottom
+    int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+
+    // Create vertices to use in cross product math
+    Vertex vs1;
+    vs1.x = triangle[1].x - triangle[0].x;
+    vs1.y = triangle[1].y - triangle[0].y;
+    Vertex vs2;
+    vs2.x = triangle[2].x - triangle[0].x;
+    vs2.y = triangle[2].y - triangle[0].y;
+
+    // Iterate through bounding box
+    for (int x = minX; x < maxX; x++)
+    {
+        for (int y = minY; y < maxY; y++)
+        {
+            // Additional vertex for cross product math
+            Vertex vs3;
+            vs3.x = x - triangle[0].x;
+            vs3.y = y - triangle[0].y;
+
+            // Cross product math
+            float s = (vs3.x * vs2.y - vs3.y * vs2.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+            float t = (vs1.x * vs3.y - vs1.y * vs3.x) / (vs1.x * vs2.y - vs1.y * vs2.x);
+
+            // Are we inside the triangle, if so, draw
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -185,7 +225,9 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
+        //GameOfLife(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
