@@ -145,7 +145,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             float s = crossProduct(q, vs2) / crossProduct(vs1, vs2);
             float t = crossProduct(vs1, q) / crossProduct(vs1, vs2);
 
-            // inside triangle
+            // inside the triangle
             if ((s >= 0) && (t >= 0) && (s + t <= 1))
             {
                 Vertex vpoint = {x, y};
