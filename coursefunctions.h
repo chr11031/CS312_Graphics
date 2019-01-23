@@ -218,52 +218,89 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         *************************************************/
         Vertex verts[3];
         Attributes attr[3];
+
+        // Prepare the attributes for triangle 1
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors1[0];
+        attr[1].color = colors1[1];
+        attr[2].color = colors1[2];
 
+        // Draw triangle 1
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
+        // Preapre the attributes for triangle 2
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors2[0];
+        attr[1].color = colors2[1];
+        attr[2].color = colors2[2];
 
+        // Draw triangle 2
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
+        // Prepare the attributes for triangle 3
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors3[0];
+        attr[1].color = colors3[1];
+        attr[2].color = colors3[2];
 
+        // Draw triangle 3
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
+        // Prepare the attributes for triangle 4
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors4[0];
+        attr[1].color = colors4[1];
+        attr[2].color = colors4[2];
 
+        // Draw triangle 4
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
+        // Prepare the attributes for triangle 5
         verts[0] = {210, 252, 1, 1};
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors5[0];
+        attr[1].color = colors5[1];
+        attr[2].color = colors5[2];
 
+        // Draw triangle 5
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
+        // Prepare the attributes for triangle 6
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+        
+        // Assign each vertex the color it will be
+        attr[0].color = colors6[0];
+        attr[1].color = colors6[1];
+        attr[2].color = colors6[2];
 
+        // Draw triangle 6
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
 
@@ -393,7 +430,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)

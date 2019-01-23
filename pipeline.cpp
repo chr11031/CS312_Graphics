@@ -1,5 +1,17 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <iostream>
+
+/*********************************************************
+ * FIND_DETERMINANT
+ * INPUTS: Vertex, Vertex
+ * OUTPUTS: double
+ * Finds and returns the determinant of the two given vertices.
+ * *******************************************************/
+double determinant(Vertex v1, Vertex v2)
+{
+    return ((v1.x * v2.y) - (v1.y * v2.x));
+}
 
 /***********************************************
  * CLEAR_SCREEN
@@ -79,7 +91,59 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    Vertex boxMax;
+    Vertex boxMin;
+
+    boxMax = {
+        MAX3(triangle[0].x, triangle[1].x, triangle[2].x),
+        MAX3(triangle[0].y, triangle[1].y, triangle[2].y)
+    };
+
+    boxMin = {
+        MIN3(triangle[0].x, triangle[1].x, triangle[2].x),
+        MIN3(triangle[0].y, triangle[1].y, triangle[2].y)
+    };
+
+
+    // Obtain the first two vectors 
+    Vertex vector1 = {triangle[1].x - triangle[0].x,
+                      triangle[1].y - triangle[0].y};
+    Vertex vector2 = {triangle[2].x - triangle[0].x,
+                      triangle[2].y - triangle[0].y};
+
+    // Obtained from the point we are looking at in the loop
+    Vertex tempVector;
+
+    // Variables to hold the determinants
+    double determinant1;
+    double determinant2;
+    for (int x = boxMin.x; x <= boxMax.x; x++)
+    {
+        for (int y = boxMin.y; y <= boxMax.y; y++)
+        {
+            //std::cout << "Point (" << x << ", " << y << ")\n\n";
+            // Create vector from first vertex in triangle
+            tempVector = {x -  triangle[0].x, y - triangle[0].y};
+
+            // Find the ratio of area to whole triangle
+            determinant1 = determinant(tempVector, vector2) / 
+                           determinant(vector1, vector2);
+
+            // Find the ratio of area to whole triangle
+            determinant2 = determinant(vector1, tempVector) /
+                           determinant(vector1, vector2);
+  
+            // If the two ratios are positive and they don't take up more than the area of the
+            // original triangle than this point is in the triangle
+            if ((determinant1 >= 0) && 
+                (determinant2 >= 0) && 
+                (determinant1 + determinant2 <= 1))
+            {
+                Vertex point = {x, y};
+                DrawPoint(target, &point, attrs, uniforms, frag);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -187,7 +251,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
