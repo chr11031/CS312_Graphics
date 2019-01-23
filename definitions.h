@@ -314,11 +314,11 @@ class VertexShader
         }
 };
 
-int crossProduct(Vertex v1, Vertex v2)
+float crossProduct(Vertex v1, Vertex v2)
 {
-    int a = v1.x * v2.y;
-    int b = v2.x * v1.y;
-    int det = a - b;
+    float a = v1.x * v2.y;
+    float b = v2.x * v1.y;
+    float det = a - b;
     return det;
 }
 
