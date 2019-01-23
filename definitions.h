@@ -223,6 +223,8 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        PIXEL color;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -312,6 +314,14 @@ class VertexShader
         }
 };
 
+int crossProduct(Vertex v1, Vertex v2)
+{
+    int a = v1.x * v2.y;
+    int b = v2.x * v1.y;
+    int det = a - b;
+    return det;
+}
+
 // Stub for Primitive Drawing function
 /****************************************
  * DRAW_PRIMITIVE
@@ -324,6 +334,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);       
+                         
        
 #endif

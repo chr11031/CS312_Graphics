@@ -60,7 +60,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -79,7 +79,34 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    //get mins and maxs for barycentric square
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    //find vertex to be used later to find determinate in crossproduct
+    Vertex v1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y),1, 1};
+    Vertex v2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y),1, 1};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            Vertex q = {(x - triangle[0].x), (y - triangle[0].y)};
+            
+            float s = (float)crossProduct(q, v2) / crossProduct(v1, v2);
+            float t = (float)crossProduct(v1, q) / crossProduct(v1, v2);
+            
+            //check to see if you're inside the triangle
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                //if inside draw in pixel
+                Vertex inside = {x, y};
+                DrawPoint(target,&inside,attrs,NULL,NULL); 
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -179,12 +206,14 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
-        // Your code goes here
+        //TestDrawPixel(frame);
+
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
