@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -65,7 +66,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_Line
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -80,7 +81,42 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Find a bounding box for the triangle
+    int minx = std::min({triangle[0].x, triangle[1].x, triangle[2].x});
+    int miny = std::min({triangle[0].y, triangle[1].y, triangle[2].y});
+    int maxx = std::max({triangle[0].x, triangle[1].x, triangle[2].x});
+    int maxy = std::max({triangle[0].y, triangle[1].y, triangle[2].y});
+    
+    // Loop through every pixel in the bounding box
+    for(int y = miny; y < maxy; y++)
+        for(int x = minx; x < maxx; x++)
+        {
+            // Side 1
+            int a1 = triangle[1].x - triangle[0].x;
+            int b1 = x             - triangle[0].x;
+            int c1 = triangle[1].y - triangle[0].y;
+            int d1 = y             - triangle[0].y;
+            
+            // Side 2
+            int a2 = triangle[2].x - triangle[1].x;
+            int b2 = x             - triangle[1].x;
+            int c2 = triangle[2].y - triangle[1].y;
+            int d2 = y             - triangle[1].y;
+            
+            // Side 3
+            int a3 = triangle[0].x - triangle[2].x;
+            int b3 = x             - triangle[2].x;
+            int c3 = triangle[0].y - triangle[2].y;
+            int d3 = y             - triangle[2].y;
+            
+            // Draw the pixel if it is to the left of each side (if the determinants are all non-negative)
+            if (a1 * d1 - b1 * c1 >= 0 && // Side 1
+                a2 * d2 - b2 * c2 >= 0 && // Side 2
+                a3 * d3 - b3 * c3 >= 0)   // Side 3
+            {
+                target[y][x] = attrs[0].color;
+            }
+        }
 }
 
 /**************************************************************
@@ -185,7 +221,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
