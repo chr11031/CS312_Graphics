@@ -61,6 +61,7 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -79,7 +80,30 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    Vertex vert1 = {(triangle[1].x - triangle[0].x),(triangle[1].y - triangle[0].y), 1 , 1};
+    Vertex vert2 = {(triangle[2].x - triangle[0].x),(triangle[2].y - triangle[0].y), 1 , 1};
+
+    int yMin = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+    int yMax = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+    int xMin = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+    int xMax = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x); 
+
+    for (int pixelX = xMin; pixelX <= xMax; pixelX++)
+    {
+        for (int pixelY = yMin; pixelY <= yMax; pixelY++)
+        {
+            Vertex q = {(pixelX - triangle[0].x), (pixelY - triangle[0].y), 1, 1};
+
+            float s = (float)xProduct(q, vert2) / xProduct(vert1, vert2);
+            float t = (float)xProduct(vert1, q) / xProduct(vert1, vert2);
+            
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                Vertex toDraw = {pixelX, pixelY, 1, 1};
+                DrawPoint(target, &toDraw, attrs, NULL, NULL);
+            }
+        }
+    }    
 }
 
 /**************************************************************
@@ -185,7 +209,9 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-
+        //TestDrawPixel(frame);
+        TestDrawTriangle(frame);
+        
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
