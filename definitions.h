@@ -223,12 +223,13 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-		PIXEL color;
+		
 
         // Obligatory empty constructor
         Attributes() {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
+        PIXEL color;
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
