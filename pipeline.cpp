@@ -80,26 +80,35 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
+    // Our verteces to be used in the cross product later
     Vertex vert1 = {(triangle[1].x - triangle[0].x),(triangle[1].y - triangle[0].y), 1 , 1};
     Vertex vert2 = {(triangle[2].x - triangle[0].x),(triangle[2].y - triangle[0].y), 1 , 1};
 
+    // this finds the bounds for the square around the triangles
+    // We will not be scanning the entire screen every time
     int yMin = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
     int yMax = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
     int xMin = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
     int xMax = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x); 
 
+    // for the width and height of the above determined square...
     for (int pixelX = xMin; pixelX <= xMax; pixelX++)
     {
         for (int pixelY = yMin; pixelY <= yMax; pixelY++)
         {
+            // find the info for the point being texted
             Vertex q = {(pixelX - triangle[0].x), (pixelY - triangle[0].y), 1, 1};
 
+            // find positive or negative values (inside the triangle)
             float s = (float)xProduct(q, vert2) / xProduct(vert1, vert2);
             float t = (float)xProduct(vert1, q) / xProduct(vert1, vert2);
             
+            // if we are inside the triangle
             if ((s >= 0) && (t >= 0) && (s + t <= 1))
             {
+                // assign the pixel a passable value
                 Vertex toDraw = {pixelX, pixelY, 1, 1};
+                // draw it!
                 DrawPoint(target, &toDraw, attrs, NULL, NULL);
             }
         }
