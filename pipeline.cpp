@@ -1,6 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <algorithm>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -82,10 +81,10 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Find a bounding box for the triangle
-    int minx = std::min({triangle[0].x, triangle[1].x, triangle[2].x});
-    int miny = std::min({triangle[0].y, triangle[1].y, triangle[2].y});
-    int maxx = std::max({triangle[0].x, triangle[1].x, triangle[2].x});
-    int maxy = std::max({triangle[0].y, triangle[1].y, triangle[2].y});
+    int minx = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int miny = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxx = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxy = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
     
     // Loop through every pixel in the bounding box
     for(int y = miny; y < maxy; y++)
