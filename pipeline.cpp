@@ -88,7 +88,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int minX = MAX(MIN3(triangle[0].x, triangle[1].x, triangle[2].x), 0);
     int minY = MAX(MIN3(triangle[0].y, triangle[1].y, triangle[2].y), 0);
 
-    // 
+    // The vertex of two of the sides of the triangle
     Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
     Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
     Vertex temp;
@@ -104,7 +104,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
         // We run though from the maxY to the minY for every X value
         for (int y = minY; y <= maxY; y++)
         {
-            // 
+            // Making the x and y values for the temp vartex
             temp.x = x - triangle[0].x; 
             temp.y = y - triangle[0].y;
 
