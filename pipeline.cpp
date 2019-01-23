@@ -75,12 +75,46 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 
 /*************************************************************
  * DRAW_TRIANGLE
+ * Finds the determinant.
+ ************************************************************/
+double Determinant(int ax, int ay, int bx, int by)
+{
+    return (ax * by) - (ay * bx); 
+}
+
+
+/*************************************************************
+ * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    //gets the boundaries
+    int minx = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int miny = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxx = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxy = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    //gets the values of the two other vectors relative to the origin
+    double vx = triangle[1].x - triangle[0].x;
+    double vy = triangle[1].y - triangle[0].y;
+    double wx = triangle[2].x - triangle[0].x;
+    double wy = triangle[2].y - triangle[0].y;
+    double detvw = Determinant(vx, vy, wx, wy);
+    //loops for each possible x and y value
+    for (int x = minx; x <= maxx; x++)
+    {
+        for(int y = miny; y <= maxy; y++)
+        {
+            double deta = Determinant(x - triangle[0].x, y - triangle[0].y, wx, wy) / detvw;
+            double detb = Determinant(vx, vy, x - triangle[1].x, y - triangle[1].y) / detvw;
+            
+            //the determinants must be positive, and the total area must not be bigger than the triangle
+            if (deta >= 0 && detb >= 0 && (deta + detb <= 1))
+                target[y][x] = attrs[0].color;
+        }
+    }
 }
 
 /**************************************************************
@@ -185,7 +219,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
