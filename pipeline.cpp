@@ -108,8 +108,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // Obtain the first two vectors 
     Vertex vector1 = {triangle[1].x - triangle[0].x,
                       triangle[1].y - triangle[0].y};
-    Vertex vector2 = {triangle[2].x - triangle[0].x,
-                      triangle[2].y - triangle[0].y};
+    Vertex vector2 = {triangle[2].x - triangle[1].x,
+                      triangle[2].y - triangle[1].y};
+    Vertex vector3 = {triangle[0].x - triangle[2].x,
+                      triangle[0].y - triangle[2].y};
 
     // Obtained from the point we are looking at in the loop
     Vertex tempVector;
@@ -117,27 +119,32 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // Variables to hold the determinants
     double determinant1;
     double determinant2;
+    double determinant3;
     for (int x = boxMin.x; x <= boxMax.x; x++)
     {
         for (int y = boxMin.y; y <= boxMax.y; y++)
         {
-            //std::cout << "Point (" << x << ", " << y << ")\n\n";
             // Create vector from first vertex in triangle
             tempVector = {x -  triangle[0].x, y - triangle[0].y};
 
             // Find the ratio of area to whole triangle
-            determinant1 = determinant(tempVector, vector2) / 
-                           determinant(vector1, vector2);
+            determinant1 = determinant(vector1, tempVector); 
+
+            tempVector = {x - triangle[1].x, y - triangle[1].y};
 
             // Find the ratio of area to whole triangle
-            determinant2 = determinant(vector1, tempVector) /
-                           determinant(vector1, vector2);
-  
+            determinant2 = determinant(vector2, tempVector);
+
+            tempVector = {x - triangle[2].x, y - triangle[2].y};
+
+            determinant3 = determinant(vector3, tempVector);
+
+    
             // If the two ratios are positive and they don't take up more than the area of the
             // original triangle than this point is in the triangle
             if ((determinant1 >= 0) && 
                 (determinant2 >= 0) && 
-                (determinant1 + determinant2 <= 1))
+                (determinant3 >= 0))
             {
                 Vertex point = {x, y};
                 DrawPoint(target, &point, attrs, uniforms, frag);
