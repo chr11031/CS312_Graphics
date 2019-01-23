@@ -297,7 +297,7 @@ class VertexShader
         // Assumes simple monotone RED shader
         VertexShader()
         {
-            VertShader = DefaultVertShader;
+            S = DefaultVertShader;
         }
 
         // Initialize with a fragment callback
