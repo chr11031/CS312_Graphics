@@ -148,6 +148,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // inside the triangle
             if ((s >= 0) && (t >= 0) && (s + t <= 1))
             {
+                // used to draw the points
                 Vertex vpoint = {x, y};
                 DrawPoint(target, &vpoint, attrs, NULL, NULL);
             }
