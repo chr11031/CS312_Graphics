@@ -172,48 +172,61 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
-        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors1[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        // setting the first attribute's color to the first color in the PIXEL color just defined
+        attr[0].color = colors1[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors2[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        attr[0].color = colors2[1];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors3[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        attr[0].color = colors3[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors4[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        attr[0].color = colors4[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {210, 252, 1, 1};
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
-        PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors5[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        attr[0].color = colors5[1];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors6[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
+
+        attr[0].color = colors6[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }

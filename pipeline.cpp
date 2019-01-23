@@ -80,7 +80,46 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // My Code (with help from the reading)
+    // This finds the minimum x and y values of the vectors, creating a bouding box
+    // around the triangle that we can loop through
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // set the origin of the colliding vectors to 0, 0. This makes the cross-product work much more simply
+    Vertex * vert1 = new Vertex {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex * vert2 = new Vertex {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+
+    // looping through each pixel in the bounding box
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            // create a temporary vertex at current pixel in the square
+            Vertex * q = new Vertex {x - triangle[0].x, y - triangle[0].y, 1, 1};
+
+            // finds the cross product of the q vertex and the second vertex divided by the cross product of the two main vertices
+            float a = (float)((q->x*vert2->y) - (q->y*vert2->x)) / ((vert1->x*vert2->y) - (vert1->y*vert2->x));
+            // finds the cross product of the first vertex and the q vertex divided by the cross product of the two main vertices
+            float b = (float)((vert1->x*q->y) - (vert1->y*q->x)) / ((vert1->x*vert2->y) - (vert1->y*vert2->x));
+
+            // a >= 0 tests to see if q is in a positive direction from vertex 2
+            // b >= 0 tests to see if q is in a negative direction from vertex 1 (if this and a are true, then it is between the vertices)
+            // if a + b is more than 1, then q travels farther in length than either of the two vertices, so
+            //    logically it must be outside the bounds of the third vertex (and vice versa)
+            if (a >= 0 && b >= 0 && (a + b) <= 1)
+            {
+                // draw the pixel, it is within the bounds of the triangle!
+                Vertex *v = new Vertex {x, y, 1, 1};
+                DrawPrimitive(POINT, target, v, attrs);
+                delete v;
+            }
+
+            delete q;
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +225,7 @@ int main()
         clearScreen(frame);
 
         /// My Code
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
