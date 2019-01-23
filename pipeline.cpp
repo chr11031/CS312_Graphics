@@ -108,7 +108,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             //filling in the triangles with color
             if (baryA >= 0.0f && baryB >= 0.0f && baryC >= 0.0f)
             {
-                target[y][x] = attrs[0].color;
+                DrawPoint(target, &v, attrs, NULL, NULL);
             }
         }
     }
