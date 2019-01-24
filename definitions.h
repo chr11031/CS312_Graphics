@@ -313,6 +313,14 @@ class VertexShader
         }
 };
 
+float crossProduct(Vertex v1, Vertex v2)
+{
+    float a = v1.x * v2.y;
+    float b = v2.x * v1.y;
+    float det = a - b;
+    return det;
+}
+
 // Stub for Primitive Drawing function
 /****************************************
  * DRAW_PRIMITIVE
@@ -325,6 +333,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);       
+                         
        
 #endif
