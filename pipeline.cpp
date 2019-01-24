@@ -80,7 +80,45 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Max x and y values for the triangle, and making sure we are in the scope of the window 
+    int maxX = MIN(MAX3(triangle[0].x, triangle[1].x, triangle[2].x), S_WIDTH  - 1);
+    int maxY = MIN(MAX3(triangle[0].y, triangle[1].y, triangle[2].y), S_HEIGHT - 1);
+
+    // Min x and y values for the triangle, and making sure we are in the scope of the window 
+    int minX = MAX(MIN3(triangle[0].x, triangle[1].x, triangle[2].x), 0);
+    int minY = MAX(MIN3(triangle[0].y, triangle[1].y, triangle[2].y), 0);
+
+    // The vertex of two of the sides of the triangle
+    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    Vertex temp;
+
+    // Initalize the variable that we will use for the areas of the triangles
+    float a = 0.0;
+    float b = 0.0;
+    float c = 0.0;
+
+    // We have a box around where the triangle is so now we run though from the maxX to the minX
+    for (int x = minX; x <= maxX; x++)
+    {
+        // We run though from the maxY to the minY for every X value
+        for (int y = minY; y <= maxY; y++)
+        {
+            // Making the x and y values for the temp vartex
+            temp.x = x - triangle[0].x; 
+            temp.y = y - triangle[0].y;
+
+            // Computing the area for each triangle by doing the determinate
+            a = (v1.x * v2.y - v1.y * v2.x);
+            b = ((temp.x * v2.y - temp.y * v2.x) / a);
+            c = ((v1.x * temp.y - v1.y * temp.x) / a);
+
+            // If we are in the triangle we color in the pixel
+            if ((b >= 0) && (c >= 0) && ((b + c) <= 1))
+                target[y][x] = attrs[0].color;
+
+        }
+    }
 }
 
 /**************************************************************
@@ -185,8 +223,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // Your code goes here
-        TestDrawPixel(frame);
+        // Draws the triangle
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
