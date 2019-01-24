@@ -226,6 +226,10 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
 
+        // Initialize all variables
+        Attributes(PIXEL Color) : color(Color) {}
+
+        // Member variables
         PIXEL color;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -233,7 +237,14 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-};	
+
+        // Add function
+        Attributes operator+(Attributes& rhs);
+};
+
+Attributes Attributes::operator+(Attributes& rhs) {
+    return Attributes(rhs.color + this->color);
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

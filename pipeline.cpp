@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -81,6 +82,37 @@ int crossProduct(Vertex a, Vertex b) {
     return a.x * b.y - a.y * b.x;
 }
 
+/****************************************
+ * LERP
+ * Linear interpolation between two numbers
+ ***************************************/
+float lerp(float a, float b, float step) {
+    return a + (b - a) * step;
+}
+
+/****************************************
+ * FIND WEIGHT
+ * Performs barycentric interpolation
+ ***************************************/
+float* findWeights(Vertex* v, Vertex p) {
+    // v[3] is the triangle, p is the pixel we are testing
+    float weights[3];
+
+    weights[0] = ((v[1].y - v[2].y) * (p.x - v[2].x) +
+                  (v[2].x - v[1].x) * (p.y - v[2].y)) /
+                 ((v[1].y - v[2].y) * (v[0].x - v[2].x) +
+                  (v[2].x - v[1].x) * (v[0].y - v[2].y));
+
+    weights[1] = ((v[2].y - v[0].y) * (p.x - v[2].x) +
+                  (v[0].x - v[2].x) * (p.y - v[2].y)) /
+                 ((v[1].y - v[2].y) * (v[0].x - v[2].x) +
+                  (v[2].x - v[1].x) * (v[0].y - v[2].y));
+                
+    weights[2] = 1 - weights[0] - weights[1];
+
+    return weights;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -120,7 +152,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             */
             if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
                 Vertex v = {x, y, 1, 1};
-                DrawPoint(target, &v, attrs, uniforms, frag);
+                // Calculate the new Attributes
+                float* weights = findWeights(triangle, v);
+                Attributes a;
+                a.color = (attrs[0].color >> 16) && 0xFF;
+                a.color *= weights[0];
+
+                DrawPoint(target, &v, &a, uniforms, frag);
             }
         }
     }
@@ -228,7 +266,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
