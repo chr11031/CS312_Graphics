@@ -1,5 +1,16 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
+
+/***********************************************
+ * crossProduct
+ * takes in two verteces and returns the cross
+ * product as a fload
+ **********************************************/
+float crossProduct (Vertex v1, Vertex v2)
+{
+    return v1.x * v2.y - v1.y * v2.x;
+}
 
 /***********************************************
  * CLEAR_SCREEN
@@ -58,14 +69,18 @@ void processUserInputs(bool & running)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, 
+               Vertex* v, 
+               Attributes* attrs, 
+               Attributes * const uniforms, 
+               FragmentShader* const frag)
 {
     // Set our pixel according to the attribute calue!
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -78,9 +93,36 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, 
+                  Vertex* const triangle, 
+                  Attributes* const attrs, 
+                  Attributes* const uniforms, 
+                  FragmentShader* const frag)
 {
-    // Your code goes here
+    int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
+    int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+    int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
+    int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+
+    Vertex vs1 = (Vertex){triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex vs2 = (Vertex){triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            
+            Vertex q = (Vertex){x - triangle[0].x, y - triangle[0].y};
+            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                Vertex vert = {x,y,1,1};
+                DrawPoint(target, &vert, attrs, uniforms, frag);
+            }
+        }     
+    }
 }
 
 /**************************************************************
@@ -183,9 +225,12 @@ int main()
         processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame); //Project 01 - red dot
+        //GameOfLife(frame); //TA 01 - The game of life
+
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
