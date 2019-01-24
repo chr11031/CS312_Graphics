@@ -74,6 +74,26 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     //target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
 }
 
+/*********************************************************************
+ * CROSS_PRODUCT and MIN and MAX
+ * helper functions to calculate the cross product of two vertecies,
+ * min, and max
+ ********************************************************************/
+float crossProduct(Vertex v1, Vertex v2)
+{
+    return (v1.x * v2.y) - (v1.y * v2.x);
+}
+int min(int num1, int num2)
+{
+    if (num1 < num2) return num1;
+    return num2;
+}
+int max(int num1, int num2)
+{
+    if (num1 > num2) return num1;
+    return num2;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -81,7 +101,37 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    //DrawPoint(target, triangle, attrs, uniforms, frag);
+    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[0].color;
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[0].color;
+
+    //bounding box to limit the amount of checking
+    int maxX = max(triangle[0].x, max(triangle[1].x, triangle[2].x));
+    int minX = min(triangle[0].x, min(triangle[1].x, triangle[2].x));
+    int maxY = max(triangle[0].y, max(triangle[1].y, triangle[2].y));
+    int minY = min(triangle[0].y, min(triangle[1].y, triangle[2].y));
+    //target[(int)minY][(int)minX] = attrs[0].color;
+    //target[(int)maxY][(int)maxX] = attrs[0].color;
+
+    //vectors that are a measuremtnt of the edge from triangle[0] to triangle[1] and to triangle[3] 
+    Vertex edge01 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
+    Vertex edge02 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y), 1, 1};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y < maxY; y ++)
+        {
+            Vertex temp = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            float bound01 = crossProduct(temp, edge02) / crossProduct(edge01, edge02);
+            float bound02 = crossProduct(edge01, temp) / crossProduct(edge01, edge02);
+
+            if ( (bound01 >= 0) && (bound02 >= 0) && (bound01+bound02 <= 1))
+            {
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -187,7 +237,8 @@ int main()
         clearScreen(frame);
 
         // TODO Your code goes here
-            TestDrawPixel(frame);
+            TestDrawTriangle(frame);
+            //GameOfLife(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
