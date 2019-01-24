@@ -1,5 +1,8 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <iostream>
+
+using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
@@ -73,6 +76,16 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+int crossProduct (Vertex vertex1, Vertex vertex2)
+{
+   int AD = vertex1.x * vertex2.y;
+   int BC = vertex1.y * vertex2.x;
+   
+   int determinate = AD - BC;
+
+   return determinate;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -80,7 +93,39 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+   //DrawPoint(target,&(triangle[0]),&(attrs[0]),NULL,NULL);
+
+   /* get the bounding box of the triangle */
+   int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+   int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+       for (int y = minY; y <= maxY; y++)
+       {
+         Vertex q = {x - triangle[0].x, y - triangle[0].y};
+
+         float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+         float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+   
+         Vertex v = {x, y};
+
+         //DrawPoint(target, &v, &(attrs[0]), NULL, NULL);
+
+         //cout << s << ", " << t << "          " << v.x << ", " << v.y << endl;
+
+         if ((s >= 0) && (t >= 0) && (s + t <= 1))
+         { /* inside triangle */
+            DrawPoint(target, &v, attrs, NULL, NULL);
+         }
+      }
+   }
 }
 
 /**************************************************************
@@ -183,9 +228,9 @@ int main()
         processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

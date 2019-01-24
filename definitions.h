@@ -21,6 +21,7 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+//#define crossProduct(A,B,C,D) (A * D) - (B * C)
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
