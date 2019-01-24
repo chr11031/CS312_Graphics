@@ -153,7 +153,6 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
         pointAttributes.color = color;
-        // Your Code goes here for 'pointAttributes'       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }

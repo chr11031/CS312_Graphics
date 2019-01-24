@@ -224,7 +224,6 @@ class Attributes
 {      
     public:
         PIXEL color;
-
         // Obligatory empty constructor
         Attributes() {}
 
