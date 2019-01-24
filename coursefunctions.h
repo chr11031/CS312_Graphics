@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -60,6 +61,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -79,7 +81,53 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+                // Implement the rules of the Game Of Life!
+                for (int i = 0; i < gridW; ++i)
+                {
+                        for (int j = 0; j < gridH; ++j)
+                        {
+                                int count = 0;
+                                for (int x = i - 1; x <= i + 1; ++x)
+                                {
+                                        for (int y = j - 1; y <= j + 1; ++y)
+                                        {
+                                                // 1. If current coordinates are not the center point,
+                                                // 2. AND if it doesn't go out of the 64x64 boundaries
+                                                // 3. AND if the outer coordinate is alive.
+                                                if (!(x == i && y == j) 
+                                                && (x >= 0 && x < gridW && y >= 0 && y < gridH)
+                                                && grid[x][y])
+                                                {
+                                                        count++; 
+                                                }
+                                        }
+                                }
+
+                                // Mortality check!
+                                if (grid[i][j]) // If it is alive...
+                                {
+                                        gridTmp[i][j] = (!(count < 2 || count > 3)); // ...does it stay alive?
+                                }
+                                else if (!grid[i][j] && count == 8) // PERFORM A RITUAL!!!
+                                {
+                                        gridTmp[i][j] = true;
+                                }
+                                else // Otherwise if it's not alive...
+                                {
+                                        gridTmp[i][j] = (count == 3); // ...does it stay dead?
+                                }
+                                
+                        }
+                }
+
+                // Update the grid with results from gridTmp
+                for (int i = 0; i < gridW; ++i)
+                {
+                        for (int j = 0; j < gridH; ++j)
+                        {
+                                grid[i][j] = gridTmp[i][j];
+                        }
+                }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -172,30 +220,50 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors1[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors2[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors3[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors4[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -204,14 +272,24 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors5[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
+        // Loop to add colors to attr
+        for (int  i = 0; i < 3; ++i)
+        {
+                attr[i].color = colors6[i];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
