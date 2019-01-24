@@ -73,6 +73,14 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/****************************************
+ * CROSS PRODUCT
+ * Calculates the determinant of two vectors
+ ***************************************/
+int crossProduct(Vertex a, Vertex b) {
+    return a.x * b.y - a.y * b.x;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -80,7 +88,42 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Barycentric algorithm from: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+
+    // Find the two edge vectors we use to calculate determinants. We don't need all 3, see below
+    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+
+    // Bounding box
+    int xmin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int ymin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int xmax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int ymax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Iterate over every pixel in the bounding box
+    for (int x = xmin; x < xmax; x++) {
+        for (int y = ymin; y < ymax; y++) {
+            // q is the vector from the pixel we are testing to triangle[0]
+            Vertex q = {x - triangle[0].x, y - triangle[0].y};
+
+            // Next we find the cross product (determinant) of vectors formed between q and each of the two edge vectors
+            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            /*
+             We do not need to find the third edge because:
+                - If s >= 0, the pixel is above the first edge vector.
+                - If t >= 0, the pixel is below the second edge vector.
+                - s + t > 1 if and only if the point is far enough away from the first
+                  and second vectors as to be outside the triangle (beyond third edge).
+             This means we only need two edges, we can calculate without needing the third one.
+            */
+            if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
+                Vertex v = {x, y, 1, 1};
+                DrawPoint(target, &v, attrs, uniforms, frag);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -185,7 +228,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
