@@ -72,6 +72,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    
 }
 
 /*************************************************************
@@ -81,7 +82,39 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // get the bounding box of the triangle
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x); // right-most value
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x); // left-most value
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y); // top-most value
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y); // bottom-most value
+
+    // get the other vectors in relation to the first vertex
+    Vertex* vs1 = new Vertex { triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1 };
+    Vertex* vs2 = new Vertex { triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1 };
+
+    // loop through the bounding box and determine which pixels are in the triangle
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            // get the current pixel's vector in relation to the first vertex
+            Vertex* q = new Vertex { x - triangle[0].x, y - triangle[0].y, 1, 1 };
+
+            // compare the pixel's relative location to the second and third vectors
+            float s = (float)((q->x*vs2->y)-(q->y*vs2->x)) / ((vs1->x*vs2->y)-(vs1->y*vs2->x));
+            float t = (float)((vs1->x*q->y)-(vs1->y*q->x)) / ((vs1->x*vs2->y)-(vs1->y*vs2->x));
+
+            // if the pixel is to the left (CCW) of each vector, it's inside of the triangle
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                // convert the vertex back to the original location
+                Vertex* inside = new Vertex {x, y, 1, 1 };
+
+                // draw the pixel
+                DrawPrimitive(POINT, target, inside, attrs);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +219,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
