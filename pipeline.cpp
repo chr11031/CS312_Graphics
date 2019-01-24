@@ -54,6 +54,19 @@ void processUserInputs(bool & running)
 }
 
 /****************************************
+ * COMPUTE_DETERMINANT
+ * Computes the determinant for a set of
+ * 2 Verticies, given in Matrix Form
+ * thus:
+ * 
+ * [a b]
+ * [c d]
+ * *************************************/
+double computeDeterminant(double a, double b, double c, double d) {
+    return (a * d) - (b * c);
+}
+
+/****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
  * appropriate coloring.
@@ -65,7 +78,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -78,9 +91,51 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    // target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Make two sides (Vectors) of the triangle
+    Vertex side1 = {
+        triangle[1].x - triangle[0].x,
+        triangle[1].y - triangle[0].y,
+        1,
+        1
+    };
+
+    Vertex side2 = {
+        triangle[2].x - triangle[0].x,
+        triangle[2].y - triangle[0].y,
+        1,
+        1
+    };
+
+    for (int x = minX; x <= maxX; x++) {
+        for (int y = minY; y <= maxY; y++) {
+            // Make a Vector that spans from the triangle[0] Vertex to the current values of x and y
+            Vertex testVector = {
+                x - triangle[0].x,
+                y - triangle[0].y,
+                1,
+                1
+            };
+
+            double det1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            double det2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+
+            // Test if this point is in the triangle
+            if ((det1 >= 0) && (det2 >= 0) && ((det1 + det2) <= 1)) {
+                // Give the point color (Draw point)
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -185,8 +240,9 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
         //GameOfLife(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
