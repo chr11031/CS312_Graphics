@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -60,7 +61,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    /// My Code
+    // Set our pixel according to the attribute value
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
@@ -78,7 +79,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms = NULL, FragmentShader* const frag = NULL)
 {
     // My Code (with help from the reading)
     // This finds the minimum x and y values of the vectors, creating a bouding box
@@ -224,7 +225,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        /// My Code
+        // Your code goes here
+        // GameOfLife(frame);
         TestDrawTriangle(frame);
 
         // Push to the GPU
