@@ -60,6 +60,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -80,6 +81,52 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {       
+                                int numNeighbors = 0;
+
+                                // get number of neighbors
+                                if (grid[y - 1][x] == 1) // directly below
+                                        numNeighbors++;
+                                if (grid[y + 1][x] == 1) // directly above
+                                        numNeighbors++;
+                                if (grid[y][x - 1] == 1) // directly left
+                                        numNeighbors++;
+                                if (grid[y][x + 1] == 1) // directly right
+                                        numNeighbors++;
+                                if (grid[y + 1][x - 1] == 1) // top left
+                                        numNeighbors++;
+                                if (grid[y + 1][x + 1] == 1) // top right
+                                        numNeighbors++;
+                                if (grid[y - 1][x - 1] == 1) // bottom left
+                                        numNeighbors++;
+                                if (grid[y - 1][x + 1] == 1) // bottom right
+                                        numNeighbors++;
+
+                                if (grid[y][x] == 1) // if alive
+                                {
+                                        if (numNeighbors < 2) // if 1 or 0 neighbors -> die
+                                                gridTmp[y][x] = 0;
+                                        else if (numNeighbors > 3) // if 4+ neighbors -> die
+                                                gridTmp[y][x] = 0;
+                                }
+                                else // if dead
+                                {
+                                        if (numNeighbors == 3) // if 3 neighbors -> alive
+                                                gridTmp[y][x] = 1;
+                                }
+                        }
+                }
+
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {
+                                grid[y][x] = gridTmp[y][x];
+                        }
+                }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -152,7 +199,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;      
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -165,53 +212,72 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         /**************************************************
         * 6 Flat color triangles below
         *************************************************/
+
+        // top left triangle
         Vertex verts[3];
         Attributes attr[3];
-        verts[0] = {100, 362, 1, 1};
-        verts[1] = {150, 452, 1, 1};
-        verts[2] = {50, 452, 1, 1};
+        verts[0] = (Vertex){100, 362, 1, 1};
+        verts[1] = (Vertex){150, 452, 1, 1};
+        verts[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors1[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
-        verts[0] = {300, 402, 1, 1};
-        verts[1] = {250, 452, 1, 1};
-        verts[2] = {250, 362, 1, 1};
+        // top middle triangle
+        verts[0] = (Vertex){300, 402, 1, 1};
+        verts[1] = (Vertex){250, 452, 1, 1};
+        verts[2] = (Vertex){250, 362, 1, 1};
         PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors2[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
-        verts[0] = {450, 362, 1, 1};
-        verts[1] = {450, 452, 1, 1};
-        verts[2] = {350, 402, 1, 1};
+        // top right triangle
+        verts[0] = (Vertex){450, 362, 1, 1};
+        verts[1] = (Vertex){450, 452, 1, 1};
+        verts[2] = (Vertex){350, 402, 1, 1};
         PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors3[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
-        verts[0] = {110, 262, 1, 1};
-        verts[1] = {60, 162, 1, 1};
-        verts[2] = {150, 162, 1, 1};
+        // bottom left triangle
+        verts[0] = (Vertex){110, 262, 1, 1};
+        verts[1] = (Vertex){60, 162, 1, 1};
+        verts[2] = (Vertex){150, 162, 1, 1};
         PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors4[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
-        verts[0] = {210, 252, 1, 1};
-        verts[1] = {260, 172, 1, 1};
-        verts[2] = {310, 202, 1, 1};
+        // bottom middle
+        verts[0] = (Vertex){210, 252, 1, 1};
+        verts[1] = (Vertex){260, 172, 1, 1};
+        verts[2] = (Vertex){310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors5[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
-        verts[0] = {370, 202, 1, 1};
-        verts[1] = {430, 162, 1, 1};
-        verts[2] = {470, 252, 1, 1};
+        // bottom right triangle
+        verts[0] = (Vertex){370, 202, 1, 1};
+        verts[1] = (Vertex){430, 162, 1, 1};
+        verts[2] = (Vertex){470, 252, 1, 1};
         PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+
+        for (int i = 0; i < 3; i++)
+                attr[i].color = colors6[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -228,9 +294,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         *************************************************/
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
-        colorTriangle[0] = {250, 112, 1, 1};
-        colorTriangle[1] = {450, 452, 1, 1};
-        colorTriangle[2] = {50, 452, 1, 1};
+        colorTriangle[0] = (Vertex){250, 112, 1, 1};
+        colorTriangle[1] = (Vertex){450, 452, 1, 1};
+        colorTriangle[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
 
@@ -247,9 +313,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         ****************************************************/
         Vertex imageTriangle[3];
         Attributes imageAttributes[3];
-        imageTriangle[0] = {425, 112, 1, 1};
-        imageTriangle[1] = {500, 252, 1, 1};
-        imageTriangle[2] = {350, 252, 1, 1};
+        imageTriangle[0] = (Vertex){425, 112, 1, 1};
+        imageTriangle[1] = (Vertex){500, 252, 1, 1};
+        imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
 
@@ -322,9 +388,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         *************************************************/
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
-        colorTriangle[0] = { 350, 112, 1, 1};
-        colorTriangle[1] = { 400, 200, 1, 1};
-        colorTriangle[2] = { 300, 200, 1, 1};
+        colorTriangle[0] = (Vertex){ 350, 112, 1, 1};
+        colorTriangle[1] = (Vertex){ 400, 200, 1, 1};
+        colorTriangle[2] = (Vertex){ 300, 200, 1, 1};
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
