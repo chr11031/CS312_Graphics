@@ -1,6 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-
+#include <iostream>
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -73,7 +73,15 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 {
     // Your code goes here
 }
-
+/********************************************
+ *Determinant
+ *Find the area of the triangle between
+ * two vectors. 
+ ******************************************/
+double Determinant(Vertex v1, Vertex v2) 
+{
+    return (v1.x * v2.y) - (v1.y * v2.x); 
+}
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -81,8 +89,51 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+//get the box around the triangle
+float maxX = MAX3(triangle[0].x,triangle[1].x,triangle[2].x);
+float maxY = MAX3(triangle[0].y,triangle[1].y,triangle[2].y);
+float minX = MIN3(triangle[0].x,triangle[1].x,triangle[2].x);
+float minY = MIN3(triangle[0].y,triangle[1].y,triangle[2].y);
+
+Vertex vt1;
+Vertex vt2;
+
+vt1.x = (triangle[1].x - triangle[0].x);
+vt1.y = (triangle[1].y - triangle[0].y);
+vt1.z = 1;
+vt1.w = 1;
+
+vt2.x = (triangle[2].x - triangle[0].x);
+vt2.y = (triangle[2].y - triangle[0].y);
+vt2.z = 1;
+vt2.w = 1;
+
+//loop through every pixel in box
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {   
+            //get the pixel we are on.
+            Vertex pixelInQuestion;
+            pixelInQuestion.x = (x - triangle[0].x) ;
+            pixelInQuestion.y = (y - triangle[0].y); 
+            pixelInQuestion.z = 1; 
+            pixelInQuestion.w = 1; 
+
+            //determine where the pixel is at
+            double detSign1 = Determinant(pixelInQuestion, vt2) / Determinant(vt1,vt2);
+            double detSign2 = Determinant(vt1, pixelInQuestion) / Determinant(vt1,vt2);
+            
+            //we are inside
+            if((detSign1 >= 0) && (detSign2 >= 0) && (detSign1 + detSign2 <=1))
+            {
+                target[y][x] = attrs[0].color;
+            }
+
+        }
+    }
 }
+
 
 /**************************************************************
  * VERTEX_SHADER_EXECUTE_VERTICES
@@ -187,7 +238,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        // TestDrawPixel(frame);
+        TestDrawTriangle(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
