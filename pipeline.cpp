@@ -1,6 +1,10 @@
 #include "definitions.h"
 #include "coursefunctions.h"
 
+#include <algorithm> 
+#include <iostream>
+#include <string>
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -74,6 +78,14 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/****************************************
+ * Calculate the cross product
+ **************************************/
+int crossProduct(int v1x, int v1y, int v2x, int v2y) 
+{ 
+    return v1x * v2y - v1y * v2x;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -82,6 +94,39 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
+
+
+    /* get the bounding box of the triangle */
+    int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
+    int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+    int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
+    int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+
+    /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+  
+            Vertex q = {x - triangle[0].x, y - triangle[0].y};
+
+            float s = (float)crossProduct(q.x,q.y, vs2.x,vs2.y) / crossProduct(vs1.x,vs1.y, vs2.x,vs2.y);
+            float t = (float)crossProduct(vs1.x,vs1.y, q.x, q.y) / crossProduct(vs1.x,vs1.y, vs2.x,vs2.y);
+
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            { 
+                /* inside triangle */
+                Vertex q = {x,y};
+                DrawPrimitive(POINT,target,&q,attrs);
+            }
+        }
+    } 
 }
 
 /**************************************************************
@@ -181,15 +226,16 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+         processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        // TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
-        // GameOfLife(frame);
+        //GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
