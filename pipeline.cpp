@@ -80,7 +80,36 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    //First we will find all the minimum and maximum X and Y points
+    //to create the bounding box.
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    //Find the edges of (triangle[0], triangle[1]) and (triangle[0], triangle[2])
+    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
+    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+    
+    //Loop throught the box around the triangle
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            Vertex w0 = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+
+            //Every pixel is then calculated with the coordinates of the points
+            float w1 = ((w0.x * vs2.y) - (w0.y * vs2.x)) / ((vs1.x * vs2.y) - (vs1.y * vs2.x));
+            float w2 = ((vs1.x * w0.y) - (vs1.y * w0.x)) / ((vs1.x * vs2.y) - (vs1.y * vs2.x));
+
+            //If the point is found inside the triangle, draw it.
+            if ((w1 >= 0) && (w2 >= 0) && (w1 + w2 <= 1))
+            {
+                Vertex vert = {x, y, 1, 1};
+                DrawPrimitive(POINT, target, &vert, attrs);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +215,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
