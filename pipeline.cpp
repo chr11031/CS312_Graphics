@@ -1,5 +1,10 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <vector>
+#include <iostream>
+#include <math.h>
+
+using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
@@ -71,6 +76,39 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    for (float t = 0; t < 1; t += .01)
+    {
+        int x = ((int)triangle[0].x)*(1.0-t) + ((int)triangle[1].x)*t;
+        int y = ((int)triangle[0].y)*(1.0-t) + ((int)triangle[1].y)*t;
+        target[y][x] = attrs[0].color;
+    }
+
+    for (float t = 1; t < 2; t += .01)
+    {
+        int x = ((int)triangle[1].x)*(1.0-t) + ((int)triangle[2].x)*t;
+        int y = ((int)triangle[1].y)*(1.0-t) + ((int)triangle[2].y)*t;
+        target[y][x] = attrs[1].color;
+    }
+
+    for (float t = 2; t < 3; t += .01)
+    {
+        int x = ((int)triangle[2].x)*(1.0-t) + ((int)triangle[0].x)*t;
+        int y = ((int)triangle[2].y)*(1.0-t) + ((int)triangle[0].y)*t;
+        target[y][x] = attrs[2].color;
+    }
+
+}
+
+/*******************************************************
+ * crossProduct
+ *   By taking the two vertex point we can times them together and
+ *   Perform the cross product of the two and return the float
+ * ******************************************************/
+float crossProduct(Vertex one, Vertex two)
+{
+    float crossPro = 0.0;
+    crossPro = (one.x * two.y) - (one.y * two.x);
+    return crossPro; 
 }
 
 /*************************************************************
@@ -80,7 +118,46 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+
+    //By finding the max and min of both are x and y axis we can find the outer box of the triangle. 
+    int maxX = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+    int minX = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+    int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+    int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+
+    //Finding the vertex lines between two points
+    Vertex vs1;
+    vs1.x = ((int)triangle[1].x - (int)triangle[0].x);
+    vs1.y = ((int)triangle[1].y - (int)triangle[0].y);
+    Vertex vs2;
+    vs2.x = (int)triangle[2].x - (int)triangle[0].x;
+    vs2.y = (int)triangle[2].y - (int)triangle[0].y;
+   
+   //Two for loops to go through both the y and the x 
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            //Our original vertex that we take the  x and y positing that we are at in the box
+            Vertex q;
+            q.x = (x - (int)triangle[0].x);
+            q.y = (y - (int)triangle[0].y);
+
+            //We find the cross product of each part and then divid them to find were we are if we are in the triangle
+            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            //If we are in the traingle these conditions will be true
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                //set the point that we are at to send to the draw point
+                Vertex myPoint[1];
+                myPoint[0] = { x , y };
+                DrawPoint(target, myPoint, attrs, uniforms, frag);
+            }    
+        }
+    }
+    
 }
 
 /**************************************************************
@@ -186,7 +263,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
