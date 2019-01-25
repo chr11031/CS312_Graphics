@@ -97,14 +97,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     //Step two define pos/neg areas
     //define lines of triangle and pos, neg, counter clockwise
     //Start with vertexes
-    Vertex a = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y} 
-    Vertex b = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y}
+    Vertex a = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex b = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
 
     //step three, fill in
     //for point in bounding box, if positive drawpixel
-    for(int ypix = ymin; ypix <= ymax; y++)
+    for(int ypix = ymin; ypix <= ymax; ypix++)
     {
-        for(int xpix = xmin; xpix <= xmax; x++)
+        for(int xpix = xmin; xpix <= xmax; xpix++)
         {
             //iterating point
             Vertex c = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
@@ -231,9 +231,13 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
         //GameOfLife(frame);
-        //TestDrawTriangle(frame);
+        TestDrawTriangle(frame);
+
+        //w3 team activity done with Paul
+
+
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

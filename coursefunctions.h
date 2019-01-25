@@ -24,7 +24,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         static int h = target.height();
         static int scaleFactor = 8;
         static int gridW = 64;
-        static int gridH = 64; 
+        static int gridH = 64;
         static int grid[64][64];
         static int gridTmp[64][64];
 
@@ -59,6 +59,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 if(holdDown && isSetup)
                 {
                         // Clicking the mouse changes a pixel's color
+                        mouseY = S_HEIGHT - mouseY;
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
@@ -80,7 +81,39 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                int neighbor = 0;//up down left right diagnals
+                for(int ygame = 0; ygame > 1 && ygame < 64; ygame++){
+                        for(int xgame = 0; xgame > 1 && xgame < 64; xgame++){
+                                neighbor = 0;
+                                if(grid[ygame][xgame] == 1){//Check all 8 directions, count neighbors
+                                        if(grid[ygame + 1][xgame] == 1){neighbor++;}
+                                        if(grid[ygame - 1][xgame] == 1){neighbor++;}
+                                        if(grid[ygame][xgame + 1] == 1){neighbor++;}
+                                        if(grid[ygame][xgame - 1] == 1){neighbor++;}
+                                        if(grid[ygame + 1][xgame + 1] == 1){neighbor++;}
+                                        if(grid[ygame - 1][xgame + 1] == 1){neighbor++;}
+                                        if(grid[ygame + 1][xgame - 1] == 1){neighbor++;}
+                                        if(grid[ygame - 1][xgame - 1] == 1){neighbor++;}
+                                }
+                                if(grid[ygame][xgame] == 1){
+                                        if(neighbor < 2){
+                                                grid[ygame][xgame] = 0;//dead
+                                        }
+                                        else if(neighbor == 2 || neighbor == 3){
+                                                grid[ygame][xgame] = 1;//stay alive
+                                        }
+                                        else if(neighbor > 4){
+                                                grid[ygame][xgame] = 0;//dead
+                                        }
+                                }
+                                else {
+                                        if(neighbor = 3){ 
+                                                grid[ygame][xgame] = 1;//alive
+                                        }
+                                }
 
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
