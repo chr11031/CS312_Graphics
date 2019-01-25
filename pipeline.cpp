@@ -73,7 +73,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /****************************************
- * DETERMINANTE
+ * DETERMINANT
  * Find the determinant of a matrix with
  * components A, B, C, D from 2 vectors.
  ***************************************/
