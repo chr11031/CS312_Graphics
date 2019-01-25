@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -65,12 +66,23 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+}
+
+/*******************************************************
+ * CROSS_PRODUCT
+ * calculates the cross product of the given vertices.
+ ******************************************************/
+float crossProduct(Vertex *v1, Vertex *v2)
+{
+    float product = 0;
+    product = (v1->x * v2->y) - (v1->y * v2->x);
+    return product;
 }
 
 /*************************************************************
@@ -80,7 +92,64 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // we only want to look at the box that the triangle is in. If we go outside
+    // that box we are just wasting processing power and speed.
+    int maxX = fmax(triangle->x, fmax((triangle + 1)->x, (triangle + 2)->x));
+    int minX = fmin(triangle->x, fmin((triangle + 1)->x, (triangle + 2)->x));
+    int maxY = fmax(triangle->y, fmax((triangle + 1)->y, (triangle + 2)->y));
+    int minY = fmin(triangle->y, fmin((triangle + 1)->y, (triangle + 2)->y));
+    
+    // vector from vertex 1 to vertex 2
+    Vertex * vs1 = new Vertex;
+    vs1->x = triangle->x - (triangle + 1)->x;
+    vs1->y = triangle->y - (triangle + 1)->y;
+
+    // vector from vertex 2 to vertex 3
+    Vertex * vs2 = new Vertex;
+    vs2->x = (triangle + 2)->x - (triangle + 1)->x;
+    vs2->y = (triangle + 2)->y - (triangle + 1)->y;
+    
+    // vector from vertex 3 to vertex 1
+    Vertex * vs3 = new Vertex;
+    vs3->x = (triangle + 2)->x - triangle->x;
+    vs3->y = (triangle + 2)->y - triangle->y;
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            // create the vector to be compared with the three side vectors.
+            Vertex * q = new Vertex;
+            q->x = x - triangle->x;
+            q->y = y - triangle->y;
+
+            // find the cross products of the three outside vectors with
+            // the vector pointing to the point to be drawn
+            float ted = crossProduct(q, vs1) / crossProduct(vs3, vs2);
+            float rufus = crossProduct(q, vs2) / crossProduct(vs3, vs2);
+            float bill = crossProduct(q, vs3) / crossProduct(vs3, vs2);
+
+            // If the cross products are less than zero then the pixel is outside of the triangle.
+            if ( (ted >= 0) && (bill >= 0) && ((rufus >= 0) && (rufus <= 1)))
+            {
+                //The point is inside the triangle.
+                //create the point for drawpoint to color.
+                Vertex * pVertex = new Vertex;
+                pVertex->x = x;
+                pVertex->y = y;
+                // draw the point.
+                DrawPoint(target, pVertex, attrs, uniforms, frag);
+                // free up memory
+                delete pVertex;
+            }
+            // free up more memory
+            delete q;
+        }
+    }
+    // free up even more memory
+    delete vs1;
+    delete vs2;
+    delete vs3;
 }
 
 /**************************************************************
@@ -180,13 +249,17 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        //processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        //clearScreen(frame);
+        clearScreen(frame);
+
+        // TestDrawPixel(frame);
+        //GameOfLife(frame);
+        TestDrawTriangle(frame);
 
         //TestDrawPixel(frame);
-        GameOfLife(frame);
+        // GameOfLife(frame);
         
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -11,7 +11,7 @@
  * DEFINES:
  * Macros for universal variables/hook-ups.
  *****************************************************/
-#define WINDOW_NAME "Pipeline"
+#define WINDOW_NAME "James' Pipeline"
 #define S_WIDTH     512
 #define S_HEIGHT    512
 #define PIXEL       Uint32
@@ -237,7 +237,7 @@ class Attributes
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // Output our shader color value, in this case red
+    // Output our shader color value, in this case red.
     fragment = 0xffff0000;
 }
 
