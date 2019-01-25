@@ -94,10 +94,10 @@ float lerp(float a, float b, float step) {
  * FIND WEIGHT
  * Performs barycentric interpolation
  ***************************************/
-float* findWeights(Vertex* v, Vertex p) {
-    // v[3] is the triangle, p is the pixel we are testing
-    float weights[3];
+void findWeights(float* weights, Vertex* v, Vertex p) {
 
+    weights = new float[3];
+    // v[3] is the triangle, p is the pixel we are testing
     weights[0] = ((v[1].y - v[2].y) * (p.x - v[2].x) +
                   (v[2].x - v[1].x) * (p.y - v[2].y)) /
                  ((v[1].y - v[2].y) * (v[0].x - v[2].x) +
@@ -110,7 +110,7 @@ float* findWeights(Vertex* v, Vertex p) {
                 
     weights[2] = 1 - weights[0] - weights[1];
 
-    return weights;
+    return;
 }
 
 /*************************************************************
@@ -153,12 +153,18 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
                 Vertex v = {x, y, 1, 1};
                 // Calculate the new Attributes
-                float* weights = findWeights(triangle, v);
+                float* weights;
+                findWeights(weights, triangle, v);
                 Attributes a;
-                a.color = (attrs[0].color >> 16) && 0xFF;
-                a.color *= weights[0];
+                PIXEL red   = ((attrs[0].color >> 16) && 0xFF) * weights[0];
+                PIXEL green = ((attrs[1].color >> 8) && 0xFF) * weights[1];
+                PIXEL blue  = (attrs[2].color && 0xFF) * weights[2];
+
+                a.color = 0xFF000000 | (red << 16) | (green << 8) | blue;
 
                 DrawPoint(target, &v, &a, uniforms, frag);
+
+                delete [] weights;
             }
         }
     }

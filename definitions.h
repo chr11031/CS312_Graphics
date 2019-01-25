@@ -231,6 +231,13 @@ class Attributes
 
         // Member variables
         PIXEL color;
+        // UV texture coordinates
+        float UVx;
+        float UVy;
+        // Normal vector
+        float normx;
+        float normy;
+        float normz;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
