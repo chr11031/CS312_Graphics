@@ -21,6 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 

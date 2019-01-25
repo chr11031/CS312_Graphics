@@ -72,6 +72,16 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/****************************************
+ * DETERMINANTE
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -79,7 +89,34 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Create a bounding box
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Compute first, second, third X-Y pairs
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+ 
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
+    {
+	for(int x = minX; x < maxX; x++)
+	{
+	    // Determine if the pixel is in the triangle by the determinant's sign
+	    double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+	    double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+	    double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+
+	    // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+	    if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+	    {
+		target[(int)y][(int)x] = attrs[0].color;
+	    }
+	}
+    }
 }
 
 /**************************************************************
@@ -184,7 +221,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-	TestDrawPixel(frame);
+	TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
