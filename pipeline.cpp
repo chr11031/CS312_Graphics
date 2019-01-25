@@ -263,7 +263,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
