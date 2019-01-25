@@ -74,13 +74,57 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*************************************************************
+ * DETERMINANT
+ * Calculates the determinant of two 2D vectors using AD-CB. 
+ ************************************************************/
+double determinant(double v1x, double v1y, double v2x, double v2y) 
+{
+    // AD - CB
+    return v1x * v2y - v1y * v2x;
+}
+
+/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Get the color of the first vertex. We are only using one color for now.
+    PIXEL color = attrs[0].color; 
+
+    // Get the triangle's bounding box.
+    double minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Create the two vectors that are two sides of the triangle by moving their starting point to the origin.
+    double v1x = triangle[1].x - triangle[0].x;
+    double v1y = triangle[1].y - triangle[0].y;
+    double v2x = triangle[2].x - triangle[0].x;
+    double v2y = triangle[2].y - triangle[0].y;
+
+    for(int y = minY; y <= maxY; y++)
+    {
+        for(int x = minX; x <= maxX; x++) // Using x for the inner loop for better spacial locality.
+        {       
+            // Calculate and store this so it doesn't have to be calculated twice.
+            double detV1V2 = determinant(v1x, v1y, v2x, v2y);
+
+            // s and t are scalars for v1 and v2 respectively. If p = <x, y>, then s * v1 + t * v2 = p
+            double s = determinant(x - triangle[0].x, y - triangle[0].y, v2x, v2y) / detV1V2;
+            double t = determinant(v1x, v1y, x - triangle[1].x, y - triangle[1].y) / detV1V2;
+
+            /* If either s or t is negative then p is outside v1 and v2. 
+               If the sum of s and t is greater than one then p is between v1 and v2, but it is past the end of the triangle.*/
+            if(s >= 0 && t >= 0 && s + t <= 1)
+            {
+                // p is inside. Draw it.
+                target[(int)y][(int)x] = color;
+            }     
+        }
+    }
 }
 
 /**************************************************************
@@ -185,7 +229,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPixel(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
