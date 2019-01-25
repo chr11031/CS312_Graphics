@@ -44,6 +44,17 @@ struct Vertex
     double y;
     double z;
     double w;
+
+    bool operator < (const Vertex& v) const
+    {
+        bool isLessThan = (v.y < y || (y == v.y && v.x > x));
+        return isLessThan;
+    }
+
+    // bool operator > (const Vertex& v) const
+    // {
+    //     return (y > v.y || (y == v.y && x > v.x));
+    // }
 };
 
 /******************************************************
