@@ -17,7 +17,6 @@ void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
         }
     }
 }
-
 /************************************************************
  * UPDATE_SCREEN
  * Blits pixels from RAM to VRAM for rendering.
@@ -60,7 +59,9 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+	// Your code goes here 
+	//TestDrawPixel(frame);
+	target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -70,7 +71,13 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    
+
+
+ 
 }
+
+//Edgepoint?
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -80,6 +87,45 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    // I have decided on the Barycentric fill algorithm, counter clockwise
+    //Step one bounding area
+    double xmin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double xmax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double ymin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double ymax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    //Step two define pos/neg areas
+    //define lines of triangle and pos, neg, counter clockwise
+    //Start with vertexes
+    Vertex a = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y} 
+    Vertex b = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y}
+
+    //step three, fill in
+    //for point in bounding box, if positive drawpixel
+    for(int ypix = ymin; ypix <= ymax; y++)
+    {
+        for(int xpix = xmin; xpix <= xmax; x++)
+        {
+            //iterating point
+            Vertex c = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
+
+            //Berycentric calculations (Cross Product)
+
+            float c1 = (c.x * b.y - c.y * b.x) / (a.x * b.y - a.y * b.x);
+            float c2 = (a.x * c.y - a.y * c.x) / (a.x * b.y - a.y * b.x);
+
+            //If inside the triangle draw
+            if ((c1 >= 0) && (c2 >= 0) && (c1 + c2 <= 1))
+            {
+                target[ypix][xpix] = attrs[0].color;
+            }
+        }
+    }
+
+
+    //      if//if positive draw, if neg don't
+    //          drawpixel(tempPoint);
+
 }
 
 /**************************************************************
@@ -185,6 +231,9 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
+        TestDrawPixel(frame);
+        //GameOfLife(frame);
+        //TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
