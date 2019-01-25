@@ -73,8 +73,9 @@ double computeDeterminant(double a, double b, double c, double d) {
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -209,6 +210,14 @@ void DrawPrimitive(PRIMITIVES prim,
     }
 }
 
+// Here, I will make a FragmentShader callback function
+void GreenFragmentShader(PIXEL & fragment, const Attributes & vertexAttr, const Attributes & uniforms)
+{
+    // OK, so we will zero out the red and blue and just leave the rest
+    //  which will be green
+    fragment = vertexAttr.color & 0xff00ff00;
+}
+
 /*************************************************************
  * MAIN:
  * Main game loop, initialization, memory management
@@ -229,6 +238,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
+    BufferImage bmpImage("../battletoads.bmp");
 
     // Draw loop 
     bool running = true;
@@ -240,9 +250,27 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawPixel(frame);
-        //GameOfLife(frame);
-        TestDrawTriangle(frame);
+        Attributes attrs;
+        FragmentShader greenSdr(GreenFragmentShader);
+
+        // Here, we will make a double for loop
+        for (int y = 0; y < 256; y++) {
+            for (int x = 0; x < 256; x++) {
+                //frame[y][x] = bmpImage[y][x];
+                //Attributes attrs;
+                // FragmentShader fragSdr(DefaultFragShader);                
+                
+                attrs.color = bmpImage[y][x];
+
+                Vertex v;
+                v.x = x;
+                v.y = y;
+                v.z = 1;
+                v.w = 1;
+
+                DrawPrimitive(POINT, frame, &v, &attrs, NULL, &greenSdr);
+            }
+        }
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
