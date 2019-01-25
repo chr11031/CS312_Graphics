@@ -65,12 +65,54 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // bool changed;
+    // int x1 = line[0].x;
+    // int y1 = line[0].y;
+    // int x2 = line[1].x;
+    // int y2 = line[1].y;
+    // int x = x1;
+    // int y = y1;
+
+    // int dx = abs(x2 - x1);
+    // int dy = abs(y2 - y1);
+
+    // int signx = signum(x2 - x1);
+    // int signy = signum(y2 - y1);
+
+    // if (dy > dx)
+    // {
+    //     swap(dx, dy);
+    //     changed = true;
+    // }
+
+    // Attributes pointAttributes;
+    // pointAttributes = attrs;   
+
+    // float e = 2 * dy - dx;
+    // for (int i = 1; i <= dx; i++)
+    // {
+    //     Vertex vert = {x, y, 1, 1};   
+
+    //     DrawPrimitive(POINT, target, &vert, &pointAttributes);
+    //     while (e >= 0)
+    //     {
+    //         if (changed)
+    //             x = x + 1;
+    //         else
+    //             y = y + 1;
+    //         e = e - 2 * dx;
+    //     }
+    //     if (changed)
+    //         y += signy;
+    //     else
+    //         x += signx;
+    //     e = e + 2 * dy;
+    // } 
 }
 
 /*************************************************************
@@ -80,7 +122,38 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // define vertices
+    Vertex v1 = triangle[0];
+    Vertex v2 = triangle[1];
+    Vertex v3 = triangle[2];
+
+    // bounds of the triangle
+    int maxX = max(v1.x, max(v2.x, v3.x));
+    int minX = min(v1.x, min(v2.x, v3.x));
+    int maxY = max(v1.y, max(v2.y, v3.y));
+    int minY = min(v1.y, min(v2.y, v3.y));
+
+    Vertex vs1 = {v2.x - v1.x, v2.y - v1.y};
+    Vertex vs2 = {v3.x - v1.x, v3.y - v1.y};
+
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            Vertex q = {x - v1.x, y - v1.y};
+
+            float s = crossProduct(q, vs2) / crossProduct(vs1, vs2);
+            float t = crossProduct(vs1, q) / crossProduct(vs1, vs2);
+
+            // inside the triangle
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
+                // used to draw the points
+                Vertex vpoint = {x, y};
+                DrawPoint(target, &vpoint, attrs, NULL, NULL);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -185,8 +258,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
  
-        // Draws a pixel
-        TestDrawPixel(frame);   
+        // Draws a triangle
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
