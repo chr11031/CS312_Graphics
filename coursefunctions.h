@@ -24,7 +24,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         static int h = target.height();
         static int scaleFactor = 8;
         static int gridW = 64;
-        static int gridH = 64; 
+        static int gridH = 64;
         static int grid[64][64];
         static int gridTmp[64][64];
 
@@ -82,6 +82,14 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         {
                 // Your Code goes here
                 //TODO draw to screen
+                bool isAlive = false;
+
+                for(int x = 0; x < gridH; x++){
+                        for(int y = 0; y < gridW; y++){
+                                isAlive = grid[x][y];
+                        }
+                }
+
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -168,53 +176,64 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         /**************************************************
         * 6 Flat color triangles below
         *************************************************/
+       
+        PIXEL red[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL lime[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL blue[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+
         Vertex verts[3];
         Attributes attr[3];
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
-        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        attr[0].color = red[0];
+        attr[1].color = red[1];
+        attr[2].color = red[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        attr[0].color = lime[0];
+        attr[1].color = lime[1];
+        attr[2].color = lime[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        attr[0].color = blue[0];
+        attr[1].color = blue[1];
+        attr[2].color = blue[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        attr[0].color = red[0];
+        attr[1].color = red[1];
+        attr[2].color = red[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {210, 252, 1, 1};
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
-        PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        attr[0].color = lime[0];
+        attr[1].color = lime[1];
+        attr[2].color = lime[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        attr[0].color = blue[0];
+        attr[1].color = blue[1];
+        attr[2].color = blue[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
