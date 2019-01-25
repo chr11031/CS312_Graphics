@@ -64,7 +64,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -73,13 +73,140 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /****************************************
- * DETERMINANT
- * Find the determinant of a matrix with
- * components A, B, C, D from 2 vectors.
+ * DRAW_TRIANGLE_SCANLINES
+ *
+ * Renders a triangle/convex polygon
+ * to the screen with the appropriate 
+ * fill pattern
  ***************************************/
-inline double determinant(const double & A, const double & B, const double & C, const double & D)
+void DrawTriangleScanlines(BufferImage & frame, Vertex* triangle, Attributes* attrs, Attributes* const uniforms, FragmentShader * const frag)
 {
-  return (A*D - B*C);
+    // Sort from least to greatest - simple O(n^2) for small set
+    // Y-ordered primarily, X-ordered secondarily 
+    int count = 3;
+    for(int i = 0; i < count; i++)
+    {
+        for(int j = 0; j < count - 1; j++)
+        {
+            if  (triangle[j].y > triangle[j+1].y || 
+                ((triangle[j].y == triangle[j+1].y && (triangle[j].x > triangle[j+1].x))))
+            {
+                SWAP(Vertex, triangle[j], triangle[j+1]);
+                SWAP(Attributes, attrs[j], attrs[j+1]);
+            }
+        }
+    }
+
+    // Determinant information
+    Vertex firstLeft = triangle[0];
+    Vertex lastRight = triangle[count-1]; 
+    int diffX = (int)lastRight.x - (int)firstLeft.x;
+    int diffY = (int)lastRight.y - (int)firstLeft.y;
+
+    // Build left-right lists
+    bool flatTop = triangle[0].y == triangle[1].y;
+    bool flatBottom = triangle[count-1].y == triangle[count-2].y;
+    int lastIteration = count - 1;
+    int numLeft = 0;
+    int numRight = 0;
+    Vertex left[8];
+    Vertex right[8];
+    Attributes lAttr[8]; 
+    Attributes rAttr[8];
+    for(int i = 0; i < count; i++)
+    {
+        int det = determinant((int)triangle[i].x - (int)firstLeft.x, diffX, 
+			      (int)triangle[i].y - (int)firstLeft.y, diffY);
+        if(det > 0)
+        {
+            rAttr[numRight] = attrs[i];
+            right[numRight++] = triangle[i];
+        }
+        else if (det < 0)
+        {
+            lAttr[numLeft] = attrs[i];
+            left[numLeft++] = triangle[i];
+        }
+        else
+        {
+            if(!(i == 0 && flatTop))
+            {
+                rAttr[numRight] = attrs[i];
+                right[numRight++] = triangle[i];
+            }
+            if(!(i == lastIteration && flatBottom))
+            {
+                lAttr[numLeft] = attrs[i];
+                left[numLeft++] = triangle[i];
+            }
+        }
+    }
+
+    // Adjust counts for bounds checks
+    --numLeft;
+    --numRight;
+ 
+    // Draw so that we are careful about adjacent polygon fitting
+    int iLeftFirst  = -1;
+    int iLeftSecond = 0;
+    int iRightFirst = -1;
+    int iRightSecond= 0;
+    int y = left[0].y;
+    int lastY = left[numLeft].y;
+    double startX = left[0].x;
+    double endX = right[0].x;
+    double numerator;
+    double divisor;
+    double stepLeft;
+    double stepRight;
+
+    Vertex scanVertices[2];
+    while(y <= lastY)
+    {
+        // Check bounds for interpolation
+        if((int)left[iLeftSecond].y == y && iLeftSecond < numLeft)
+        {
+            ++iLeftFirst;
+            ++iLeftSecond;
+            stepLeft = 0.0;
+            diffY = left[iLeftSecond].y - left[iLeftFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = left[iLeftSecond].x - left[iLeftFirst].x; 
+                divisor = diffY;
+                stepLeft = numerator / divisor;
+            }
+        }
+        if((int)right[iRightSecond].y == y && iRightSecond < numRight)
+        {
+            ++iRightSecond;
+            ++iRightFirst;
+            stepRight = 0.0;
+            diffY = right[iRightSecond].y - right[iRightFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = right[iRightSecond].x - right[iRightFirst].x; 
+                divisor = diffY;
+                stepRight = numerator / divisor;
+            }
+        }
+
+        // Scanline process
+        scanVertices[0].x = startX;
+        scanVertices[0].y = y;
+        scanVertices[1].x = endX;
+        scanVertices[1].y = y;
+
+        int numSteps = (scanVertices[1].x - scanVertices[0].x);
+        while(scanVertices[0].x <= scanVertices[1].x)
+        {
+            frame[scanVertices[0].y][(int)scanVertices[0].x++] = attrs[0].color;
+        }
+
+        startX += stepLeft;
+        endX += stepRight;
+        y++;
+    }
 }
 
 /*************************************************************
