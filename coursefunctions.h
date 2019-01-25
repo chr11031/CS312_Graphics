@@ -79,7 +79,18 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-                // Your Code goes here
+               for (int wi = 0; wi < 64; wi++)
+               {
+                  for (int hi = 0; hi < 64; hi++)
+                  {
+                     int neighbors = 0;
+                     
+                     if (grid[wi] [hi])
+                     {
+                     
+                     }
+                  }   
+               }
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -123,7 +134,7 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
 
 
-        // Your code goes here 
+        // Your code goes here
         // Feel free to copy from other test functions to get started!
 
 
@@ -152,7 +163,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -171,31 +182,47 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
-
+        
+        for (int i = 0; i < 3; i++)
+        {
+           attr[i].color = colors1[i];
+        }
+        
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        
+        for (int j = 0; j < 3; j++)
+        {
+           attr[j].color = colors2[j];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+        
+        for (int k = 0; k < 3; k++)
+        {
+           attr[k].color = colors3[k];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+      
+        for (int x = 0; x < 3; x++)
+        {
+           attr[x].color = colors4[x];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -203,15 +230,23 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+       
+        for (int y = 0; y < 3; y++)
+        {
+           attr[y].color = colors5[y];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
+        PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+        
+        for (int z = 0; z < 3; z++)
+        {
+           attr[z].color = colors6[z];
+        }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
