@@ -1,4 +1,7 @@
+#include "C:/MinGW/include/SDL2/SDL.h"
 #include "definitions.h"
+#include "shaders.h"
+#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -165,6 +168,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         /**************************************************
         * 6 Flat color triangles below
         *************************************************/
+       //Winding order is counter clockwise!
         Vertex verts[3];
         Attributes attr[3];
         verts[0] = {100, 362, 1, 1};
@@ -190,7 +194,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0x0000ffff, 0x0000ffff, 0x0000ffff};
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         attr[0].color = colors3[0];
         attr[1].color = colors3[1];
         attr[2].color = colors3[2];
@@ -256,10 +260,16 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
 
-        FragmentShader myColorFragShader;
+        FragmentShader myColorFragShader(TriangleColorShader);
         // Your code for the color fragment shader goes here
 
         Attributes colorUniforms;
+        colorUniforms.vertexPoints[0] = colorTriangle[0];
+        colorUniforms.vertexPoints[1] = colorTriangle[1];
+        colorUniforms.vertexPoints[2] = colorTriangle[2];
+        colorUniforms.colors[0] = colors[0];
+        colorUniforms.colors[1] = colors[1];
+        colorUniforms.colors[2] = colors[2];
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
@@ -275,13 +285,18 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        BufferImage myImage("venator.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
+        //std::cout << std::hex << getpixel(myImage.img, 0, 0) << std::endl;
         Attributes imageUniforms;
+        imageUniforms.image = &myImage;
+        imageUniforms.vertexPoints[0] = imageTriangle[0];
+        imageUniforms.vertexPoints[1] = imageTriangle[1];
+        imageUniforms.vertexPoints[2] = imageTriangle[2];
         // Your code for the uniform goes here
 
-        FragmentShader myImageFragShader;
+        FragmentShader myImageFragShader(TriangleImageShader);
         // Your code for the image fragment shader goes here
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);

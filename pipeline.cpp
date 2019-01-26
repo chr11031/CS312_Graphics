@@ -74,15 +74,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
-int MaxNum(const int & num1, const int & num2)
-{
-    return (num1 > num2) ? num1 : num2;
-}
-
-int MinNum(const int & num1, const int & num2)
-{
-    return (num1 < num2) ? num1 : num2;
-}
 /*************************************************************
  * CROSS_PRODUCT
  * Finds the crossproduct of two vectors
@@ -131,6 +122,8 @@ int minY = MinNum((int)triangle[0].y, MinNum((int)triangle[1].y, (int)triangle[2
             if ( (s >= 0) && (t >= 0) && (s + t <= 1))
             { /* inside triangle */
             target[y][x] = attrs[0].color;
+            attrs->vertexPoint = Vertex{x,y,1,1};
+            frag->FragShader(target[y][x], *attrs, *uniforms);
             }
         }
     }
@@ -238,7 +231,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-		TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
