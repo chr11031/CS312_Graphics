@@ -1,6 +1,8 @@
 #include "definitions.h"
 #include "coursefunctions.h"
 #include <cmath>
+#include <iostream>
+#include <iomanip>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -62,7 +64,8 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = attrs->color[0];
+    // std::cout << std::hex << attrs->color[0] << std::endl;
 }
 
 /****************************************
@@ -74,17 +77,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
-/*******************************************************
- * CROSS_PRODUCT
- * calculates the cross product of the given vertices.
- ******************************************************/
-float crossProduct(Vertex *v1, Vertex *v2)
-{
-    float product = 0;
-    product = (v1->x * v2->y) - (v1->y * v2->x);
-    return product;
-}
-
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -94,56 +86,62 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
     // we only want to look at the box that the triangle is in. If we go outside
     // that box we are just wasting processing power and speed.
-    int maxX = fmax(triangle->x, fmax((triangle + 1)->x, (triangle + 2)->x));
-    int minX = fmin(triangle->x, fmin((triangle + 1)->x, (triangle + 2)->x));
-    int maxY = fmax(triangle->y, fmax((triangle + 1)->y, (triangle + 2)->y));
-    int minY = fmin(triangle->y, fmin((triangle + 1)->y, (triangle + 2)->y));
+    int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));
+    int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));
+    int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));
+    int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));
     
     // vector from vertex 1 to vertex 2
-    Vertex * vs1 = new Vertex;
-    vs1->x = triangle->x - (triangle + 1)->x;
-    vs1->y = triangle->y - (triangle + 1)->y;
+    Vertex * vs1 = new Vertex{(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
 
     // vector from vertex 2 to vertex 3
-    Vertex * vs2 = new Vertex;
-    vs2->x = (triangle + 2)->x - (triangle + 1)->x;
-    vs2->y = (triangle + 2)->y - (triangle + 1)->y;
+    Vertex * vs2 = new Vertex{(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y), 1, 1};
     
     // vector from vertex 3 to vertex 1
-    Vertex * vs3 = new Vertex;
-    vs3->x = (triangle + 2)->x - triangle->x;
-    vs3->y = (triangle + 2)->y - triangle->y;
+    Vertex * vs3 = new Vertex{(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y), 1, 1};
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            // create the vector to be compared with the three side vectors.
-            Vertex * q = new Vertex;
-            q->x = x - triangle->x;
-            q->y = y - triangle->y;
+            // create the vectors to be compared with the three side vectors.
+            Vertex * q1 = new Vertex{x - triangle[0].x, y - triangle[0].y, 1, 1};
+            Vertex * q2 = new Vertex{x - triangle[1].x, y - triangle[1].y, 1, 1};
+            Vertex * q3 = new Vertex{x - triangle[2].x, y - triangle[2].y, 1, 1};
 
             // find the cross products of the three outside vectors with
             // the vector pointing to the point to be drawn
-            float ted = crossProduct(q, vs1) / crossProduct(vs3, vs2);
-            float rufus = crossProduct(q, vs2) / crossProduct(vs3, vs2);
-            float bill = crossProduct(q, vs3) / crossProduct(vs3, vs2);
+            float ted = crossProduct(vs1, q1);
+            float rufus = crossProduct(vs2, q2);
+            float bill = crossProduct(vs3, q3);
 
-            // If the cross products are less than zero then the pixel is outside of the triangle.
-            if ( (ted >= 0) && (bill >= 0) && ((rufus >= 0) && (rufus <= 1)))
+            // If any of the cross products are less than zero then the pixel is outside of the triangle.
+            if ( (ted >= 0) && (bill >= 0) && ((rufus >= 0)))
             {
                 //The point is inside the triangle.
                 //create the point for drawpoint to color.
-                Vertex * pVertex = new Vertex;
-                pVertex->x = x;
-                pVertex->y = y;
+                Vertex * pVertex = new Vertex{x, y, 1, 1};
+
+                float triangleArea = crossProduct(vs1, vs2);
+
+                float lam0 = rufus/triangleArea;
+                float lam1 = bill/triangleArea;
+                float lam2 = ted/triangleArea;
+
+                attrs->baryVert = new Vertex {lam0, lam1, lam2, 1};
+
+                // lerp here?
+                frag->FragShader(attrs->color[0], *attrs, *uniforms);
+
                 // draw the point.
                 DrawPoint(target, pVertex, attrs, uniforms, frag);
                 // free up memory
                 delete pVertex;
             }
             // free up more memory
-            delete q;
+            delete q1;
+            delete q2;
+            delete q3;
         }
     }
     // free up even more memory
@@ -256,7 +254,22 @@ int main()
 
         // TestDrawPixel(frame);
         //GameOfLife(frame);
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        // FragmentShader frag(greenFragShader);
+        // Attributes pointAttributes;
+        // Buffer2D<double> image2d();
+        // BufferImage image("Mario-icon.bmp");
+        // for (int x = 0; x < 256; x++)
+        // {
+        //     for (int y = 0; y < 256; y++)
+        //     {
+        //         Vertex vert;
+        //         vert.x = x;
+        //         vert.y = y;
+        //         DrawPrimitive(POINT, frame, &vert,  &pointAttributes, NULL, &frag, NULL, &image2d)
+        //     }
+        // }
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

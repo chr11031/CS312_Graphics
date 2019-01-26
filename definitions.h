@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -221,9 +222,12 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
+{
     public:
-        PIXEL color;
+        PIXEL color[4];
+        Vertex verts[3];
+        Vertex *baryVert;
+        BufferImage *image;
         // Obligatory empty constructor
         Attributes() {}
 
@@ -234,11 +238,37 @@ class Attributes
         }
 };	
 
+/*******************************************************
+ * CROSS_PRODUCT
+ * calculates the cross product of the given vertices.
+ ******************************************************/
+float crossProduct(Vertex *v1, Vertex *v2)
+{
+    return ((v1->x * v2->y) - (v1->y * v2->x)) / 2;
+}
+
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red.
     fragment = 0xffff0000;
+}
+
+void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = 0xff00ff00;
+}
+
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = (vertAttr.color[1] * vertAttr.baryVert->x) 
+             + (vertAttr.color[2] * vertAttr.baryVert->y) 
+             + (vertAttr.color[3] * vertAttr.baryVert->z);
+}
+
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = 0xff000ff0;
 }
 
 /*******************************************************
