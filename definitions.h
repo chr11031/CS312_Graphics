@@ -242,6 +242,10 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
+void MyFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+    
+}
+
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
@@ -258,7 +262,8 @@ class FragmentShader
         // Assumes simple monotone RED shader
         FragmentShader()
         {
-            FragShader = DefaultFragShader;
+            //FragShader = DefaultFragShader;
+            FragShader = MyFragShader;
         }
 
         // Initialize with a fragment callback
