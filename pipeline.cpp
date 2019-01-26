@@ -220,7 +220,7 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
     //Something else for week03
-    BufferImage myImage("./optimusprimehead.bmp");
+    BufferImage myImage("../Assets/optimusprimehead.bmp");
 
     // Draw loop 
     bool running = true;
