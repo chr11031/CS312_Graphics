@@ -94,9 +94,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    // target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-
     int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
     int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
@@ -117,8 +114,11 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
         1
     };
 
-    for (int x = minX; x <= maxX; x++) {
-        for (int y = minY; y <= maxY; y++) {
+    // float area = (triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y);
+    float area = computeDeterminant(triangle[0].x - triangle[2].x, triangle[1].x - triangle[2].x, triangle[0].y - triangle[2].y, triangle[1].y - triangle[2].y);
+
+    for (int y = minY; y <= maxY; y++) {
+        for (int x = minX; x <= maxX; x++) {
             // Make a Vector that spans from the triangle[0] Vertex to the current values of x and y
             Vertex testVector = {
                 x - triangle[0].x,
@@ -127,13 +127,46 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 1
             };
 
-            double det1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            double det2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            target[y][x] = attrs[0].color;
+
+            // bary == barycentric coordinate
+            double bary1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            double bary2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            double bary3 = bary1 + bary2;
+            // double bary1 = (triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y) / area;
+            // double bary2 = (triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y) / area;
+            // double bary3 = 1.0 - bary1 - bary2;
+
+            // cout << "bary1: " << bary1 << endl;
+            // cout << "bary2: " << bary2 << endl;
+            // cout << "bary3: " << bary3 << endl;
 
             // Test if this point is in the triangle
-            if ((det1 >= 0) && (det2 >= 0) && ((det1 + det2) <= 1)) {
-                // Give the point color (Draw point)
-                target[y][x] = attrs[0].color;
+            if ((bary1 >= 0) && (bary2 >= 0) && ((bary1 + bary2) <= 1)) {
+                attrs[0].weight = bary1;
+                attrs[1].weight = bary2;
+                attrs[2].weight = bary3;
+
+                // Create RGB values in decimal form
+                PIXEL r = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+                PIXEL g = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+                PIXEL b = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+
+                // cout << "r " << r << endl;
+                // cout << "g " << g << endl;
+                // cout << "b " << b << endl;
+
+                // Put the rgb values into one color
+                Attributes pointAttribute;
+                pointAttribute.color = r * 255 & g * 255 & b * 255 & 0xffffffff;
+                //pointAttribute.color = r & b & g & 0xffffffff;
+                // cout << pointAttribute.color << endl;
+                
+                // Set the attribute color by sending to fragShader
+                // frag->FragShader(target[y][x], pointAttribute, *uniforms);
+                //GradientFragShader(target[y][x], pointAttribute, *uniforms);
+
+                // target[y][x] = attrs[0].color;
             }
         }
     }
@@ -215,6 +248,7 @@ void GreenFragmentShader(PIXEL & fragment, const Attributes & vertexAttr, const 
 {
     // OK, so we will zero out the red and blue and just leave the rest
     //  which will be green
+    
     fragment = vertexAttr.color & 0xff00ff00;
 }
 
@@ -250,27 +284,30 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        Attributes attrs;
-        FragmentShader greenSdr(GreenFragmentShader);
+        // TestDrawFragments(frame);
+        TestDrawTriangle(frame);
 
-        // Here, we will make a double for loop
-        for (int y = 0; y < 256; y++) {
-            for (int x = 0; x < 256; x++) {
-                //frame[y][x] = bmpImage[y][x];
-                //Attributes attrs;
-                // FragmentShader fragSdr(DefaultFragShader);                
+        // Attributes attrs;
+        // FragmentShader greenSdr(GreenFragmentShader);
+
+        // // Here, we will make a double for loop
+        // for (int y = 0; y < 256; y++) {
+        //     for (int x = 0; x < 256; x++) {
+        //         //frame[y][x] = bmpImage[y][x];
+        //         //Attributes attrs;
+        //         // FragmentShader fragSdr(DefaultFragShader);                
                 
-                attrs.color = bmpImage[y][x];
+        //         attrs.color = bmpImage[y][x];
 
-                Vertex v;
-                v.x = x;
-                v.y = y;
-                v.z = 1;
-                v.w = 1;
+        //         Vertex v;
+        //         v.x = x;
+        //         v.y = y;
+        //         v.z = 1;
+        //         v.w = 1;
 
-                DrawPrimitive(POINT, frame, &v, &attrs, NULL, &greenSdr);
-            }
-        }
+        //         DrawPrimitive(POINT, frame, &v, &attrs, NULL, &greenSdr);
+        //     }
+        // }
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

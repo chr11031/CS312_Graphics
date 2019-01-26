@@ -233,6 +233,7 @@ class Attributes
         }
 
         PIXEL color;
+        float weight;
 };	
 
 // Example of a fragment shader
