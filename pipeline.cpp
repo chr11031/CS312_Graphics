@@ -1,5 +1,8 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <algorithm>
+
+using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
@@ -75,6 +78,15 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*************************************************************
+ * crossProduct
+ * returns corss product of the vectors
+ ************************************************************/
+int crossProduct(int ax, int ay, int bx, int by) 
+{
+	    return ax * by - ay * bx;
+}
+
+/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
@@ -82,6 +94,38 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+    
+    //Barycentric Algorithm
+    /* get the bounding box of the triangle */
+    int maxX = max((int)triangle[0].x, max((int)triangle[1].x, (int)triangle[2].x));
+    int minX = min((int)triangle[0].x, min((int)triangle[1].x, (int)triangle[2].x));
+    int maxY = max((int)triangle[0].y, max((int)triangle[1].y, (int)triangle[2].y));
+    int minY = min((int)triangle[0].y, min((int)triangle[1].y, (int)triangle[2].y));
+
+    /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+
+    /*Iterate thwough the bounding box.*/
+    for (int x = minX; x <= maxX; x++)
+    {
+        for (int y = minY; y <= maxY; y++)
+        {
+            Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+
+            /**/ 
+            float s = (float)crossProduct((int)q.x, (int)q.y,(int)v2.x,(int)v2.y) / crossProduct((int)v1.x,(int)v1.y, (int)v2.x,(int)v2.y);
+            float t = (float)crossProduct((int)v1.x,(int)v1.y,(int)q.x,(int)q.y) / crossProduct((int)v1.x,(int)v1.y, (int)v2.x,(int)v2.y);
+
+            /*Evaluate the crossProduct of the vectors and if the point 
+              is inside the triangle then color it. */
+            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            { /* inside triangle */
+                target[y][x] = attrs[0].color;
+            }
+        }
+    }
+	
 }
 
 /**************************************************************
@@ -181,14 +225,15 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        //processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        //clearScreen(frame);
+        clearScreen(frame);
 
         // Your code goes here
         //TestDrawPixel(frame);
-        GameOfLife(frame);
+        //GameOfLife(frame);
+        TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
