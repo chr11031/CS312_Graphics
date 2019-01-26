@@ -219,6 +219,8 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
+    //Something else for week03
+    BufferImage myImage("./optimusprimehead.bmp");
 
     // Draw loop 
     bool running = true;
@@ -233,7 +235,18 @@ int main()
         // Your code goes here
         //TestDrawPixel(frame);
         //GameOfLife(frame);
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(myImage);
+
+       // static int w = myImage.width();
+       // static int h = myImage.height();
+        for(int y = 0; y < 256; y++)
+        {
+                for(int x = 0; x < 256; x++)
+                {
+                    frame[y][x] = myImage[y][x];
+                }
+        }
+        
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
