@@ -225,17 +225,34 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        double r;
+	double g;
+	double b;
   
         // Obligatory empty constructor
         Attributes() {}
-        PIXEL color;
-
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+        PIXEL color;
+
 };	
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+    
+    fragment = color;
+}
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

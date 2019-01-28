@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include "interp.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -226,6 +227,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
     double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
     double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
  
     // Loop through every pixel in the grid
     for(int y = minY; y < maxY; y++)
@@ -241,6 +245,15 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 	    if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
 	    {
 		target[(int)y][(int)x] = attrs[0].color;
+
+		// Interpolate Attributes for this pixel - In this case the R,G,B values
+		Attributes interpolatedAttribs;
+		interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+		interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+		interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+	
+		// Call shader callback
+		frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
 	    }
 	}
     }
@@ -348,7 +361,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-	TestDrawTriangle(frame);
+	TestDrawFragments(frame);
+	//TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

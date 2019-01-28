@@ -244,15 +244,26 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+	colorAttributes[0].r = 1.0;
+	colorAttributes[0].g = 0.0;
+	colorAttributes[0].b = 0.0;
+	colorAttributes[1].r = 0.0;
+	colorAttributes[1].g = 1.0;
+	colorAttributes[1].b = 0.0;
+	colorAttributes[2].r = 0.0;
+	colorAttributes[2].g = 0.0;
+	colorAttributes[2].b = 1.0;
+
         // Your color code goes here for 'colorAttributes'
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+	myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
+	// Nothing gets setup this time
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
+	return;
 
         /****************************************************
          * 2. Interpolated image triangle
@@ -263,6 +274,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+
         // Your texture coordinate code goes here for 'imageAttributes'
 
         BufferImage myImage("image.bmp");
