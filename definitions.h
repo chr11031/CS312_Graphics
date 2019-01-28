@@ -226,13 +226,13 @@ class Attributes
 {      
     public:
 
-    double u;
-    double v; 
-    void* ptrImg;
+        double u;
+        double v; 
+        void* ptrImg;
 
-    double r;
-	double g;
-	double b;
+        double r;
+        double g;
+        double b;
   
         // Obligatory empty constructor
         Attributes() {}
