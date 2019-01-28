@@ -127,15 +127,15 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 1
             };
 
-            target[y][x] = attrs[0].color;
+            // target[y][x] = attrs[0].color;
 
             // bary == barycentric coordinate
-            double bary1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            double bary2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            double bary3 = bary1 + bary2;
-            // double bary1 = (triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y) / area;
-            // double bary2 = (triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y) / area;
-            // double bary3 = 1.0 - bary1 - bary2;
+            // double bary1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            // double bary2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+            // double bary3 = bary1 + bary2;
+            double bary1 = (triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y) / area;
+            double bary2 = (triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y) / area;
+            double bary3 = 1.0 - bary1 - bary2;
 
             // cout << "bary1: " << bary1 << endl;
             // cout << "bary2: " << bary2 << endl;
@@ -163,7 +163,7 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 // cout << pointAttribute.color << endl;
                 
                 // Set the attribute color by sending to fragShader
-                // frag->FragShader(target[y][x], pointAttribute, *uniforms);
+                frag->FragShader(target[y][x], pointAttribute, *uniforms);
                 //GradientFragShader(target[y][x], pointAttribute, *uniforms);
 
                 // target[y][x] = attrs[0].color;
@@ -284,8 +284,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // TestDrawFragments(frame);
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        // TestDrawTriangle(frame);
 
         // Attributes attrs;
         // FragmentShader greenSdr(GreenFragmentShader);
