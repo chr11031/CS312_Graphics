@@ -233,7 +233,16 @@ class Attributes
         }
 
         PIXEL color;
-        float weight;
+        double r;
+        double g;
+        double b;
+
+        // Texture coordinates.  U = X-Axis, V = Y-Axis
+        double u;
+        double v;
+
+        // Reference to an image to interpolate
+        void* ptrImg;
 };	
 
 // Example of a fragment shader

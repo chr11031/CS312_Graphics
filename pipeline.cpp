@@ -67,6 +67,26 @@ double computeDeterminant(double a, double b, double c, double d) {
 }
 
 /****************************************
+ * INTERPOLATE
+ * Interpolates (mixes) components from 3
+ * colors.
+ * 
+ * area - Area of a primitive
+ * firstDet - Factor for computing
+ *            multiplication of colorAttr1
+ * ...
+ * color1 - Color for attribute 1
+ * *************************************/
+double interpolate(double area, double firstDet, double secondDet, double thirdDet, double colorAttr1, double colorAttr2, double colorAttr3)
+{
+    double component1 = (firstDet / area) * colorAttr1;
+    double component2 = (secondDet / area) * colorAttr2;
+    double component3 = (thirdDet / area) * colorAttr3;
+
+    return component1 + component2 + component3;
+}
+
+/****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
  * appropriate coloring.
@@ -74,8 +94,6 @@ double computeDeterminant(double a, double b, double c, double d) {
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
-    // Set our pixel according to the attribute value!
-    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -100,73 +118,64 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
     // Make two sides (Vectors) of the triangle
-    Vertex side1 = {
+    Vertex firstVect = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
         1,
         1
     };
 
-    Vertex side2 = {
-        triangle[2].x - triangle[0].x,
-        triangle[2].y - triangle[0].y,
+    Vertex secondVect = {
+        triangle[2].x - triangle[1].x,
+        triangle[2].y - triangle[1].y,
+        1,
+        1
+    };
+
+    // Sample Class Code
+    Vertex thirdVect = {
+        triangle[0].x - triangle[2].x,
+        triangle[0].y - triangle[2].y,
         1,
         1
     };
 
     // float area = (triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y);
-    float area = computeDeterminant(triangle[0].x - triangle[2].x, triangle[1].x - triangle[2].x, triangle[0].y - triangle[2].y, triangle[1].y - triangle[2].y);
+    double area = computeDeterminant(firstVect.x, -thirdVect.x, firstVect.y, -thirdVect.y);
 
     for (int y = minY; y <= maxY; y++) {
         for (int x = minX; x <= maxX; x++) {
-            // Make a Vector that spans from the triangle[0] Vertex to the current values of x and y
-            Vertex testVector = {
-                x - triangle[0].x,
-                y - triangle[0].y,
-                1,
-                1
-            };
-
-            // target[y][x] = attrs[0].color;
-
-            // bary == barycentric coordinate
-            // double bary1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            // double bary2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            // double bary3 = bary1 + bary2;
-            double bary1 = (triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y) / area;
-            double bary2 = (triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y) / area;
-            double bary3 = 1.0 - bary1 - bary2;
-
-            // cout << "bary1: " << bary1 << endl;
-            // cout << "bary2: " << bary2 << endl;
-            // cout << "bary3: " << bary3 << endl;
+            // Determinant calculations from class
+            double firstDet = computeDeterminant(firstVect.x, x - triangle[0].x, firstVect.y, y - triangle[0].y);
+            double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
+            double thirdDet = computeDeterminant(thirdVect.x, x - triangle[2].x, thirdVect.y, y - triangle[2].y);
 
             // Test if this point is in the triangle
-            if ((bary1 >= 0) && (bary2 >= 0) && ((bary1 + bary2) <= 1)) {
-                attrs[0].weight = bary1;
-                attrs[1].weight = bary2;
-                attrs[2].weight = bary3;
-
+            if ((firstDet >= 0) && ((secondDet >= 0) && (thirdDet >= 0) && ((firstDet + secondDet) <= 1))) {
                 // Create RGB values in decimal form
-                PIXEL r = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
-                PIXEL g = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
-                PIXEL b = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+                // PIXEL r = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+                // PIXEL g = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
+                // PIXEL b = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
 
                 // cout << "r " << r << endl;
                 // cout << "g " << g << endl;
                 // cout << "b " << b << endl;
 
                 // Put the rgb values into one color
-                Attributes pointAttribute;
-                pointAttribute.color = r * 255 & g * 255 & b * 255 & 0xffffffff;
+                // Attributes pointAttribute;
+                // pointAttribute.color = r * 255 & g * 255 & b * 255 & 0xffffffff;
                 //pointAttribute.color = r & b & g & 0xffffffff;
                 // cout << pointAttribute.color << endl;
+
+                // From Sample Class code
+                Attributes interpolatedAttributes;
+                interpolatedAttributes.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttributes.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttributes.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
                 
                 // Set the attribute color by sending to fragShader
-                frag->FragShader(target[y][x], pointAttribute, *uniforms);
-                //GradientFragShader(target[y][x], pointAttribute, *uniforms);
-
-                // target[y][x] = attrs[0].color;
+                frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
+                
             }
         }
     }
