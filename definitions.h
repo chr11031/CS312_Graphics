@@ -226,7 +226,11 @@ class Attributes
 {      
     public:
 
-        double r;
+    double u;
+    double v; 
+    void* ptrImg;
+
+    double r;
 	double g;
 	double b;
   
@@ -240,6 +244,16 @@ class Attributes
         PIXEL color;
 
 };	
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
 
 // My Fragment Shader for color interpolation
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

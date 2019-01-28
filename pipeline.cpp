@@ -234,28 +234,31 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // Loop through every pixel in the grid
     for(int y = minY; y < maxY; y++)
     {
-	for(int x = minX; x < maxX; x++)
-	{
-	    // Determine if the pixel is in the triangle by the determinant's sign
-	    double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
-	    double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
-	    double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+        for(int x = minX; x < maxX; x++)
+        {
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
-	    // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
-	    if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
-	    {
-		target[(int)y][(int)x] = attrs[0].color;
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+            target[(int)y][(int)x] = attrs[0].color;
 
-		// Interpolate Attributes for this pixel - In this case the R,G,B values
-		Attributes interpolatedAttribs;
-		interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-		interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-		interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
-	
-		// Call shader callback
-		frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
-	    }
-	}
+            // Interpolate Attributes for this pixel - In this case the R,G,B values
+            Attributes interpolatedAttribs;
+            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+        
+            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+            // Call shader callback
+            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
+        }
     }
 }
 
@@ -361,8 +364,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-	TestDrawFragments(frame);
-	//TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        //TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

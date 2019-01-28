@@ -237,7 +237,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 {
         /**************************************************
         * 1. Interpolated color triangle
-        *************************************************/
+        *************************************************
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
         colorTriangle[0] = {250, 112, 1, 1};
@@ -263,7 +263,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 	// Nothing gets setup this time
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-	return;
+        */
 
         /****************************************************
          * 2. Interpolated image triangle
@@ -274,17 +274,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+        imageAttributes[0].u = coordinates[0][0];
+        imageAttributes[0].v = coordinates[0][1];
+        imageAttributes[1].u = coordinates[1][0];
+        imageAttributes[1].v = coordinates[1][1];
+        imageAttributes[2].u = coordinates[2][0];
+        imageAttributes[2].v = coordinates[2][1];
 
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("sax.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
