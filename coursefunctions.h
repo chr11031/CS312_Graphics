@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -321,12 +322,28 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].attrValues[0] = 1.0;
+        colorAttributes[0].attrValues[1] = 0.0;
+        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].valuesToInterpolate = 3;
+
+        colorAttributes[1].attrValues[0] = 0.0;
+        colorAttributes[1].attrValues[1] = 1.0;
+        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].valuesToInterpolate = 3;
+
+        colorAttributes[2].attrValues[0] = 0.0;
+        colorAttributes[2].attrValues[1] = 0.0;
+        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[3].valuesToInterpolate = 3;
+
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.setShader(baryInterpolationShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
+        // No uniforms today
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
@@ -340,15 +357,29 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].attrValues[0] = 1;
+        imageAttributes[0].attrValues[1] = 0;
+        imageAttributes[0].valuesToInterpolate = 2;
 
-        BufferImage myImage("image.bmp");
+        imageAttributes[1].attrValues[0] = 1;
+        imageAttributes[1].attrValues[1] = 1;
+        imageAttributes[1].valuesToInterpolate = 2;
+
+        imageAttributes[2].attrValues[0] = 0;
+        imageAttributes[2].attrValues[1] = 1;
+        imageAttributes[2].valuesToInterpolate = 2;
+
+
+        static BufferImage myImage("c.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImage = &myImage;
 
         FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
+        myImageFragShader.setShader(imageFragShader);
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
