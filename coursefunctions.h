@@ -286,14 +286,27 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
 
+        //Set the RGB values for each of the colors of the 
+        //RBG values
+        colorAttributes[0].setRGB(1.0,0.0,0.0);
+        //-------------------
+        colorAttributes[1].setRGB(0.0,1.0,0.0);
+        //-------------------
+        colorAttributes[2].setRGB(0.0,0.0,1.0);
+
+        Attributes defaultUniforms;
+
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
+        //to test the first triangle.
+        return;
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/

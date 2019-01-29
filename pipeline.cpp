@@ -86,6 +86,16 @@ int crossProduct(int ax, int ay, int bx, int by)
 	    return ax * by - ay * bx;
 }
 
+/****************************************
+  * DETERMINANT
+  * Find the determinant of a matrix with
+  * components A, B, C, D from 2 vectors.
+  ***************************************/
+ inline double determinant(const double & A, const double & B, const double & C, const double & D)
+ {
+   return (A*D - B*C);
+ }
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -102,24 +112,41 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxY = max((int)triangle[0].y, max((int)triangle[1].y, (int)triangle[2].y));
     int minY = min((int)triangle[0].y, min((int)triangle[1].y, (int)triangle[2].y));
 
+    FragmentShader myColorFragShader;
+
+    // Your code for the color fragment shader goes here		 	
+     myColorFragShader.FragShader = ColorFragShader;
+
+    /*Compute first, second third X-Y pairs */
+    double firstVec[]  = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secondVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[]  = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
     /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    /*
     Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
     Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    */
 
+   double areaTriangle = determinant(firstVec[0],thirdVec[0], firstVec[1], thirdVec[1]);
     /*Iterate thwough the bounding box.*/
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            //Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
 
-            /**/ 
+            /*  
             float s = (float)crossProduct((int)q.x, (int)q.y,(int)v2.x,(int)v2.y) / crossProduct((int)v1.x,(int)v1.y, (int)v2.x,(int)v2.y);
             float t = (float)crossProduct((int)v1.x,(int)v1.y,(int)q.x,(int)q.y) / crossProduct((int)v1.x,(int)v1.y, (int)v2.x,(int)v2.y);
+            */
+            double firstDet  = determinant(firstVec[0] , x - triangle[0].x, firstVec[1] , y - triangle[0].y);
+            double secondDet = determinant(secondVec[0], x - triangle[1].x, secondVec[1], y - triangle[1].y);
+            double thirdDet  = determinant(thirdVec[0] , x - triangle[2].x, thirdVec[1] , y - triangle[2].y);
 
             /*Evaluate the crossProduct of the vectors and if the point 
               is inside the triangle then color it. */
-            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
+            if ( (firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0))
             { /* inside triangle */
                 target[y][x] = attrs[0].color;
             }
@@ -236,17 +263,21 @@ int main()
         //TestDrawPixel(frame);
         //GameOfLife(frame);
         //TestDrawTriangle(myImage);
+        TestDrawFragments(frame);
 
        // static int w = myImage.width();
        // static int h = myImage.height();
+       /*Attributes imageUniforms;
+       Attributes uniforms;
         for(int y = 0; y < 256; y++)
         {
                 for(int x = 0; x < 256; x++)
                 {
+                    //GrayFragShader(myImage[y][x],imageUniforms,uniforms );
                     frame[y][x] = myImage[y][x];
                 }
         }
-        
+        */
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

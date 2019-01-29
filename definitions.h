@@ -225,6 +225,14 @@ class Attributes
     public:
         PIXEL color;
 
+        //
+        double u;
+        double v;
+        //add RGB values.
+        double r;
+        double g;
+        double b; 
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -233,6 +241,16 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        //For out RGB values
+        void setRGB(double R, double G, double B)
+        {
+            this->r = R;
+            this->g = G;
+            this->b = B;
+        }
+
+        
 };	
 
 // Example of a fragment shader
@@ -242,8 +260,24 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
-void MyFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
-    
+void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+
+    PIXEL avgChannel = ((vertAttr.color >> 16) && 0xff) + 
+                        ((vertAttr.color >> 8) && 0xff) + 
+                        ((vertAttr.color) && 0xff);
+    avgChannel /= 3;
+    fragment = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
+}
+
+void  ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+
+    PIXEL color = 0xff000000;
+
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
 }
 
 /*******************************************************
@@ -263,7 +297,7 @@ class FragmentShader
         FragmentShader()
         {
             //FragShader = DefaultFragShader;
-            FragShader = MyFragShader;
+            FragShader = DefaultFragShader;
         }
 
         // Initialize with a fragment callback
