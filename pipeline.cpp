@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -80,7 +81,47 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Get the max and min boundaries of the triangle
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Vertexes for the cross product computations
+    double vs1[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double vs2[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double vs3[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    // double areaTriangle = determinant(vs1.x, -vs3.x, vs1.y, -vs3.y); //a, b, c, d
+    double areaTriangle = ((vs1[0] * (-vs3[1])) - ((-vs3[0]) * vs1[1]));
+
+    for (int y = minY; y < maxY; y++)
+    {
+        for (int x = minX; x < maxX; x++)
+        {
+            // Use cross product to check if the pixel coordinates are in the bounds of the triangle.
+
+            double d1 = ((vs1[0] * (y - triangle[0].y)) - (vs1[1] * (x - triangle[0].x)));
+            double d2 = ((vs2[0] * (y - triangle[1].y)) - (vs2[1] * (x - triangle[1].x)));
+            double d3 = ((vs3[0] * (y - triangle[2].y)) - (vs3[1] * (x - triangle[2].x)));
+
+            if (d1 >= 0 && d2 >= 0 && d3 >= 0)
+            {
+                Attributes intAttrs;
+                // Do interpolation for r, g, and b.
+
+                intAttrs.r = interp(areaTriangle, d1, d2, d3, attrs[0].r, attrs[1].r, attrs[2].r);
+                intAttrs.g = interp(areaTriangle, d1, d2, d3, attrs[0].g, attrs[1].g, attrs[2].g);
+                intAttrs.b = interp(areaTriangle, d1, d2, d3, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                intAttrs.u = interp(areaTriangle, d1, d2, d3, attrs[0].u, attrs[1].u, attrs[2].u);
+                intAttrs.v = interp(areaTriangle, d1, d2, d3, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                frag->FragShader(target[y][x], intAttrs, *uniforms);
+                // target[y][x] = attrs[0].color;
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -186,7 +227,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

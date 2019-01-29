@@ -167,6 +167,7 @@ class BufferImage : public Buffer2D<PIXEL>
         // Free dynamic memory
         ~BufferImage()
         {
+            // return;
             // De-Allocate pointers for column references
             free(grid);
 
@@ -224,6 +225,15 @@ class Attributes
 {      
     public:
         PIXEL color;
+        // float weight;
+        double r;
+        double g;
+        double b;
+        
+        double u = 0;
+        double v = 0;
+
+        void * ptrImg;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -233,13 +243,46 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Attributes(BufferImage* i)
+        // {
+        //     image = i;
+        // }
 };	
+
+double interp(double area, double d1, double d2, double d3, double t1, double t2, double t3)
+{
+    d1 /= area;
+    d2 /= area;
+    d3 /= area;
+
+    return (d1 * t1) + (d2 * t2) + (d3 * t3);
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+
+    fragment = color;
+}
+
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
 }
 
 /*******************************************************

@@ -60,6 +60,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         // Clicking the mouse changes a pixel's color
                         SDL_GetMouseState(&mouseX, &mouseY);
+                        mouseY = S_HEIGHT - mouseY;
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
                         if(grid[gridY][gridX] == 1)
@@ -80,6 +81,73 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                for(int y = 0; y < gridH; y++)
+                {
+                        for(int x = 0; x < gridW; x++)
+                        {
+                                // Check for number of alive neighbors
+                                int numNeighbors = 0;
+                                int xtemp = -1;
+                                int ytemp = -2;
+                                for(int i = 0; i < 9; i++)
+                                {
+                                        if(i % 3 == 0)
+                                                ytemp += 1;
+                                        if(y + ytemp >= 0 && x + xtemp >= 0)
+                                        {
+                                                if(grid[y + ytemp][x + xtemp] == 1)
+                                                {
+                                                        numNeighbors++;
+                                                        if(xtemp == 0 && ytemp == 0)
+                                                                numNeighbors--;
+                                                }
+                                        }
+                                        else
+                                        {
+                                                int tempy = y + ytemp;
+                                                int tempx = x + xtemp;
+                                                if(tempy < 0)
+                                                {
+                                                        tempy = gridH - 1;
+                                                }
+                                                else if(tempx < 0)
+                                                {
+                                                        tempx = gridW - 1;
+                                                }
+
+                                                if(grid[tempy][tempx] == 1)
+                                                {
+                                                        numNeighbors++;
+                                                        if(xtemp == 0 && ytemp == 0)
+                                                                numNeighbors--;
+                                                }
+                                        }
+                                        
+                                        if(xtemp >= 1)
+                                                xtemp = -1;
+                                        else
+                                                xtemp += 1;
+                                }
+                                if(grid[y][x] == 1) // Alive at current location
+                                {
+                                        if(numNeighbors < 2 || numNeighbors >= 4)
+                                                gridTmp[y][x] = 0;
+                                        else
+                                                gridTmp[y][x] = 1;
+                                }
+                                else // Dead at current location
+                                {
+                                        if(numNeighbors == 3)
+                                                gridTmp[y][x] = 1;
+                                        else
+                                                gridTmp[y][x] = 0;
+                                }
+                        }
+                }
+
+                for(int y = 0; y < gridH; y++)
+                        for(int x = 0; x < gridW; x++)
+                                grid[y][x] = gridTmp[y][x];
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
@@ -153,7 +221,6 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
         pointAttributes.color = color;
-
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
 
@@ -172,30 +239,38 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors1[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors2[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors3[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors4[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -204,14 +279,18 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors5[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
+        for(int i = 0; i < 3; i++)
+                attr[i].color = colors6[i];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -233,9 +312,21 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].r = 1.0;
+        colorAttributes[0].g = 0.0;
+        colorAttributes[0].b = 0.0;
+        colorAttributes[1].r = 0.0;
+        colorAttributes[1].g = 1.0;
+        colorAttributes[1].b = 0.0;
+        colorAttributes[2].r = 0.0;
+        colorAttributes[2].g = 0.0;
+        colorAttributes[2].b = 1.0;
+        for (int i = 0; i < 3; i++)
+                colorAttributes[i].color = colors[i];
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = colorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
@@ -251,16 +342,21 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].u = 1;
+        imageAttributes[0].v = 0;
+        imageAttributes[1].u = 1;
+        imageAttributes[1].v = 1;
+        imageAttributes[2].u = 0;
+        imageAttributes[2].v = 1;
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = imageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
