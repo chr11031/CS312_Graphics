@@ -1,6 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -62,11 +61,15 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
         // Set our pixel according to the attribute value!
-        target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+
+        PIXEL color;
+        frag->FragShader(color, *attrs, *uniforms);
+        
+        target[(int)v[0].y][(int)v[0].x] = color;
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -75,43 +78,16 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /****************************************
- * CROSS PRODUCT
+ * DETERMINANT
  * Calculates the determinant of two vectors
  ***************************************/
-int crossProduct(Vertex a, Vertex b) {
-    return a.x * b.y - a.y * b.x;
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
 }
 
-/****************************************
- * LERP
- * Linear interpolation between two numbers
- ***************************************/
-float lerp(float a, float b, float step) {
-    return a + (b - a) * step;
-}
-
-/****************************************
- * FIND WEIGHT
- * Performs barycentric interpolation
- ***************************************/
-void findWeights(float* weights, Vertex* v, Vertex p) {
-
-    weights = new float[3];
-    // v[3] is the triangle, p is the pixel we are testing
-    weights[0] = ((v[1].y - v[2].y) * (p.x - v[2].x) +
-                  (v[2].x - v[1].x) * (p.y - v[2].y)) /
-                 ((v[1].y - v[2].y) * (v[0].x - v[2].x) +
-                  (v[2].x - v[1].x) * (v[0].y - v[2].y));
-
-    weights[1] = ((v[2].y - v[0].y) * (p.x - v[2].x) +
-                  (v[0].x - v[2].x) * (p.y - v[2].y)) /
-                 ((v[1].y - v[2].y) * (v[0].x - v[2].x) +
-                  (v[2].x - v[1].x) * (v[0].y - v[2].y));
-                
-    weights[2] = 1 - weights[0] - weights[1];
-
-    return;
-}
+#define Y_KEY 1
+#define X_KEY 0
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -120,51 +96,51 @@ void findWeights(float* weights, Vertex* v, Vertex p) {
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Barycentric algorithm from: http://www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
+    // Create a bounding box
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    // Find the two edge vectors we use to calculate determinants. We don't need all 3, see below
-    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+    // Compute first, second, third X-Y pairs
+    // These are the vectors representing the edges of the triangle, which
+    // will be used to calculate the determinant.
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    // Bounding box
-    int xmin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int ymin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int xmax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int ymax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
 
-    // Iterate over every pixel in the bounding box
-    for (int x = xmin; x < xmax; x++) {
-        for (int y = ymin; y < ymax; y++) {
-            // q is the vector from the pixel we are testing to triangle[0]
-            Vertex q = {x - triangle[0].x, y - triangle[0].y};
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
+    {
+        for(int x = minX; x < maxX; x++)
+        {
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
-            // Next we find the cross product (determinant) of vectors formed between q and each of the two edge vectors
-            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
-            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+                target[(int)y][(int)x] = attrs[0].color;
 
-            /*
-             We do not need to find the third edge because:
-                - If s >= 0, the pixel is above the first edge vector.
-                - If t >= 0, the pixel is below the second edge vector.
-                - s + t > 1 if and only if the point is far enough away from the first
-                  and second vectors as to be outside the triangle (beyond third edge).
-             This means we only need two edges, we can calculate without needing the third one.
-            */
-            if ((s >= 0) && (t >= 0) && (s + t <= 1)) {
-                Vertex v = {x, y, 1, 1};
-                // Calculate the new Attributes
-                float* weights;
-                findWeights(weights, triangle, v);
-                Attributes a;
-                PIXEL red   = ((attrs[0].color >> 16) && 0xFF) * weights[0];
-                PIXEL green = ((attrs[1].color >> 8) && 0xFF) * weights[1];
-                PIXEL blue  = (attrs[2].color && 0xFF) * weights[2];
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                // The interp function works the way that it does because the amount each
+                // vertex's attributes should contribute to the pixel is inversely proportional
+                // to the area (determinant) at that point.
+                Attributes interpolatedAttribs;
+                interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
-                a.color = 0xFF000000 | (red << 16) | (green << 8) | blue;
+                interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
 
-                DrawPoint(target, &v, &a, uniforms, frag);
-
-                delete [] weights;
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }
