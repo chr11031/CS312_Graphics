@@ -60,8 +60,9 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-   // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    // Set our pixel according to the attribute value!
+    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 
 }
 
@@ -74,10 +75,14 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
-float crossProduct(Vertex v1, Vertex v2)
+/****************************************
+ * CROSS_PRODUCT
+ ***************************************/
+float crossProduct(double v1X, double v1Y, double v2X, double v2Y)
 {
-    return v1.x * v2.y - v1.y * v2.x;
+    return v1X * v2Y - v1Y * v2X;
 }
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -94,22 +99,28 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int minY = MIN3(v1.y, v2.y, v3.y);
 
     /* spanning vectors of edge (v1,v2) and (v1,v3) */
-    Vertex vs1 = {v2.x - v1.x, v2.y - v1.y, 1, 1};
-    Vertex vs2 = {v3.x - v1.x, v3.y - v1.y,1 ,1};
+    double vs1[] = {v2.x - v1.x, v2.y - v1.y,};
+    double vs2[] = {v3.x - v2.x, v3.y - v2.y};
+    double vs3[] = {v1.x - v3.x , v1.y - v3.y}; 
+
+    double areaTriangle = crossProduct(vs1[0], -vs3[0], vs1[1], -vs3[1]);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-        Vertex q {x - v1.x, y - v1.y};
 
-        float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
-        float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+        double firstDet = crossProduct(vs1[0], x - v1.x, vs1[1], y - v1.y);
+        double secndDet = crossProduct(vs2[0], x - v2.x, vs2[1], y - v2.y);
+        double thirdDet = crossProduct(vs3[0], x - v3.x, vs3[1], y - v3.y);
 
-        if ( (s >= 0) && (t >= 0) && (s + t <= 1))
-        { /* inside triangle */
-            Vertex v = {x,y,1,1};
-            DrawPoint(target, &v, attrs, uniforms, frag);
+        if (firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+        { 
+            Attributes interpolatedAttribs;
+            interpolatedAttribs.numValues = attrs[0].numValues;
+            interpolatedAttribs.interpolateValues(firstDet, secndDet, thirdDet, areaTriangle, attrs);
+
+            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
         }
         }
     }
@@ -217,7 +228,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

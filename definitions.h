@@ -224,21 +224,47 @@ class Attributes
 {      
     public:
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : numValues(0) {}
         
+         PIXEL color;
+        int numValues;
+        double attrValues[3];
+        void* ptrImg;
+
+        /* Old way
+        double r;
+        double g;
+        double b;
+
+        double u;
+        double v;
+        
+        */
+
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-        PIXEL color;
+        void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
+        {
+            double w1 = det1 / area;
+            double w2 = det2 / area;
+            double w3 = 1 - w2 - w1;
+
+             for (int i = 0; i < numValues; i++)
+            {
+                attrValues[i] = vertAttrs[0].attrValues[i] * w2 + vertAttrs[1].attrValues[i] * w3 + vertAttrs[2].attrValues[i] * w1;
+            }
+        }
+       
 };	
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
-    fragment = 0xffff0000;
+    fragment = 0xff00ff00;
 }
 
 /*******************************************************
