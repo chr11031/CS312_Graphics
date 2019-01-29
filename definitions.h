@@ -224,10 +224,16 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {
     public:
-        PIXEL color[4];
-        Vertex verts[3];
-        Vertex *baryVert;
-        BufferImage *image;
+        PIXEL color;
+        // Vertex verts[3];
+        // Vertex *lerpVert;
+        // Vertex *currentVert;
+        void *image;
+        double r;
+        double g;
+        double b;
+        double u;
+        double v;
         // Obligatory empty constructor
         Attributes() {}
 
@@ -242,9 +248,16 @@ class Attributes
  * CROSS_PRODUCT
  * calculates the cross product of the given vertices.
  ******************************************************/
-float crossProduct(Vertex *v1, Vertex *v2)
+float triangleArea(double v1[2], double v2[2])
 {
-    return ((v1->x * v2->y) - (v1->y * v2->x)) / 2;
+    return ((v1[0] * v2[1]) - (v1[1] * v2[0])) / 2;
+}
+
+double lerp(float area, float area1, float area2, float area3, double attr1, double attr2, double attr3)
+{
+    double lerpedAttr = 0.0;
+    lerpedAttr = (area1/area * attr1) + (area2/area * attr2) + (area3/area * attr3);
+    return lerpedAttr;
 }
 
 // Example of a fragment shader
@@ -261,14 +274,25 @@ void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
 void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    fragment = (vertAttr.color[1] * vertAttr.baryVert->x) 
-             + (vertAttr.color[2] * vertAttr.baryVert->y) 
-             + (vertAttr.color[3] * vertAttr.baryVert->z);
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+
+    fragment = color;
 }
 
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    fragment = 0xff000ff0;
+    BufferImage *ptr = (BufferImage*)uniforms.image;
+
+    int wid = ptr->width() - 1;
+    int hgt = ptr->height() - 1;
+
+    int x = vertAttr.u * wid;
+    int y = vertAttr.v * hgt;
+
+    fragment = (*ptr)[y][x];
 }
 
 /*******************************************************

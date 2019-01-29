@@ -63,8 +63,12 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
+    PIXEL color = 0xff000000;
+     color += (unsigned int)(attrs[0].r * 0xff) << 16;
+     color += (unsigned int)(attrs[0].g * 0xff) << 8;
+     color += (unsigned int)(attrs[0].b * 0xff) << 0;
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs->color[0];
+    target[(int)v[0].y][(int)v[0].x] = color;
     // std::cout << std::hex << attrs->color[0] << std::endl;
 }
 
@@ -86,68 +90,60 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
     // we only want to look at the box that the triangle is in. If we go outside
     // that box we are just wasting processing power and speed.
-    int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));
-    int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));
-    int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));
-    int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
     
     // vector from vertex 1 to vertex 2
-    Vertex * vs1 = new Vertex{(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
+    double vs1[2] = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y)};
 
     // vector from vertex 2 to vertex 3
-    Vertex * vs2 = new Vertex{(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y), 1, 1};
+    double vs2[2] = {(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y)};
     
     // vector from vertex 3 to vertex 1
-    Vertex * vs3 = new Vertex{(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y), 1, 1};
+    double vs3[2] = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
+
+    float totalArea = triangleArea(vs1, vs2);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
             // create the vectors to be compared with the three side vectors.
-            Vertex * q1 = new Vertex{x - triangle[0].x, y - triangle[0].y, 1, 1};
-            Vertex * q2 = new Vertex{x - triangle[1].x, y - triangle[1].y, 1, 1};
-            Vertex * q3 = new Vertex{x - triangle[2].x, y - triangle[2].y, 1, 1};
+            double q1[2] = {x - triangle[0].x, y - triangle[0].y};
+            double q2[2] = {x - triangle[1].x, y - triangle[1].y};
+            double q3[2] = {x - triangle[2].x, y - triangle[2].y};
 
             // find the cross products of the three outside vectors with
             // the vector pointing to the point to be drawn
-            float ted = crossProduct(vs1, q1);
-            float rufus = crossProduct(vs2, q2);
-            float bill = crossProduct(vs3, q3);
+            float areaT1 = triangleArea(vs2, q2);
+            float areaT3 = triangleArea(vs1, q1);
+            float areaT2 = triangleArea(vs3, q3);
 
             // If any of the cross products are less than zero then the pixel is outside of the triangle.
-            if ( (ted >= 0) && (bill >= 0) && ((rufus >= 0)))
+            if ( (areaT1 >= 0) && (areaT3 >= 0) && ((areaT2 >= 0)))
             {
                 //The point is inside the triangle.
-                //create the point for drawpoint to color.
-                Vertex * pVertex = new Vertex{x, y, 1, 1};
+                target[y][x] = attrs[0].color;
 
-                float triangleArea = crossProduct(vs1, vs2);
+                // interpolate colors here into new attributes object
+                Attributes lerpedAttrs;
+                lerpedAttrs.r = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].r, attrs[1].r, attrs[2].r);
+                lerpedAttrs.g = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].g, attrs[1].g, attrs[2].g);
+                lerpedAttrs.b = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].b, attrs[1].b, attrs[2].b);
 
-                float lam0 = rufus/triangleArea;
-                float lam1 = bill/triangleArea;
-                float lam2 = ted/triangleArea;
+                lerpedAttrs.u = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].u, attrs[1].u, attrs[2].u);
+                lerpedAttrs.v = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].v, attrs[1].v, attrs[2].v);
 
-                attrs->baryVert = new Vertex {lam0, lam1, lam2, 1};
-
-                // lerp here?
-                frag->FragShader(attrs->color[0], *attrs, *uniforms);
+                // check github code on class repo.;
+                frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
 
                 // draw the point.
-                DrawPoint(target, pVertex, attrs, uniforms, frag);
-                // free up memory
-                delete pVertex;
+                // DrawPoint(target, pVertex, attrs, uniforms, frag);
             }
-            // free up more memory
-            delete q1;
-            delete q2;
-            delete q3;
         }
     }
-    // free up even more memory
-    delete vs1;
-    delete vs2;
-    delete vs3;
 }
 
 /**************************************************************
