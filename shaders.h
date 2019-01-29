@@ -7,8 +7,8 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     BufferImage* imagePtr = (BufferImage*)uniforms.ptrImage;
 
-    int x = (unsigned int)vertAttr.attrValues[0] * (imagePtr->width()  - 1);
-    int y = (unsigned int)vertAttr.attrValues[1] * (imagePtr->height() - 1);
+    int x = vertAttr.attrValues[0] * (imagePtr->width()  - 1);
+    int y = vertAttr.attrValues[1] * (imagePtr->height() - 1);
 
     fragment = (*imagePtr)[y][x];
 }
