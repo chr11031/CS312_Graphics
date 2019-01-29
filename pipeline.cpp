@@ -2,6 +2,8 @@
 #include "coursefunctions.h"
 #include <cmath>
 
+#include <iostream>
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -62,7 +64,7 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Set the dot to our given attribute    
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color; 
 }
 
 /****************************************
@@ -83,6 +85,31 @@ float crossProduct(Vertex a, Vertex b)
     return (a.x * b.y) - (a.y * b.x);
 }
 
+/**************************************************************
+ * DETERMINANT
+ * Calculates the determinant with the four parameters.
+ *************************************************************/
+double determinant(double ax, double bx, double ay, double by) 
+{
+    // Find the area of the triangle
+    return ((ax * by) - (bx * ay));
+}
+
+/**************************************************************
+ * INTERP
+ * Interpolates the attributes.
+ *************************************************************/
+double interp(double area, double det1, double det2, double det3, double attr1, double attr2, double attr3) 
+{
+    // Calculate the weights of each point (percentage)
+    double weight1 = det1 / area;
+    double weight2 = det2 / area;
+    double weight3 = 1 - weight1 - weight2;
+    
+    // Apply the weights and return the final value
+    return ((weight1 * attr1) + (weight2 * attr2) + (weight3 * attr3));
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -90,39 +117,44 @@ float crossProduct(Vertex a, Vertex b)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-
    // Bounding box
-   int xMax = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));
-   int yMax = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));
-   int xMin = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));
-   int yMin = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));
+   int xMax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int yMax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+   int xMin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int yMin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-   // Span vertecies
-   Vertex vs1;
-   vs1.x = triangle[1].x - triangle[0].x;
-   vs1.y = triangle[1].y - triangle[0].y;
+   // Vectors
+   double vec1[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+   double vec2[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+   double vec3[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-   Vertex vs2;
-   vs2.x = triangle[2].x - triangle[0].x;
-   vs2.y = triangle[2].y - triangle[0].y;
+   // Area of whole triangle
+   double totalArea = determinant(vec1[0], -vec3[0], vec1[1], -vec3[1]);
 
    // Check every point in the bounding box
-   for (int x = xMin; x <= xMax; x++)
+   for (int y = yMin; y < yMax; y++)
    {
-        for (int y = yMin; y <= yMax; y++)
+        for (int x = xMin; x <= xMax; x++)
         {
-             Vertex q;
-             q.x = x - triangle[0].x;
-             q.y = y - triangle[0].y;
-
-            float s = crossProduct(q, vs2) / crossProduct(vs1, vs2);
-            float t = crossProduct(vs1, q) / crossProduct(vs1, vs2);
+            // Calculate the determinant of each of the inner triangles
+            double det1 = determinant(vec1[0], x - triangle[0].x, vec1[1], y - triangle[0].y);
+            double det2 = determinant(vec2[0], x - triangle[1].x, vec2[1], y - triangle[1].y);
+            double det3 = determinant(vec3[0], x - triangle[2].x, vec3[1], y - triangle[2].y);
 
             // If in the triangle
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            if (det1 >= 0 && det2 >= 0 && det3 >= 0)
             { 
-                //DrawPoint(target, triangle, attrs, nullptr, nullptr);
-                target[y][x] = attrs[0].color;
+
+                Attributes interAttr;
+
+                // Interpolate each value
+                interAttr.argb[0] = interp(totalArea, det1, det2, det3, attrs[0].argb[0], attrs[1].argb[0], attrs[2].argb[0]);
+                interAttr.argb[1] = interp(totalArea, det1, det2, det3, attrs[0].argb[1], attrs[1].argb[1], attrs[2].argb[1]);
+                interAttr.argb[2] = interp(totalArea, det1, det2, det3, attrs[0].argb[2], attrs[1].argb[2], attrs[2].argb[2]);
+                interAttr.argb[3] = interp(totalArea, det1, det2, det3, attrs[0].argb[3], attrs[1].argb[3], attrs[2].argb[3]);
+
+                // Call the fragment shader function previously set
+                frag->FragShader(target[y][x], interAttr, *uniforms);
             }
         }
     }   
@@ -228,10 +260,10 @@ int main()
         processUserInputs(running);
 
         // Refresh Screen
-        //clearScreen(frame);
+        clearScreen(frame);
 
-        // Test our Triangle
-        TestDrawTriangle(frame);
+        // Test our Fragmentation
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
