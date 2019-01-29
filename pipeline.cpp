@@ -92,27 +92,31 @@ float CrossProduct(const Vertex & v1, const Vertex & v2)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Creates the bounding box
     int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));     // Find the max x vertex by searching through the verticies of the triangle
     int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));     // Find the min x vertex by searching through the verticies of the triangle
     int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));     // Find the max y vertex by searching through the verticies of the triangle
     int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));     // Find the min y vertex by searching through the verticies of the triangle
-
-    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
-
+   
+    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    
     // loop through the space of the triangle
-    for (int y = minY; y <= maxY; y++)
+    for (int x = minX; x <= maxX; x++)
     {
-        for (int x = minX; x <= maxX; x++)
+        for (int y = minY; y <= maxY; y++)
         {
-            Vertex vt = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            Vertex q = {x - triangle[0].x, y - triangle[0].y};
+            
+            float s = CrossProduct(q, v2) / CrossProduct(v1, v2);
+            float t = CrossProduct(v1, q) / CrossProduct(v1, v2);
 
-            float a = CrossProduct(vt, v2) / CrossProduct(v1, v2);
-            float b = CrossProduct(v1, vt) / CrossProduct(v1, v2);
-
-            if ((a >= 0) && (b >= 0) && (a + b <= 1))
+            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            {
                 target[y][x] = attrs[0].color;
+                attrs->vertPoint = Vertex{x,y,1,1};
+                frag->FragShader(target[y][x], *attrs, *uniforms);      // Uses the fragment shader and call shader callback
+            }
         }
     }
 }
@@ -207,22 +211,23 @@ int main()
     FRAME_BUF = SDL_CreateRGBSurface(0, S_WIDTH, S_HEIGHT, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
-    BufferImage frame(FRAME_BUF);
+    BufferImage frame(FRAME_BUF);    
 
     // Draw loop 
     bool running = true;
     while(running) 
     {           
         // Handle user inputs
-        // processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        // clearScreen(frame);
+        clearScreen(frame);
 
         // Your code goes here
         // GameOfLife(frame);              // This will run the Game of Life
-        // TestDrawPixel(frame);
-        TestDrawTriangle(frame);
+        // TestDrawPixel(frame);           // This will draw a pixel 
+        // TestDrawTriangle(frame);        // This will draw a triangle
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

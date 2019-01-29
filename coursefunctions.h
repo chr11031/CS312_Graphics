@@ -1,5 +1,5 @@
 #include "definitions.h"
-
+#include "shaders.h"
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
@@ -289,18 +289,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        FragmentShader myColorFragShader(TriangleColorShader);
 
-        FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
-
         Attributes colorUniforms;
+
         // Your code for the uniform goes here, if any (don't pass NULL here)
+        for (int i = 0; i < 3; i++)
+                colorUniforms.vertPoints[i] = colorTriangle[i];
+
+        for (int i = 0; i < 3; i++)
+                colorUniforms.colors[i] = colors[i];
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
         /****************************************************
          * 2. Interpolated image triangle
-        ****************************************************/
+        ****************************************************/        
         Vertex imageTriangle[3];
         Attributes imageAttributes[3];
         imageTriangle[0] = {425, 112, 1, 1};
@@ -309,14 +314,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        BufferImage myImage("peng.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.image = &myImage;
+        for (int i = 0; i < 3; i++)
+                imageUniforms.vertPoints[i] = imageTriangle[i];
 
-        FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
+        FragmentShader myImageFragShader(TriangleImageShader);
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }

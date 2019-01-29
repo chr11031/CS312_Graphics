@@ -143,7 +143,6 @@ class Buffer2D
 class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
-        SDL_Surface* img;                   // Reference to the Surface in question
         bool ourSurfaceInstance = false;    // Do we need to de-allocate?
 
         // Private intialization setup
@@ -164,6 +163,7 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 
     public:
+        SDL_Surface* img;           // Reference to the Surface in question
         // Free dynamic memory
         ~BufferImage()
         {
@@ -225,13 +225,17 @@ class Attributes
     public:
         // Obligatory empty constructor
         Attributes() {}
+        PIXEL color;                
+        PIXEL colors[3];            // Obtains 3 colors for the Color Fragment Shader
+        Vertex vertPoint;           // Represents p in the barycentric coordinates
+        Vertex vertPoints[3];       // Used for the weights to find p
+        BufferImage *image;         // Pointer attribute for images
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-        PIXEL color;
 };	
 
 // Example of a fragment shader
@@ -239,6 +243,43 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/***************************************************
+ * GET_IMG_PIXEL
+ * Gets the pixels for the Image Fragment Shader
+ **************************************************/
+Uint32 getImgPixel(SDL_Surface *surface, int x, int y)
+{
+    int bpp = surface->format->BytesPerPixel;
+    Uint8 *ptr = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
+
+    switch (bpp)
+    {
+        case 1:
+            return *ptr;
+            break;
+
+        case 2:
+            return *(Uint16 *)ptr;
+            break;
+
+        case 3:
+            if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+                return ptr[0] << 16 | ptr[1] << 8 | ptr[2];
+            else
+                return ptr[0] | ptr[1] << 8 | ptr[2] << 16;
+            break;
+
+        case 4:
+            return *(Uint32 *)ptr;
+            break;
+            
+    
+        default:
+            return 0;
+            break;
+    }
 }
 
 /*******************************************************
