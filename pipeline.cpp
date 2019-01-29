@@ -79,9 +79,10 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms = NULL, FragmentShader* const frag = NULL)
 {
     // Get the max and min boundaries of the triangle
+
     int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
     int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
