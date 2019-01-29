@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -298,15 +299,34 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = (Vertex){450, 452, 1, 1};
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
+        
+        // chanign colors to floats
+        colorAttributes[0].attrValues[0] = 1.0;
+        colorAttributes[0].attrValues[1] = 0.0;
+        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].numValues = 3;
+
+        colorAttributes[1].attrValues[0] = 0.0;
+        colorAttributes[1].attrValues[1] = 1.0;
+        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].numValues = 3;
+
+        colorAttributes[2].attrValues[0] = 0.0;
+        colorAttributes[2].attrValues[1] = 0.0;
+        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[2].numValues = 3;
 
         FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = myBaryShader;
+        // myColorFragShader.setShader(myBaryShader);
         // Your code for the color fragment shader goes here
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
+
+        // take this out eventually
 
         /****************************************************
          * 2. Interpolated image triangle
@@ -317,16 +337,28 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = (Vertex){500, 252, 1, 1};
         imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        // texture coordinates
+        imageAttributes[0].attrValues[0] = 1;
+        imageAttributes[0].attrValues[1] = 0;
+        imageAttributes[0].numValues = 2;
+
+        imageAttributes[1].attrValues[0] = 1;
+        imageAttributes[1].attrValues[1] = 1;
+        imageAttributes[1].numValues = 2;
+
+        imageAttributes[2].attrValues[0] = 0;
+        imageAttributes[2].attrValues[1] = 1;
+        imageAttributes[2].numValues = 2;
+
+        static BufferImage myImage("checker.bmp"); // comment out deconstructor if there are issues
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.pointerImg = &myImage; // the address of my images
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = imageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
