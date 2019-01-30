@@ -85,11 +85,6 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
-            // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
-            {
-                free(grid[r]);
-            }
             free(grid);
         }
 
