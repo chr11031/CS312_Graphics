@@ -79,17 +79,9 @@ double computeDeterminant(double a, double b, double c, double d) {
  * *************************************/
 double interpolate(double area, double firstDet, double secondDet, double thirdDet, double colorAttr1, double colorAttr2, double colorAttr3)
 {
-    double component1 = (firstDet / area) * colorAttr1;
-    double component2 = (secondDet / area) * colorAttr2;
-    double component3 = (thirdDet / area) * colorAttr3;
-
-    // cout << "firstDet" << firstDet << endl;
-    // cout << "secondDet" << secondDet << endl;
-    // cout << "thirdDet" << thirdDet << endl;
-    // cout << "area: " << area << endl;
-    // cout << "color1: " << colorAttr1 << endl;
-    // cout << "color2: " << colorAttr2 << endl;
-    // cout << "color3: " << colorAttr3 << endl;
+    double component1 = (secondDet / area) * colorAttr1;
+    double component2 = (thirdDet / area) * colorAttr2;
+    double component3 = (firstDet / area) * colorAttr3;
 
     return component1 + component2 + component3;
 }
@@ -157,27 +149,8 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
             double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
             double thirdDet = computeDeterminant(thirdVect.x, x - triangle[2].x, thirdVect.y, y - triangle[2].y);
 
-            // cout << "firstDet: " << firstDet << endl;
-            // cout << "secondDet: " << secondDet << endl;
-            // cout << "thirdDet: " << thirdDet << endl;
-
             // Test if this point is in the triangle
-            if ((firstDet >= 0) && ((secondDet >= 0) && ((thirdDet >= 0)))) {
-                // Create RGB values in decimal form
-                // PIXEL r = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
-                // PIXEL g = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
-                // PIXEL b = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
-
-                // cout << "r " << r << endl;
-                // cout << "g " << g << endl;
-                // cout << "b " << b << endl;
-
-                // Put the rgb values into one color
-                // Attributes pointAttribute;
-                // pointAttribute.color = r * 255 & g * 255 & b * 255 & 0xffffffff;
-                //pointAttribute.color = r & b & g & 0xffffffff;
-                // cout << pointAttribute.color << endl;
-
+            if ((firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0)) {
                 // From Sample Class code
                 Attributes interpolatedAttributes;
                 interpolatedAttributes.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
@@ -185,7 +158,7 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 interpolatedAttributes.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
                 
                 // Set the attribute color by sending to fragShader
-                // frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
+                frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
                 
             }
         }
