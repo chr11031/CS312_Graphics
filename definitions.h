@@ -232,7 +232,41 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
     PIXEL color;
+
+    //Individual values
+    double r;
+    double g;
+    double b;
+    double u;
+    double v;
+
+    //Void pointer to an image
+    void * image;
 };	
+
+//Creates a color with the attributes sent to it
+void avgColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    //color base
+    PIXEL color = 0xFF000000;
+    //Adds the individual parts of the color value together.
+    color += (unsigned int)(vertAttr.r * 0xFF) << 16;
+    color += (unsigned int)(vertAttr.g * 0xFF) << 8;
+    color += (unsigned int)(vertAttr.b * 0xFF) << 0;
+
+    fragment = color;
+}
+
+//Finds the color corresponding to the u/v values.
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* buffer = (BufferImage*)uniforms.image;
+    int x = vertAttr.u * (buffer->width() - 1);
+    int y = vertAttr.v * (buffer->height() - 1);
+
+    fragment = (*buffer)[y][x];
+}
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
