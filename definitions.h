@@ -225,7 +225,7 @@ class Attributes
 {      
     public:
         PIXEL color;
-        // float weight;
+        // Individual red, green, blue, u and v variables to easier handle interpolation.
         double r;
         double g;
         double b;
@@ -250,6 +250,8 @@ class Attributes
         // }
 };	
 
+// My interpolation function. The determinants of each vertex is divided by the area and multiplied
+// with the specific color weights of each vertex.
 double interp(double area, double d1, double d2, double d3, double t1, double t2, double t3)
 {
     d1 /= area;
@@ -266,6 +268,7 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
+// Color fragment shader, which assigns a color to a pixel based on the color weights passed in.
 void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
@@ -276,6 +279,7 @@ void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = color;
 }
 
+// Image fragment shader, which draws an image over a rendered triangle.
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
