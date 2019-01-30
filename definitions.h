@@ -224,6 +224,13 @@ class Attributes
 {      
     public:
         PIXEL color;
+        //for r, g, b and u, v  colors and coordinates = cc but for now I only need 3 because they 
+        //get overwritten.
+        double cc[3];
+        // For image interpolation
+        double size = 3;
+        void* ptrImg;
+               
         // Obligatory empty constructor
         Attributes() {}
 
@@ -239,6 +246,36 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/*******************************************************************************************
+ * ImageFragShader
+ * takes uv coordinates and draws them to the fragment.
+********************************************************************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniform)
+{
+    BufferImage * imgPtr = (BufferImage*)uniform.ptrImg;
+
+    int x = vertAttr.cc[0] * (imgPtr->width() - 1);
+    int y = vertAttr.cc[1] * (imgPtr->height() - 1);
+
+    fragment = (*imgPtr)[y][x];
+}
+
+/*************************************************************************
+ * ColorFragShader
+ * use bit shifting to get individual colors and draw them to fragment.
+*******************************************************************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniform)
+{
+    PIXEL color = 0xff000000;
+
+    // adding colors, using bit shifting to effect only r, then g, then b values.
+    color += (unsigned int)(vertAttr.cc[0] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.cc[1] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.cc[2] * 0xff) << 0;
+
+    fragment = color;
 }
 
 /*******************************************************
