@@ -6,7 +6,7 @@ using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
- * Sets the screen to the indicated color valueBte
+ * Sets the screen to the indicated color value
  **********************************************/
 void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
 {
