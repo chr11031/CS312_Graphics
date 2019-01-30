@@ -80,42 +80,47 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Max x and y values for the triangle, and making sure we are in the scope of the window 
+    // Max and min x and y values for the triangle, and making sure we are in the scope of the window 
     int maxX = MIN(MAX3(triangle[0].x, triangle[1].x, triangle[2].x), S_WIDTH  - 1);
     int maxY = MIN(MAX3(triangle[0].y, triangle[1].y, triangle[2].y), S_HEIGHT - 1);
-
-    // Min x and y values for the triangle, and making sure we are in the scope of the window 
     int minX = MAX(MIN3(triangle[0].x, triangle[1].x, triangle[2].x), 0);
     int minY = MAX(MIN3(triangle[0].y, triangle[1].y, triangle[2].y), 0);
 
-    // The vertex of two of the sides of the triangle
-    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
-    Vertex temp;
+    // Compute first, second, third X-Y pairs
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    // Initalize the variable that we will use for the areas of the triangles
-    float a = 0.0;
-    float b = 0.0;
-    float c = 0.0;
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
 
-    // We have a box around where the triangle is so now we run though from the maxX to the minX
-    for (int x = minX; x <= maxX; x++)
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
     {
-        // We run though from the maxY to the minY for every X value
-        for (int y = minY; y <= maxY; y++)
+        for(int x = minX; x < maxX; x++)
         {
-            // Making the x and y values for the temp vartex
-            temp.x = x - triangle[0].x; 
-            temp.y = y - triangle[0].y;
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
-            // Computing the area for each triangle by doing the determinate
-            a = (v1.x * v2.y - v1.y * v2.x);
-            b = ((temp.x * v2.y - temp.y * v2.x) / a);
-            c = ((v1.x * temp.y - v1.y * temp.x) / a);
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+                target[(int)y][(int)x] = attrs[0].color;
 
-            // If we are in the triangle we color in the pixel
-            if ((b >= 0) && (c >= 0) && ((b + c) <= 1))
-                target[y][x] = attrs[0].color;
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs;
+                interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
 
         }
     }
@@ -212,7 +217,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
-
+ 
     // Draw loop 
     bool running = true;
     while(running) 
@@ -224,7 +229,11 @@ int main()
         clearScreen(frame);
 
         // Draws the triangle
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+
+
+
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

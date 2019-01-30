@@ -21,6 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -225,6 +227,14 @@ class Attributes
     public:
         PIXEL color;
 
+        double u;
+        double v;
+        void* ptrImg;
+
+        double r;
+        double b;
+        double g;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -234,6 +244,28 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 };	
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader 
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -326,6 +358,31 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);       
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & V1x, const double & V2x, const double & V1y, const double & V2y)
+{
+  return (V1x*V2y - V1y*V2x);
+}
+
+/****************************************************
+ * Interpolation
+ *  
+ * *****************************************************/
+double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
+{
+    //Finding where the point is in the traingle and how much color is in each part
+    firstDet /= areaTriangle;
+    secndDet /= areaTriangle;
+    thirdDet /= areaTriangle;
+
+    return (firstDet * attrs1) + (secndDet * attrs2) + (thirdDet * attrs3);
+
+}
        
 #endif
