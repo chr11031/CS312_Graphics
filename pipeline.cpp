@@ -85,7 +85,7 @@ inline int determinant(int a, int b, int c, int d)
 // Find the value of a point based on the vertices
 double interpolate(int area, int det[3], double attr0, double attr1, double attr2)
 {
-    // det / area * attr
+    // determinant * attribute / area
     double value = 0;
     value += det[0] * attr0;
     value += det[1] * attr1;

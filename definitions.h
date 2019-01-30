@@ -234,6 +234,9 @@ class Attributes
         double g;
         double b;
 
+        // Other attributes
+        double other[16];
+
         // Obligatory empty constructor
         Attributes() {}
 
