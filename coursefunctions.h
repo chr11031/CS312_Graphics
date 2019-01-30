@@ -323,7 +323,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].u = coordinates[2][0];
         imageAttributes[2].v = coordinates[2][1];
 
-        static BufferImage myImage("../Assets/optimusprimehead.bmp");
+        //static is ultra necessary
+        static BufferImage myImage("Assets/optimusprimehead.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
