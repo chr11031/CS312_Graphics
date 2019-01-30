@@ -3,6 +3,10 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
+#include <iostream>
+using namespace std;
+
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -225,17 +229,20 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        PIXEL color;
-        
-        //
+        //coordinates.
         double u;
         double v;
-        void* ptrImg;
 
         //add RGB values.
         double r;
         double g;
         double b; 
+
+        //pointer for image buffer
+        void* ptrImg;
+
+        //classic color pixel value
+        PIXEL color;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -246,7 +253,7 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
-        //For out RGB values
+        //Set the RGB values of pixel the attributes class using doubles.
         void setRGB(double R, double G, double B)
         {
             this->r = R;
@@ -254,6 +261,72 @@ class Attributes
             this->b = B;
         }
 
+        //Set the RGB values of the pixel attributes class using color codes.
+        void setRGB(Uint32 R, Uint32 G, Uint32 B)
+        {
+            this->r = (double)R;
+            this->g = (double)G;
+            this->b = (double)B;
+        }
+
+        /*Vector must have values in form R G B U V*/
+        void setRGBUV(vector<double> &vect)
+        {
+            if(vect.size() != 4)
+            {
+                cout << "The vector is not of a valid size, check you values" << endl;
+            } 
+            else
+            {
+                //This is not what a normalize vector does! But it helps to get an idea of how to manage vectors.
+                this->setRGB(vect[0],vect[1],vect[2]);
+                this->setUV(vect[3], vect[4]);
+            }
+            
+        }
+
+        //Set the U V values for the pixel attributes.
+        void setUV(double U, double V)
+        {
+            this->u = U;
+            this->v = V;
+        }
+
+        //Set Image data with a 2D Buffered Image.
+        void setImageData(BufferImage myImage)
+        {
+            this->ptrImg = &myImage;
+        }
+
+        void setFogCoord(double fogCoord)
+        {
+            //Your code goes here
+        }
+
+        void setCustomAttributes()
+        {
+            //Your code goes here
+        }
+
+        void setTransofmations(vector<double> &transformationMatrix)
+        {
+            //Your code goes here
+        }
+
+        void setLightSourceInfo(double light)
+        {
+            //Your code goes here
+        }
+
+        void mouseInfo(int x, int y)
+        {
+            //Your code goes here
+        }
+
+        void time(double time)
+        {
+            //Your code goes here
+        }
         
 };	
 

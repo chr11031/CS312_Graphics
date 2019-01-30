@@ -293,6 +293,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorAttributes[2].setRGB(0.0,0.0,1.0);
 
         Attributes defaultUniforms;
+        //No need for any changes here.
 
         // Your code for the color fragment shader goes here
         FragmentShader myColorFragShader;
@@ -302,9 +303,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         Attributes colorUniforms;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-
-
         //to test the first triangle.
+        //return;
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -314,14 +314,11 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = (Vertex){500, 252, 1, 1};
         imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
 
-        imageAttributes[0].u = coordinates[1][0];
-        imageAttributes[0].v = coordinates[1][1];
-        imageAttributes[1].u = coordinates[0][0];
-        imageAttributes[1].v = coordinates[0][1];
-        imageAttributes[2].u = coordinates[2][0];
-        imageAttributes[2].v = coordinates[2][1];
+        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].setUV(coordinates[1][0], coordinates[1][1]);
+        imageAttributes[1].setUV(coordinates[0][1], coordinates[0][1]);
+        imageAttributes[2].setUV(coordinates[2][0], coordinates[2][1]);
 
         //static is ultra necessary
         static BufferImage myImage("Assets/optimusprimehead.bmp");
@@ -370,7 +367,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("Assets/checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
