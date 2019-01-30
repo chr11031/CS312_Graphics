@@ -79,6 +79,8 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
+
+            return;
             // De-Allocate pointers for column references
             for(int r = 0; r < h; r++)
             {
@@ -226,14 +228,65 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
 
-        PIXEL color;
+        // Brother Christenson said that this the arrtibutes class will only need a 
+        // maximum of 16 different attributes. With the pointer to the image I've accounted
+        // for even more.
+        double variables[16];
+
+        // For interpolating data from an image. This is the pointer to that image.
+        void* ptrImg;
+
+        Attributes(Vertex * colorTriangle, Vertex point)
+        {
+
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+
+        PIXEL  color;
 };	
+
+/*****************************************
+ * Color Fragment Shader
+ * Feed in the RGB color values and 
+ * bit shift to fill the appropriate color channel
+ * ***************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output the interpolated attribute color 
+    PIXEL color = 0xff000000;
+
+    // add the colors and bit shift to fill the correct color channel for that color
+    color += (unsigned int)(vertAttr.variables[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.variables[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.variables[2] *0xff) << 0;
+
+    // Color the fragment
+    fragment = color;
+
+
+};
+
+/*****************************************
+ * Shade the pizel from the uv coordinates of 
+ * an image. Each Pixel will be filled with the 
+ * color of that pixel from the associated uv coordinate.
+ * ***************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.variables[0] * (bf->width()-1);
+    int y = vertAttr.variables[1] * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+
+
+};
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

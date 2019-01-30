@@ -66,7 +66,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 {
     // Your code goes here
     // Set our pixel according to the attribute value!   
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].variables[0];
 }
 
 /****************************************
@@ -86,6 +86,25 @@ int crossProduct(int v1x, int v1y, int v2x, int v2y)
     return v1x * v2y - v1y * v2x;
 }
 
+double interp(double x, double y, Vertex* const triangle, double attr1, double attr2, double attr3){
+    
+    double wv1;
+    double wv2;
+    double wv3;
+    
+    wv1 = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y))/
+    ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y)); 
+
+    wv2 = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y))/
+    ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y)); 
+
+    wv3 = 1 - (wv1 + wv2);
+
+    return attr1 * wv1 + attr2 * wv2 + attr3 * wv3;
+
+
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -93,10 +112,10 @@ int crossProduct(int v1x, int v1y, int v2x, int v2y)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
-    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
+
+    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].variables[0];
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].variables[0];
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].variables[0];
 
 
     /* get the bounding box of the triangle */
@@ -122,8 +141,16 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if ( (s >= 0) && (t >= 0) && (s + t <= 1))
             { 
                 /* inside triangle */
-                Vertex q = {x,y};
-                DrawPrimitive(POINT,target,&q,attrs);
+
+                Attributes interpolatedAttrs;
+
+                interpolatedAttrs.variables[0] = interp(x,y,triangle,attrs[0].variables[0],attrs[1].variables[0],attrs[2].variables[0]);
+                interpolatedAttrs.variables[1] = interp(x,y,triangle,attrs[0].variables[1],attrs[1].variables[1],attrs[2].variables[1]);
+                interpolatedAttrs.variables[2] = interp(x,y,triangle,attrs[0].variables[2],attrs[1].variables[2],attrs[2].variables[2]);
+
+                frag->FragShader(target[y][x],interpolatedAttrs,*uniforms);
+
+
             }
         }
     } 
@@ -233,7 +260,7 @@ int main()
 
         // Your code goes here
         // TestDrawPixel(frame);
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         //GameOfLife(frame);
 
