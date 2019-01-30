@@ -83,6 +83,14 @@ double interpolate(double area, double firstDet, double secondDet, double thirdD
     double component2 = (secondDet / area) * colorAttr2;
     double component3 = (thirdDet / area) * colorAttr3;
 
+    // cout << "firstDet" << firstDet << endl;
+    // cout << "secondDet" << secondDet << endl;
+    // cout << "thirdDet" << thirdDet << endl;
+    // cout << "area: " << area << endl;
+    // cout << "color1: " << colorAttr1 << endl;
+    // cout << "color2: " << colorAttr2 << endl;
+    // cout << "color3: " << colorAttr3 << endl;
+
     return component1 + component2 + component3;
 }
 
@@ -140,7 +148,6 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
         1
     };
 
-    // float area = (triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y);
     double area = computeDeterminant(firstVect.x, -thirdVect.x, firstVect.y, -thirdVect.y);
 
     for (int y = minY; y <= maxY; y++) {
@@ -150,8 +157,12 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
             double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
             double thirdDet = computeDeterminant(thirdVect.x, x - triangle[2].x, thirdVect.y, y - triangle[2].y);
 
+            // cout << "firstDet: " << firstDet << endl;
+            // cout << "secondDet: " << secondDet << endl;
+            // cout << "thirdDet: " << thirdDet << endl;
+
             // Test if this point is in the triangle
-            if ((firstDet >= 0) && ((secondDet >= 0) && (thirdDet >= 0) && ((firstDet + secondDet) <= 1))) {
+            if ((firstDet >= 0) && ((secondDet >= 0) && ((thirdDet >= 0)))) {
                 // Create RGB values in decimal form
                 // PIXEL r = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
                 // PIXEL g = bary1 * 255.0 + bary2 * 255.0 + bary3 * 255.0;
@@ -174,7 +185,7 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 interpolatedAttributes.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
                 
                 // Set the attribute color by sending to fragShader
-                frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
+                // frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
                 
             }
         }
