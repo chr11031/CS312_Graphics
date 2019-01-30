@@ -233,15 +233,11 @@ class Attributes
         }
     PIXEL color;
 
-    //Individual values
-    double r;
-    double g;
-    double b;
-    double u;
-    double v;
-
-    //Void pointer to an image
-    void * image;
+    //array of doubles for value and the number in the instance.
+    double values[5];
+    int numValues;
+    //Void pointer that can be cast to an image or other value.
+    void * pointer;
 };	
 
 //Creates a color with the attributes sent to it
@@ -250,9 +246,9 @@ void avgColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Att
     //color base
     PIXEL color = 0xFF000000;
     //Adds the individual parts of the color value together.
-    color += (unsigned int)(vertAttr.r * 0xFF) << 16;
-    color += (unsigned int)(vertAttr.g * 0xFF) << 8;
-    color += (unsigned int)(vertAttr.b * 0xFF) << 0;
+    color += (unsigned int)(vertAttr.values[0] * 0xFF) << 16;
+    color += (unsigned int)(vertAttr.values[1] * 0xFF) << 8;
+    color += (unsigned int)(vertAttr.values[2] * 0xFF) << 0;
 
     fragment = color;
 }
@@ -260,9 +256,9 @@ void avgColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Att
 //Finds the color corresponding to the u/v values.
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* buffer = (BufferImage*)uniforms.image;
-    int x = vertAttr.u * (buffer->width() - 1);
-    int y = vertAttr.v * (buffer->height() - 1);
+    BufferImage* buffer = (BufferImage*)uniforms.pointer;
+    int x = vertAttr.values[0] * (buffer->width() - 1);
+    int y = vertAttr.values[1] * (buffer->height() - 1);
 
     fragment = (*buffer)[y][x];
 }

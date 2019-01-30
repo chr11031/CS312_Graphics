@@ -251,16 +251,20 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+        
         colorAttributes[0].color=colors[0];
-        colorAttributes[0].r = 1.0;
-        colorAttributes[0].g = 0.0;
-        colorAttributes[0].b = 0.0;
-        colorAttributes[1].r = 0.0;
-        colorAttributes[1].g = 1.0;
-        colorAttributes[1].b = 0.0;
-        colorAttributes[2].r = 0.0;
-        colorAttributes[2].g = 0.0;
-        colorAttributes[2].b = 1.0;
+        colorAttributes[0].values[0] = 1.0;
+        colorAttributes[0].values[1] = 0.0;
+        colorAttributes[0].values[2] = 0.0;
+        colorAttributes[1].values[0] = 0.0;
+        colorAttributes[1].values[1] = 1.0;
+        colorAttributes[1].values[2] = 0.0;
+        colorAttributes[2].values[0] = 0.0;
+        colorAttributes[2].values[1] = 0.0;
+        colorAttributes[2].values[2] = 1.0;
+        for (int i = 0; i < 3; i++)
+            colorAttributes[i].numValues = 3;
+
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = avgColorFragShader;
@@ -279,18 +283,20 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        imageAttributes[0].u = 1;
-        imageAttributes[0].v = 0;
-        imageAttributes[1].u = 1;
-        imageAttributes[1].v = 1;
-        imageAttributes[2].u = 0;
-        imageAttributes[2].v = 1;
+        imageAttributes[0].values[0] = 1;
+        imageAttributes[0].values[1] = 0;
+        imageAttributes[1].values[0] = 1;
+        imageAttributes[1].values[1] = 1;
+        imageAttributes[2].values[0] = 0;
+        imageAttributes[2].values[1] = 1;
+        for (int i = 0; i < 3; i++)
+            imageAttributes[i].numValues = 2;
 
         //Greatest album of all time
         BufferImage myImage("best.bmp");
         
         Attributes imageUniforms;
-        imageUniforms.image = &myImage;
+        imageUniforms.pointer = &myImage;
 
         FragmentShader myImageFragShader;
         myImageFragShader.FragShader = imageFragShader;

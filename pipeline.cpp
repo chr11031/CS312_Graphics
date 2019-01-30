@@ -120,7 +120,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
         for(int y = miny; y <= maxy; y++)
         {
             //As much as I liked the praise for only doing 3 determinant calculations
-            //per pixel, I need all 3 to interpolate properly.
+            //per pixel, I need all 3 to interpolate properly. This also fixed the jagged
+            //edges on my triangles.
             double deta = Determinant(vx, vy, x - triangle[0].x, y - triangle[0].y);
             double detb = Determinant(wx, wy, x - triangle[1].x, y - triangle[1].y);
             double detc = Determinant(ux, uy, x - triangle[2].x, y - triangle[2].y);
@@ -130,13 +131,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 //for if just sent empty pixels.
                 target[y][x] = attrs[0].color;
                 Attributes newattribs;
-
+                newattribs.numValues= attrs[0].numValues;
                 //interpolates attributes (may clean up later)
-                newattribs.r = interpolate(area, deta, detb, detc, attrs[0].r, attrs[1].r, attrs[2].r);
-                newattribs.b = interpolate(area, deta, detb, detc, attrs[0].b, attrs[1].b, attrs[2].b);
-                newattribs.g = interpolate(area, deta, detb, detc, attrs[0].g, attrs[1].g, attrs[2].g);
-                newattribs.u = interpolate(area, deta, detb, detc, attrs[0].u, attrs[1].u, attrs[2].u);
-                newattribs.v = interpolate(area, deta, detb, detc, attrs[0].v, attrs[1].v, attrs[2].v);
+                for (int i = 0; i < newattribs.numValues; i++)
+                    newattribs.values[i] = interpolate(area, deta, detb, detc, attrs[0].values[i], attrs[1].values[i], attrs[2].values[i]);
 
                 //sends the new attributes to the fragment shader
                 frag->FragShader(target[y][x], newattribs, *uniforms);
