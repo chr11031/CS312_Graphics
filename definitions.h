@@ -80,11 +80,7 @@ class Buffer2D
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
-            {
-                free(grid[r]);
-            }
-            free(grid);
+            //free(grid);
         }
 
         // Size-Specified constructor, no data
@@ -155,11 +151,11 @@ class BufferImage : public Buffer2D<PIXEL>
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
 
             PIXEL* row = (PIXEL*)img->pixels;
-            row += (w*h);
+            row = &row[w*h];
             for(int i = 0; i < h; i++)
             {
                 grid[i] = row;
-                row -= w;                    
+                row -= (img->pitch/sizeof(PIXEL));                    
             }
         }
 
@@ -207,9 +203,12 @@ class BufferImage : public Buffer2D<PIXEL>
             ourSurfaceInstance = true;
             SDL_Surface* tmp = SDL_LoadBMP(path);      
             SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
+
+            PIXEL pix = ((PIXEL*)tmp->pixels)[0];
+
             img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
+            //SDL_FreeSurface(tmp);
+            //SDL_FreeFormat(format);
             setupInternal();
         }
 };
@@ -231,8 +230,45 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-        PIXEL color;
+
+        // Here we declare an array of vars to be interpolated however we like. 16 is more than enough.
+        float vars[16];
+
+        // Here we have a void pointer to be used how we wish. Most likely to be used for a buffer image.
+        void* ptr;
 };	
+
+void GreenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) 
+{   
+    PIXEL color = ((int)vertAttr.vars[0] << 24) + ((int)vertAttr.vars[1] << 16) + ((int)vertAttr.vars[2] << 8) + (vertAttr.vars[3]);
+    fragment = color & 0xff00ff00;
+}
+
+void GrayScaleFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) 
+{   
+    PIXEL color = ((int)vertAttr.vars[0] << 24) + ((int)vertAttr.vars[1] << 16) + ((int)vertAttr.vars[2] << 8) + ((int)vertAttr.vars[3]);
+    int r = (color >> 16) & 0x000000ff;
+    int g = (color >> 8) & 0x000000ff;
+    int b = (color) & 0x000000ff;
+
+    int avgChannel = (r + g + b) / 3;
+    fragment = 0xff00ff00 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
+}
+
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = 0xff000000 | ((int)vertAttr.vars[0] << 16) | ((int)vertAttr.vars[1] << 8) | (int)vertAttr.vars[2];
+}
+
+void imgFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptr;
+    int x = vertAttr.vars[0] * (bf->width()-1);
+    int y = vertAttr.vars[1] * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
