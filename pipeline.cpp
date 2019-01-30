@@ -153,13 +153,15 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
             if ((firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0)) {
                 // From Sample Class code
                 Attributes interpolatedAttributes;
-                interpolatedAttributes.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttributes.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttributes.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
+                interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
+                interpolatedAttributes.values[2] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[2], attrs[1].values[2], attrs[2].values[2]);
+
+                interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
+                interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
                 
                 // Set the attribute color by sending to fragShader
                 frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
-                
             }
         }
     }
