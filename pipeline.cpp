@@ -169,13 +169,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
               Attributes interpolatedAttribs;
               //Color attributes for the color triangle. Finding the interpolation for that color to know how much of each
-              interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-              interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-              interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+              interpolatedAttribs.newColor[0] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[0], attrs[1].newColor[0], attrs[2].newColor[0]);
+              interpolatedAttribs.newColor[1] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[1], attrs[1].newColor[1], attrs[2].newColor[1]);
+              interpolatedAttribs.newColor[2] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[2], attrs[1].newColor[2], attrs[2].newColor[2]);
 
               //Color attributes for the picture triangle
-              interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[1].u);
-              interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[1].v);
+              interpolatedAttribs.newColor[3] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[3], attrs[1].newColor[3], attrs[1].newColor[3]);
+              interpolatedAttribs.newColor[4] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[4], attrs[1].newColor[4], attrs[1].newColor[4]);
 
               //calling to the fragment shader of either the color or picture triangle. 
               frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
