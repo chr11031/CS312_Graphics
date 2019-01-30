@@ -23,6 +23,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_Key 0
+#define Y_Key 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -152,6 +154,7 @@ class BufferImage : public Buffer2D<PIXEL>
         void setupInternal()
         {
             // Allocate pointers for column references
+            
             h = img->h;
             w = img->w;
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
@@ -228,12 +231,43 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
         PIXEL color;
+        
+        double u;
+        double v;
+        void* ptrImg;
+
+        double r;
+        double b;
+        double g;
+
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+};
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int x = vertAttr.u * (ptr->width()-1);
+    int y = vertAttr.v * (ptr->height()-1);
+
+    fragment = (*ptr)[y][x];
+
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
