@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "shaders.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -227,9 +228,11 @@ class Attributes
 
         // Obligatory empty constructor
         Attributes() {}
+         // Used for the color of the point or u=a v=r
+        double argb[4];
+        // For now points to the image, but can later point to other assets
+        void* ptr;
 
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        PIXEL color;
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented

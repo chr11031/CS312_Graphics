@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -221,7 +222,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
         // Your Code goes here for 'pointAttributes'
-        pointAttributes.color = color;       
+        pointAttributes.argb[1] = 1;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -239,11 +240,11 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
-        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors1[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
-        attr[1].color = colors1[1];
-        attr[2].color = colors1[2];
+        //attr[0].color = colors1[0];
+        //attr[1].color = colors1[1];
+        //attr[2].color = colors1[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -252,9 +253,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {250, 362, 1, 1};
         PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
-        attr[0].color = colors2[0];
-        attr[1].color = colors2[1];
-        attr[2].color = colors2[2];
+        //attr[0].color = colors2[0];
+        //attr[1].color = colors2[1];
+        //attr[2].color = colors2[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -263,9 +264,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {350, 402, 1, 1};
         PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
-        attr[0].color = colors3[0];
-        attr[1].color = colors3[1];
-        attr[2].color = colors3[2];
+        //attr[0].color = colors3[0];
+        //attr[1].color = colors3[1];
+        //attr[2].color = colors3[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -274,9 +275,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {150, 162, 1, 1};
         PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
-         attr[0].color = colors4[0];
-        attr[1].color = colors4[1];
-        attr[2].color = colors4[2];
+        //attr[0].color = colors4[0];
+        //attr[1].color = colors4[1];
+        //attr[2].color = colors4[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -285,9 +286,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
-         attr[0].color = colors5[0];
-        attr[1].color = colors5[1];
-        attr[2].color = colors5[2];
+        //attr[0].color = colors5[0];
+        //attr[1].color = colors5[1];
+        //attr[2].color = colors5[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -296,9 +297,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[2] = {470, 252, 1, 1};
         PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
-         attr[0].color = colors6[0];
-        attr[1].color = colors6[1];
-        attr[2].color = colors6[2];
+        //attr[0].color = colors6[0];
+        //attr[1].color = colors6[1];
+        //attr[2].color = colors6[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -320,12 +321,22 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].argb[1] = 1.0;
+        colorAttributes[0].argb[2] = 0.0;
+        colorAttributes[0].argb[3] = 0.0;
+
+        colorAttributes[1].argb[1] = 0.0;
+        colorAttributes[1].argb[2] = 1.0;
+        colorAttributes[1].argb[3] = 0.0;
+
+        colorAttributes[2].argb[1] = 0.0;
+        colorAttributes[2].argb[2] = 0.0;
+        colorAttributes[2].argb[3] = 1.0;
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragmentShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
@@ -339,15 +350,26 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].argb[0] = 1;
+        imageAttributes[0].argb[1] = 0;
 
-        BufferImage myImage("image.bmp");
+        imageAttributes[1].argb[0] = 1;
+        imageAttributes[1].argb[1] = 1;
+
+        imageAttributes[2].argb[0] = 0;
+        imageAttributes[2].argb[1] = 1;
+
+        BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+         imageUniforms.ptr = &myImage;
 
         FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
+        FragmentShader myImageFragShader(ImageFragmentShader);
+        myImageFragShader.FragShader = ImageFragmentShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
