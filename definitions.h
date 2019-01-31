@@ -227,13 +227,12 @@ class Attributes
     public:
         PIXEL color;
 
-        double u;
-        double v;
+        // Bit map information
+        double coor[2] = {0.0, 0.0};
         void* ptrImg;
 
-        double r;
-        double b;
-        double g;
+        // Colors information
+        double col[3] = {0.0, 0.0, 0.0};
 
         // Obligatory empty constructor
         Attributes() {}
@@ -243,14 +242,74 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Getters
+        // Colors
+        double getRed() const {
+            return col[0];
+        }
+
+        double getGreen() const {
+            return col[1];
+        }
+
+        double getBlue() const {
+            return col[2];
+        }
+
+        // Bitmap coor
+        double getBU() const {
+            return coor[0];
+        }
+
+        double getBV() const {
+            return coor[1];
+        }
+
+        // Setters
+        // Colors
+        void setRed(double value) {
+            col[0] = value;
+        }
+
+        void setGreen(double value) {
+            col[1] = value;
+        }
+
+        void setBlue(double value) {
+            col[2] = value;
+        }
+
+        void setColor(double r, double g, double b) {
+            setRed(r);
+            setGreen(g);
+            setBlue(b);
+        }
+
+        // Bitmap coor
+        void setBU(double u) {
+            coor[0] = u;
+        }
+
+        void setBV(double v) {
+            coor[1] = v;
+        }
+
+        void setCoor(double u, double v) {
+            setBU(u);
+            setBV(v);
+        }
+
 };	
 
 // Image Fragment Shader 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
+    // Creats a buffer for the image
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (bf->width()-1);
-    int y = vertAttr.v * (bf->height()-1);
+
+    int x = vertAttr.getBU() * (bf->width()-1);
+    int y = vertAttr.getBV() * (bf->height()-1);
 
     fragment = (*bf)[y][x];
 }
@@ -260,9 +319,11 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.r *0xff) << 16;
-    color += (unsigned int)(vertAttr.g *0xff) << 8;
-    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+
+    color += (unsigned int)(vertAttr.getRed() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getGreen() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getBlue() *0xff) << 0;
 
     fragment = color;
 }
@@ -363,26 +424,23 @@ void DrawPrimitive(PRIMITIVES prim,
 /****************************************
  * DETERMINANT
  * Find the determinant of a matrix with
- * components A, B, C, D from 2 vectors.
+ * X, Y components from 2 vectors.
  ***************************************/
 inline double determinant(const double & V1x, const double & V2x, const double & V1y, const double & V2y)
 {
-  return (V1x*V2y - V1y*V2x);
+  return ((V1x * V2y) - (V1y * V2x));
 }
 
 /****************************************************
  * Interpolation
- *  
+ *  Finds the point on the triangle
+ *  Then figgures out the color value based off of the 
+ *  attributes and 
  * *****************************************************/
-double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
+double interp(double area, double *det, double attrs1, double attrs2, double attrs3)
 {
-    //Finding where the point is in the traingle and how much color is in each part
-    firstDet /= areaTriangle;
-    secndDet /= areaTriangle;
-    thirdDet /= areaTriangle;
-
-    return (firstDet * attrs1) + (secndDet * attrs2) + (thirdDet * attrs3);
-
+    return ((det[0] / area) * attrs1) + ((det[1] / area) * attrs2) + ((det[2] / area) * attrs3);
 }
        
+
 #endif
