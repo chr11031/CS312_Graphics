@@ -252,26 +252,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        colorAttributes[0].color = colors[0]; colorAttributes[1].color = colors[1]; colorAttributes[2].color = colors[2]; 
 
-/*        double color0[] = {1.0, 0.0, 0.0};
-        double color1[] = {0.0, 1.0, 0.0};
-        double color2[] = {0.0, 0.0, 1.0};
-        colorAttributes[0].colorAttr = color0;
-        colorAttributes[1].colorAttr = color1;
-        colorAttributes[2].colorAttr = color2;*/
-
-        colorAttributes[0].r = 1.0;
-        colorAttributes[0].g = 0.0;
-        colorAttributes[0].b = 0.0;
-        colorAttributes[1].r = 0.0;
-        colorAttributes[1].g = 1.0;
-        colorAttributes[1].b = 0.0;
-        colorAttributes[2].r = 0.0;
-        colorAttributes[2].g = 0.0;
-        colorAttributes[2].b = 1.0;
-
-/*        colorAttributes[0].colorAttr.push_back(1.0);
+        colorAttributes[0].colorAttr.push_back(1.0);
         colorAttributes[0].colorAttr.push_back(0.0);
         colorAttributes[0].colorAttr.push_back(0.0);
         colorAttributes[0].colorAttr.shrink_to_fit();
@@ -282,16 +264,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorAttributes[2].colorAttr.push_back(0.0);
         colorAttributes[2].colorAttr.push_back(0.0);
         colorAttributes[2].colorAttr.push_back(1.0);
-        colorAttributes[2].colorAttr.shrink_to_fit();*/
-
-        // Your color code goes here for 'colorAttributes'
+        colorAttributes[2].colorAttr.shrink_to_fit();
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
-        // Your code for the color fragment shader goes here
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
@@ -304,25 +282,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        imageAttributes[0].u = 1;
-        imageAttributes[0].v = 0;
-        imageAttributes[1].u = 1;
-        imageAttributes[1].v = 1;
-        imageAttributes[2].u = 0;
-        imageAttributes[2].v = 1;
-
-        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.push_back(0);
+        imageAttributes[0].colorAttr.shrink_to_fit();
+        imageAttributes[1].colorAttr.push_back(1);
+        imageAttributes[1].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.shrink_to_fit();
+        imageAttributes[2].colorAttr.push_back(0);
+        imageAttributes[2].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.shrink_to_fit();
 
         BufferImage myImage("foothills.bmp"); //TODO find an image of 24bit
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         imageUniforms.ptrImg = &myImage;
-        // Your code for the uniform goes here
 
         FragmentShader myImageFragShader;
         myImageFragShader.FragShader = ImageFragShader;
-        // Your code for the image fragment shader goes here*/
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }

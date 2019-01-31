@@ -227,17 +227,9 @@ class Attributes
 {   
     public:
         PIXEL color;
-        double r;
-        double g;
-        double b;
-
-        double u;
-        double v;
         void* ptrImg;
 
         vector<double> colorAttr;
-        //double colorAttr[];
-        //double* colorAttr;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -257,13 +249,13 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
-/* his code */
+/* creating a full color from rgb parts*/
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
-    color += (unsigned int) (vertAttr.r *0xff) << 16;
-    color += (unsigned int) (vertAttr.g *0xff) << 8;
-    color += (unsigned int) (vertAttr.b *0xff) << 0;
+    color += (unsigned int) (vertAttr.colorAttr[0] *0xff) << 16;
+    color += (unsigned int) (vertAttr.colorAttr[1] *0xff) << 8;
+    color += (unsigned int) (vertAttr.colorAttr[2] *0xff) << 0;
     fragment = color;
 }
 
@@ -271,8 +263,8 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     PIXEL color;
     BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (ptr->width()-1);
-    int y = vertAttr.v * (ptr->height()-1);
+    int x = vertAttr.colorAttr[0] * (ptr->width()-1);
+    int y = vertAttr.colorAttr[1] * (ptr->height()-1);
     fragment = (*ptr)[y][x];
 }
 
