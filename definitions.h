@@ -237,20 +237,9 @@ class Attributes
         }
 
         // Use a map to store the values needed for the attributes. 
-        // This could be made private later with getters and setters to help.
+        // TODO: This could be made private later with getters and setters to help.
         std::map<char, double> var;
-
-        // // RGB variables
-        // double r;
-        // double g;
-        // double b;
-        
-        // // UV and image pointer variables
-        // double u;
-        // double v;
         void* ptrImg; // A pointer for the image
-
-        //PIXEL color;  // The color of the point in question
 };	
 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

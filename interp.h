@@ -16,7 +16,9 @@ double interp(const double areaTriangle,
 {
     // This follows the equation in the reading. 
     // The order of the attr's is important so it matches up to the 
-    // CCW order displayed in the slides. 
+    //  CCW order displayed in the slides. This was done by changing the 
+    //  order to see which way made the image sit upright instead of upside-down.
+    //  After that it was easy to see why it made sense in comparison to the slides.
     return (((firstDet / areaTriangle) * attr3) + 
             ((secndDet / areaTriangle) * attr1) + 
             ((thirdDet / areaTriangle) * attr2));
