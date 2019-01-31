@@ -1,18 +1,19 @@
 #include "definitions.h"
 #include "coursefunctions.h"
 #include <cmath>
+#include "interp.h"
 
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
  **********************************************/
-void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
+void clearScreen(Buffer2D<PIXEL> &frame, PIXEL color = 0xff000000)
 {
     int h = frame.height();
     int w = frame.width();
-    for(int y = 0; y < h; y++)
+    for (int y = 0; y < h; y++)
     {
-        for(int x = 0; x < w; x++)
+        for (int x = 0; x < w; x++)
         {
             frame[y][x] = color;
         }
@@ -23,7 +24,7 @@ void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
  * UPDATE_SCREEN
  * Blits pixels from RAM to VRAM for rendering.
  ***********************************************************/
-void SendFrame(SDL_Texture* GPU_OUTPUT, SDL_Renderer * ren, SDL_Surface* frameBuf) 
+void SendFrame(SDL_Texture *GPU_OUTPUT, SDL_Renderer *ren, SDL_Surface *frameBuf)
 {
     SDL_UpdateTexture(GPU_OUTPUT, NULL, frameBuf->pixels, frameBuf->pitch);
     SDL_RenderClear(ren);
@@ -36,18 +37,18 @@ void SendFrame(SDL_Texture* GPU_OUTPUT, SDL_Renderer * ren, SDL_Surface* frameBu
  * Updates the state of the application based on:
  * keyboard, mouse, touch screen, gamepad inputs. 
  ************************************************************/
-void processUserInputs(bool & running)
+void processUserInputs(bool &running)
 {
     SDL_Event e;
     int mouseX;
     int mouseY;
-    while(SDL_PollEvent(&e)) 
+    while (SDL_PollEvent(&e))
     {
-        if(e.type == SDL_QUIT) 
+        if (e.type == SDL_QUIT)
         {
             running = false;
         }
-        if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) 
+        if (e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN)
         {
             running = false;
         }
@@ -59,7 +60,7 @@ void processUserInputs(bool & running)
  * Take two vectors and find their cross 
  * product.
  ***************************************/
-float crossProduct(const Vertex & vert1, const Vertex & vert2)
+float crossProduct(const Vertex &vert1, const Vertex &vert2)
 {
     return (vert1.x * vert2.y) - (vert1.y * vert2.x);
 }
@@ -69,19 +70,155 @@ float crossProduct(const Vertex & vert1, const Vertex & vert2)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> &target, Vertex *v, Attributes *attrs, Attributes *const uniforms, FragmentShader *const frag)
 {
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].var.at('c');
 }
 
 /****************************************
  * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawLine(Buffer2D<PIXEL> &target, Vertex *const triangle, Attributes *const attrs, Attributes *const uniforms, FragmentShader *const frag)
 {
     // Your code goes here
+}
+
+/****************************************
+ * DRAW_TRIANGLE_SCANLINES
+ *
+ * Renders a triangle/convex polygon
+ * to the screen with the appropriate 
+ * fill pattern
+ ***************************************/
+void DrawTriangleScanlines(BufferImage &frame, Vertex *triangle, Attributes *attrs, Attributes *const uniforms, FragmentShader *const frag)
+{
+    // Sort from least to greatest - simple O(n^2) for small set
+    // Y-ordered primarily, X-ordered secondarily
+    int count = 3;
+    for (int i = 0; i < count; i++)
+    {
+        for (int j = 0; j < count - 1; j++)
+        {
+            if (triangle[j].y > triangle[j + 1].y ||
+                ((triangle[j].y == triangle[j + 1].y && (triangle[j].x > triangle[j + 1].x))))
+            {
+                SWAP(Vertex, triangle[j], triangle[j + 1]);
+                SWAP(Attributes, attrs[j], attrs[j + 1]);
+            }
+        }
+    }
+
+    // Determinant information
+    Vertex firstLeft = triangle[0];
+    Vertex lastRight = triangle[count - 1];
+    int diffX = (int)lastRight.x - (int)firstLeft.x;
+    int diffY = (int)lastRight.y - (int)firstLeft.y;
+
+    // Build left-right lists
+    bool flatTop = triangle[0].y == triangle[1].y;
+    bool flatBottom = triangle[count - 1].y == triangle[count - 2].y;
+    int lastIteration = count - 1;
+    int numLeft = 0;
+    int numRight = 0;
+    Vertex left[8];
+    Vertex right[8];
+    Attributes lAttr[8];
+    Attributes rAttr[8];
+    for (int i = 0; i < count; i++)
+    {
+        int det = determinant((int)triangle[i].x - (int)firstLeft.x, diffX, (int)triangle[i].y - (int)firstLeft.y, diffY);
+        if (det > 0)
+        {
+            rAttr[numRight] = attrs[i];
+            right[numRight++] = triangle[i];
+        }
+        else if (det < 0)
+        {
+            lAttr[numLeft] = attrs[i];
+            left[numLeft++] = triangle[i];
+        }
+        else
+        {
+            if (!(i == 0 && flatTop))
+            {
+                rAttr[numRight] = attrs[i];
+                right[numRight++] = triangle[i];
+            }
+            if (!(i == lastIteration && flatBottom))
+            {
+                lAttr[numLeft] = attrs[i];
+                left[numLeft++] = triangle[i];
+            }
+        }
+    }
+
+    // Adjust counts for bounds checks
+    --numLeft;
+    --numRight;
+
+    // Draw so that we are careful about adjacent polygon fitting
+    int iLeftFirst = -1;
+    int iLeftSecond = 0;
+    int iRightFirst = -1;
+    int iRightSecond = 0;
+    int y = left[0].y;
+    int lastY = left[numLeft].y;
+    double startX = left[0].x;
+    double endX = right[0].x;
+    double numerator;
+    double divisor;
+    double stepLeft;
+    double stepRight;
+
+    Vertex scanVertices[2];
+    while (y <= lastY)
+    {
+        // Check bounds for interpolation
+        if ((int)left[iLeftSecond].y == y && iLeftSecond < numLeft)
+        {
+            ++iLeftFirst;
+            ++iLeftSecond;
+            stepLeft = 0.0;
+            diffY = left[iLeftSecond].y - left[iLeftFirst].y;
+            if (diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = left[iLeftSecond].x - left[iLeftFirst].x;
+                divisor = diffY;
+                stepLeft = numerator / divisor;
+            }
+        }
+        if ((int)right[iRightSecond].y == y && iRightSecond < numRight)
+        {
+            ++iRightSecond;
+            ++iRightFirst;
+            stepRight = 0.0;
+            diffY = right[iRightSecond].y - right[iRightFirst].y;
+            if (diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = right[iRightSecond].x - right[iRightFirst].x;
+                divisor = diffY;
+                stepRight = numerator / divisor;
+            }
+        }
+
+        // Scanline process
+        scanVertices[0].x = startX;
+        scanVertices[0].y = y;
+        scanVertices[1].x = endX;
+        scanVertices[1].y = y;
+
+        int numSteps = (scanVertices[1].x - scanVertices[0].x);
+        while (scanVertices[0].x <= scanVertices[1].x)
+        {
+            frame[scanVertices[0].y][(int)scanVertices[0].x++] = attrs[0].var.at('c');
+        }
+
+        startX += stepLeft;
+        endX += stepRight;
+        y++;
+    }
 }
 
 /*************************************************************
@@ -89,38 +226,52 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> &target, Vertex *const triangle, 
+                  Attributes *const attrs, Attributes *const uniforms, 
+                  FragmentShader *const frag)
 {
-    // Your code goes here
-    // Code adapted from www.sunshine2k.de/coding/java/TriangleRasterization/TriangleRasterization.html
-    // This is known as the BaryCentric Algorithm. 
-    // Find the bounding box of the triangle, test each point in the box to see if it is in the triangle, if so, draw that pixel.
-    int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x)); // Find the max x vertex by searching through the verticies of the triangle
-    int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x)); // Find the min x vertex by searching through the verticies of the triangle
-    int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y)); // Find the max y vertex by searching through the verticies of the triangle
-    int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y)); // Find the min y vertex by searching through the verticies of the triangle
+    // Create a bounding box
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    // Create the verticies that we want to draw with
-    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
+    // Compute first, second, third X-Y pairs
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    // Start looping through the bounding box to determine what to draw
-    for (int y = minY; y <= maxY; ++y)
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
+
+    // Loop through every pixel in the grid
+    for (int y = minY; y < maxY; y++)
     {
-        for (int x = minX; x <= maxX; ++x)
+        for (int x = minX; x < maxX; x++)
         {
-            // Create vertex used for the Cross Products
-            Vertex q = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
-            // Find the Cross Products needed to test location of the pixel in question
-            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
-            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
-
-            // Test to see if the pixel in question is within the triangle
-            if((s >= 0) && (t >= 0) && (s + t <= 1))
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors
+            if (firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
-                // It is within the triangle, so plot it...
-                target[y][x] = attrs[0].color;
+                target[(int)y][(int)x] = attrs[0].var['c'];
+
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs;
+                // TODO: These are long but they will be shortened later
+                interpolatedAttribs.var['r'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
+                interpolatedAttribs.var['g'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
+                interpolatedAttribs.var['b'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
+                
+                //Interpolate the UV attributes for this pixel
+                interpolatedAttribs.var['u'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
+                interpolatedAttribs.var['v'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }
@@ -131,13 +282,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
-                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader *vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int &numIn,
+                                 Attributes *const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
-    if(vert == NULL)
+    if (vert == NULL)
     {
-        for(int i = 0; i < numIn; i++)
+        for (int i = 0; i < numIn; i++)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
@@ -154,46 +305,46 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
  *  4) ViewPort transform
  *  5) Rasterization & Fragment Shading
  **************************************************************************/
-void DrawPrimitive(PRIMITIVES prim, 
-                   Buffer2D<PIXEL>& target,
-                   const Vertex inputVerts[], 
+void DrawPrimitive(PRIMITIVES prim,
+                   Buffer2D<PIXEL> &target,
+                   const Vertex inputVerts[],
                    const Attributes inputAttrs[],
-                   Attributes* const uniforms,
-                   FragmentShader* const frag,                   
-                   VertexShader* const vert,
-                   Buffer2D<double>* zBuf)
+                   Attributes *const uniforms,
+                   FragmentShader *const frag,
+                   VertexShader *const vert,
+                   Buffer2D<double> *zBuf)
 {
     // Setup count for vertices & attributes
     int numIn = 0;
-    switch(prim)
+    switch (prim)
     {
-        case POINT:
-            numIn = 1;
-            break;
-        case LINE:
-            numIn = 2;
-            break;
-        case TRIANGLE:
-            numIn = 3;
-            break;
+    case POINT:
+        numIn = 1;
+        break;
+    case LINE:
+        numIn = 2;
+        break;
+    case TRIANGLE:
+        numIn = 3;
+        break;
     }
 
-    // Vertex shader 
+    // Vertex shader
     Vertex transformedVerts[MAX_VERTICES];
     Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
     // Vertex Interpolation & Fragment Drawing
-    switch(prim)
+    switch (prim)
     {
-        case POINT:
-            DrawPoint(target, transformedVerts, transformedAttrs, uniforms, frag);
-            break;
-        case LINE:
-            DrawLine(target, transformedVerts, transformedAttrs, uniforms, frag);
-            break;
-        case TRIANGLE:
-            DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
+    case POINT:
+        DrawPoint(target, transformedVerts, transformedAttrs, uniforms, frag);
+        break;
+    case LINE:
+        DrawLine(target, transformedVerts, transformedAttrs, uniforms, frag);
+        break;
+    case TRIANGLE:
+        DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
     }
 }
 
@@ -204,10 +355,10 @@ void DrawPrimitive(PRIMITIVES prim,
 int main()
 {
     // -----------------------DATA TYPES----------------------
-    SDL_Window* WIN;               // Our Window
-    SDL_Renderer* REN;             // Interfaces CPU with GPU
-    SDL_Texture* GPU_OUTPUT;       // GPU buffer image (GPU Memory)
-    SDL_Surface* FRAME_BUF;        // CPU buffer image (Main Memory) 
+    SDL_Window *WIN;         // Our Window
+    SDL_Renderer *REN;       // Interfaces CPU with GPU
+    SDL_Texture *GPU_OUTPUT; // GPU buffer image (GPU Memory)
+    SDL_Surface *FRAME_BUF;  // CPU buffer image (Main Memory)
 
     // ------------------------INITIALIZATION-------------------
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -218,23 +369,26 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
 
-    // Draw loop 
+    // Draw loop
     bool running = true;
-    while(running) 
-    {           
+    while (running)
+    {
         // Handle user inputs
-        //processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        //clearScreen(frame);
+        clearScreen(frame);
 
         /********** Your code goes here **********/
         /* Uncomment to run the Game Of Life code *
         GameOfLife(frame);
         TestDrawPixel(frame);
 
-        /* Uncomment to run the Project 2 - Triangle Rasterization code */
+        /* Uncomment to run the Project 2 - Triangle Rasterization code *
         TestDrawTriangle(frame);
+
+        /* Uncommant to run the Project 3 - Linear Interpolation code */
+        TestDrawFragments(frame);
 
         /********** End of my code area **********/
         // Push to the GPU

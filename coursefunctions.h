@@ -200,7 +200,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        pointAttributes.color = color;       
+        pointAttributes.var['c'] = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -223,7 +223,8 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors1[i];
+                // The first time we need to insert it.
+                attr[i].var.insert(std::pair<char, double>('c', colors1[i])); 
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -236,7 +237,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors2[i];
+                attr[i].var['c'] = colors2[i]; // Every other time we just overwrite it.
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -249,7 +250,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors3[i];
+                attr[i].var['c'] = colors3[i];
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -262,7 +263,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors4[i];
+                attr[i].var['c'] = colors4[i];
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -275,7 +276,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors5[i];
+                attr[i].var['c'] = colors5[i];
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -288,7 +289,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         // Loop to add colors to attr
         for (int  i = 0; i < 3; ++i)
         {
-                attr[i].color = colors6[i];
+                attr[i].var['c'] = colors6[i];
         }
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -311,15 +312,25 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].var.insert(std::pair<char, double>('r', 1.0));
+        colorAttributes[0].var.insert(std::pair<char, double>('g', 0.0));
+        colorAttributes[0].var.insert(std::pair<char, double>('b', 0.0));
+        colorAttributes[1].var.insert(std::pair<char, double>('r', 0.0));
+        colorAttributes[1].var.insert(std::pair<char, double>('g', 1.0));
+        colorAttributes[1].var.insert(std::pair<char, double>('b', 0.0));
+        colorAttributes[2].var.insert(std::pair<char, double>('r', 0.0));
+        colorAttributes[2].var.insert(std::pair<char, double>('g', 0.0));
+        colorAttributes[2].var.insert(std::pair<char, double>('b', 1.0));
+        
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-
+        
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -329,16 +340,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
+        
+        imageAttributes[0].var.insert(std::pair<char, double>('u', coordinates[0][0]));
+        imageAttributes[0].var.insert(std::pair<char, double>('v', coordinates[0][1]));
+        imageAttributes[1].var.insert(std::pair<char, double>('u', coordinates[1][0]));
+        imageAttributes[1].var.insert(std::pair<char, double>('v', coordinates[1][1]));
+        imageAttributes[2].var.insert(std::pair<char, double>('u', coordinates[2][0]));
+        imageAttributes[2].var.insert(std::pair<char, double>('v', coordinates[2][1]));
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("firelinkarmor.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
+        imageUniforms.ptrImg = &myImage;
+
         // Your code for the uniform goes here
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
