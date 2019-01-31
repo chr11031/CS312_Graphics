@@ -21,6 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -221,8 +223,32 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
+{     
+    private:
+        double u;
+        double v;
+        double r;
+        double g;
+        double b; 
     public:
+        
+        double getR() const {return this->r;}
+        void setR(double r) {this->r = r;}
+
+        double getG() const {return this->g;}
+        void setG(double g) {this->g = g;}
+
+        double getB() const {return this->b;}
+        void setB(double b) {this->b = b;}
+
+        double getU() const {return this->u;}
+        void setU(double u) {this->u = u;}
+
+        double getV() const {return this->v;}
+        void setV(double v) {this->v = v;}
+
+
+        void* ptrImg;
         PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
@@ -233,7 +259,24 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 };	
+void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
+    fragment = (*bf)[y][x];
 
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.getR() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getG() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getB() *0xff) << 0;
+
+    fragment = color;
+}
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -312,14 +355,31 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
-
-float crossProduct(Vertex v1, Vertex v2)
+/****************************************
+ * CROSS_PRODUCT
+ * returns the determinant 
+ ***************************************/
+double crossProduct(double v1x, double v1y, double v2x, double v2y)
 {
-    float a = v1.x * v2.y;
-    float b = v2.x * v1.y;
-    float det = a - b;
-    return det;
+    
+    return (v1x*v2y - v1y*v2x);
 }
+
+/****************************************
+ * INTERP
+ * Linear interpolation between three points
+ ***************************************/
+double interp(double area, double d1, double d2, double d3, double att1, double att2, double att3)
+{
+    //finds the ratio to multiple the attribute with
+    d1 /= area;
+    d2 /= area;
+    d3 /= area;
+
+    //mix in the attribute with the how much it makes up of the triangle. 
+    return ((d1 * att1) + (d2 * att2) + (d3 * att3));
+}
+
 
 // Stub for Primitive Drawing function
 /****************************************

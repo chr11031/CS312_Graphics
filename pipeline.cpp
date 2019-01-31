@@ -60,6 +60,9 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
+    
+    //frag->FragShader(&target, *attrs, *uniforms);
+    
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
@@ -85,25 +88,44 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //find vertex to be used later to find determinate in crossproduct
-    Vertex v1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y),1, 1};
-    Vertex v2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y),1, 1};
+    // //find vertex to be used later to find determinate in crossproduct
+    // Vertex v1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y),1, 1};
+    // Vertex v2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y),1, 1};
 
-    for (int x = minX; x <= maxX; x++)
+    double v1[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double v2[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double v3[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    double area = crossProduct(v1[X_KEY], -v3[X_KEY], v1[Y_KEY], -v3[Y_KEY]);
+
+
+
+    for (int y = minY; y <= maxY; y++)
     {
-        for (int y = minY; y <= maxY; y++)
+        for (int x = minX; x <= maxX; x++)
         {
-            Vertex q = {(x - triangle[0].x), (y - triangle[0].y)};
-            
-            float s = (float)crossProduct(q, v2) / crossProduct(v1, v2);
-            float t = (float)crossProduct(v1, q) / crossProduct(v1, v2);
+            //find determinants
+            double d1 = crossProduct(v1[X_KEY], x - triangle[0].x, v1[Y_KEY], y - triangle[0].y);
+            double d2 = crossProduct(v2[X_KEY], x - triangle[1].x, v2[Y_KEY], y - triangle[1].y);
+            double d3 = crossProduct(v3[X_KEY], x - triangle[2].x, v3[Y_KEY], y - triangle[2].y);
             
             //check to see if you're inside the triangle
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            if (d1 >= 0 && d2 >= 0 && d3 >= 0)
             {
-                //if inside draw in pixel
-                Vertex inside = {x, y};
-                DrawPoint(target,&inside,attrs,NULL,NULL); 
+                target[(int)y][(int)x] = attrs[0].color;
+
+                //through linear interpolation the color attributes are filled within the triangle.
+                Attributes interpAttr;
+                interpAttr.setR(interp(area, d1, d2, d3, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
+                interpAttr.setG(interp(area, d1, d2, d3, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
+                interpAttr.setB(interp(area, d1, d2, d3, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
+
+                interpAttr.setU(interp(area, d1, d2, d3, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
+                interpAttr.setV(interp(area, d1, d2, d3, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
+
+                //calls fragshader callback
+                frag->FragShader(target[y][x], interpAttr, *uniforms);
+                 
             }
         }
     }
@@ -201,19 +223,52 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
 
+
+    // BufferImage myPic("AllMight.bmp");
+
+    // Vertex * point;
+    
+    // PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+
+    
+    // Attributes * attr;
+
+
+    
+
     // Draw loop 
     bool running = true;
     while(running) 
+    
     {           
         // Handle user inputs
-        //processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        //clearScreen(frame);
+        clearScreen(frame);
+
+    // for(int y = 0; y < myPic.height(); y++)
+    // {
+    //     for(int x = 0; x < myPic.width(); x++)
+    //     {
+    //         Vertex v;
+    //         v.x = x;
+    //         v.y = y;
+    //         Attributes at;
+    //         at.color = myPic[y][x];
+    //         Attributes uniforms;
+
+    //         FragmentShader frag(DefaultFragShader);
+
+    //         DrawPoint(frame, &v, &at, &uniforms, &frag);
+    //     }
+    // }
+
+        TestDrawFragments(frame);
 
         //TestDrawPixel(frame);
 
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
