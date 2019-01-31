@@ -59,7 +59,8 @@ void processUserInputs(bool & running)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
+template <class T>
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes<T>* attrs, Attributes<T> * const uniforms, FragmentShader<T>* const frag)
 {
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
@@ -68,11 +69,12 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+template <class T>
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T>* const attrs, Attributes<T>* const uniforms, FragmentShader<T>* const frag)
 {
     float x = triangle[0].x;
     float y = triangle[0].y;
-    float length;
+    float length = 0;
 
     float avx = std::abs(triangle[1].x - x);
     float avy = std::abs(triangle[1].y - y);
@@ -94,39 +96,51 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+template <class T>
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T>* const attrs, Attributes<T>* const uniforms, FragmentShader<T>* const frag)
 {
     // Bounding Box
-    int top = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
-    int bottom = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
-    int right = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
-    int left = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
+    int yMax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int yMin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int xMax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int xMin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
 
-    //Vertices for cross products of triangle
-    Vertex v1;
-    v1.x = triangle[1].x - triangle[0].x;
-    v1.y = triangle[1].y - triangle[0].y;
-    Vertex v2;
-    v2.x = triangle[2].x - triangle[0].x; 
-    v2.y = triangle[2].y - triangle[0].y;
+    //Compute first, second, third x-y pairs (used to find area and determinants)
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secondVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    // Iteration for bounding box
-    for (int x = left; x < right; x++)
+    // Compute area of whole triangle (need to divide determinants by this in interpolation)
+    double areaTriangle = determinant(firstVec[0], -thirdVec[0], firstVec[1], -thirdVec[1]);
+
+    // Mega Pixel Loop
+    for (int x = xMin; x < xMax; x++)
     {
-        for (int y = bottom; y < top; y++)
+        for (int y = yMin; y < yMax; y++)
         {
-            // Variable vertex for cross products
-            Vertex v3;
-            v3.x = x - triangle[0].x;
-            v3.y = y - triangle[0].y;
+            //Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[0], x - triangle[0].x, firstVec[1], y - triangle[0].y);
+            double secondDet = determinant(secondVec[0], x - triangle[1].x, secondVec[1], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[0], x - triangle[2].x, thirdVec[1], y - triangle[2].y);
 
-            // Cross product calculations
-            float s = (v3.x * v2.y - v3.y * v2.x) / (v1.x * v2.y - v1.y * v2.x);
-            float t = (v1.x * v3.y - v1.y * v3.x) / (v1.x * v2.y - v1.y * v2.x);
+            // Point is inside triangle
+            if(firstDet >= 0 && secondDet >= 0 && thirdDet >= 0)
+            {   //Draw (Doesn't look like we need this, but keeping it in case)
+                //target[(int)y][(int)x] = attrs[0].color;
 
-            // Draw
-            if((s >= 0) && (t >= 0) && (s + t <= 1))
-                target[y][x] = attrs[0].color;
+                // Interpolate attributes
+                Attributes<T> interpolatedAttribs;
+                //RGB (or alpha ;)
+                interpolatedAttribs.r = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                //Image units
+                interpolatedAttribs.u = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Shader call back
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
         }
     }
 }
@@ -136,8 +150,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
-                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
+template <class T>
+void VertexShaderExecuteVertices(const VertexShader<T>* vert, Vertex const inputVerts[], Attributes<T> const inputAttrs[], const int& numIn, 
+                                 Attributes<T>* const uniforms, Vertex transformedVerts[], Attributes<T> transformedAttrs[])
 {
     // Defaults to pass-through behavior
     if(vert == NULL)
@@ -159,13 +174,14 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
  *  4) ViewPort transform
  *  5) Rasterization & Fragment Shading
  **************************************************************************/
+template <class T>
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const Attributes inputAttrs[],
-                   Attributes* const uniforms,
-                   FragmentShader* const frag,                   
-                   VertexShader* const vert,
+                   const Attributes<T> inputAttrs[],
+                   Attributes<T>* const uniforms,
+                   FragmentShader<T>* const frag,                   
+                   VertexShader<T>* const vert,
                    Buffer2D<double>* zBuf)
 {
     // Setup count for vertices & attributes
@@ -185,7 +201,7 @@ void DrawPrimitive(PRIMITIVES prim,
 
     // Vertex shader 
     Vertex transformedVerts[MAX_VERTICES];
-    Attributes transformedAttrs[MAX_VERTICES];
+    Attributes<T> transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
     // Vertex Interpolation & Fragment Drawing
@@ -233,7 +249,13 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        /***********************************
+         * Trophy Box.
+         * ********************************
+        //TestDrawPixel(frame);
+        //TestDrawTriangle(frame);         */
+
+        TestDrawFragments<double>(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
