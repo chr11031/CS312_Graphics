@@ -80,11 +80,81 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         if(!isSetup)
         {
                 // Your Code goes here
+                int counter = 0;
+                for (int y = 0; y < 64; y++)
+                {
+                        for(int x = 0; x < 64; x++)
+                        {
+                                if (grid[y][x] == 1)
+                                {
+                                        if (grid[y+1][x] == 1)
+                                        counter++;
+                                        if (grid[y-1][x] == 1)
+                                        counter++;
+                                        if (grid[y][x-1] == 1)
+                                        counter++;
+                                        if (grid[y][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x-1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x-1] == 1)
+                                        counter++;
 
+                                        switch (counter)
+                                        {
+                                            case 0:
+                                            case 1:
+                                            grid[y][x] = 0;
+                                            break;
+                                            case 2:
+                                            case 3:
+                                            grid[y][x] = 1;
+                                            break;
+                                            default:
+                                            grid[y][x] = 0;
+                                            break;
+                                        }
+                                        counter = 0;
+                                }
+                                else
+                                {
+                                        if (grid[y+1][x] == 1)
+                                        counter++;
+                                        if (grid[y-1][x] == 1)
+                                        counter++;
+                                        if (grid[y][x-1] == 1)
+                                        counter++;
+                                        if (grid[y][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x+1] == 1)
+                                        counter++;
+                                        if (grid[y+1][x-1] == 1)
+                                        counter++;
+                                        if (grid[y-1][x-1] == 1)
+                                        counter++;
+
+                                        switch (counter)
+                                        {
+                                            case 3:
+                                            grid[y][x] = 1;
+                                            break;
+                                            default:
+                                            grid[y][x] = 0;
+                                            break;
+                                        }
+                                        counter = 0;
+                                }
+                        }
+                }
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
-
 
         // Upscale/blit to screen
         for(int y = 0; y < h; y++)
@@ -152,7 +222,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'       
+        pointAttributes.color = color;       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -171,7 +241,6 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
         attr[0].color = colors1[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
@@ -179,27 +248,24 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
+        PIXEL colors2[3] = {0xff00ff00, 0xffff0000, 0xffff0000};
+        attr[0].color = colors2[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
+        PIXEL colors3[3] = {0xff0000ff, 0xff00ff00, 0xff00ff00};
+        attr[0].color = colors3[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
+        PIXEL colors4[3] = {0xffff0000, 0xff00ff00, 0xff00ff00};
+        attr[0].color = colors4[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -207,17 +273,15 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
+        attr[0].color = colors5[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        // Your color code goes here for 'attr'
-        attr[0].color = colors1[0];
+        PIXEL colors6[3] = {0xff0000ff, 0xff00ff00, 0xff00ff00};
+        attr[0].color = colors6[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }

@@ -264,7 +264,7 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-
+  
         // Set the new image
         void setImage(const char* path)
         {
