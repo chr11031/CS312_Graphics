@@ -223,6 +223,10 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        // value[] is used for r, g, b, u, and v values
+        double value[3];
+        // Used for image fragment shader
+        void * ptrImg;
         // Obligatory empty constructor
         Attributes() {}
 
@@ -232,7 +236,28 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
         PIXEL color;
-};	
+};
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output a bitmap image
+    BufferImage * ptr = (BufferImage *)uniforms.ptrImg;
+    int wid = ptr->width();
+    int hgt = ptr->height();
+    int x = vertAttr.value[0] * (wid - 1);
+    int y = vertAttr.value[1] * (hgt - 1);
+    fragment = (*ptr)[y][x];
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output the shader color value
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.value[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.value[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.value[2] *0xff) << 0;
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
