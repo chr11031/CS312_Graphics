@@ -3,6 +3,9 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
+
+using namespace std;
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +24,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -225,6 +230,14 @@ class Attributes
     public:
         //public member variabels
         PIXEL color;
+        double r, g, b, u, v;
+
+        vector<double> vAttr;
+        // This is what I would use to make the attributes
+        // more flexible, however, I ran out of time and
+        // wasn't able to fully implement it
+
+        void* ptrImg;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -235,6 +248,25 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 };	
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -314,6 +346,44 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
+
+/***************************************************
+ * Function: signum
+ **************************************************/
+template <typename T> int signum(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
+/***************************************************
+ * Function: crossProduct
+ * Another version of the determinant function
+ **************************************************/
+float crossProduct(Vertex u, Vertex v)
+{
+    return (u.x * v.y) - (v.x * u.y);
+}
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+    return (A*D - B*C);
+}
+
+/****************************************
+ * INTERPOLATE
+ * Uses the determinants over the area
+ * to determine the weights of each
+ * attribute
+ ***************************************/
+double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2)
+{
+    return (firstDet * attr0 + secndDet * attr1 + thirdDet * attr2) / areaTriangle;
+}
 
 // Stub for Primitive Drawing function
 /****************************************
