@@ -77,12 +77,15 @@ double computeDeterminant(double a, double b, double c, double d) {
  * color1 - Color for attribute 1
  * ...
  * *************************************/
-double interpolate(double area, double firstDet, double secondDet, double thirdDet, double colorAttr1, double colorAttr2, double colorAttr3)
+double interpolate(double area, double firstDet, double secondDet, double thirdDet, double attr1, double attr2, double attr3)
 {
-    double component1 = (secondDet / area) * colorAttr1;
-    double component2 = (thirdDet / area) * colorAttr2;
-    double component3 = (firstDet / area) * colorAttr3;
+    // Divide the subtriangle area by the entire triangle area
+    //  Then, multiply the result by whatever the attribute value is
+    double component1 = (secondDet / area) * attr1;
+    double component2 = (thirdDet / area) * attr2;
+    double component3 = (firstDet / area) * attr3;
 
+    // We add the components together to get a single interpolated attribute value
     return component1 + component2 + component3;
 }
 
