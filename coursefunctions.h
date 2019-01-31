@@ -301,9 +301,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 
         Attributes colorAttributes[3] = 
         {
-            RgbAttr(1, 0, 0),
+            RgbAttr(0, 0, 1),
             RgbAttr(0, 1, 0),
-            RgbAttr(0, 0, 1)
+            RgbAttr(1, 0, 0)
         };
 
         FragmentShader myColorFragShader;
@@ -324,9 +324,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 
         Attributes imageAttributes[3] = 
         {
-            ImageAttr(1, 0),
             ImageAttr(1, 1),
-            ImageAttr(0, 1)
+            ImageAttr(0, 1),
+            ImageAttr(1, 0)
         };
 
         static BufferImage myImage = BufferImage("checker.bmp");
