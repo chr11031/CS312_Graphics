@@ -47,6 +47,39 @@ struct Vertex
 };
 
 /******************************************************
+ * Calculate the area of a triangle with X and Y
+ * coordinates by using two points on a graph.
+ * This equation is similar to the one we discused
+ * in class on finding the area of a parallelogram.
+ * ****************************************************/
+double calcArea(const double & A, const double & B, const double & C, const double & D)
+{
+    return (A * D - B * C);
+}
+
+/******************************************************
+ * Interpolation Function
+ ******************************************************/
+double interpolate(double area, double d1, double d2, double d3, double c1, double c2, double c3)
+{
+    //First we find the percentage of the smaller triangle's area compared to the whole triangle
+    //we then multiply that percentage with the color associated with that vertex
+    double w1 = c1 * (d1 / area);
+    double w2 = c2 * (d2 / area);
+    double w3 = c3 * (d3 / area);
+
+    //If the percentages added together are greater than 1, then
+    //we know the color is 100% and should be kept at 1
+    if((w1 + w2 + w3) > 1)
+    {
+        return 1;
+    }
+
+    //Return the added percentages to know how much of this color should be used
+    return w1 + w2 + w3;
+}
+
+/******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
  * and depth buffers. Can be described as frames or 
@@ -231,13 +264,67 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Set the new image
+        void setImage(const char* path)
+        {
+            BufferImage newimage(path);
+            image() = newimage;
+        }
+
+        /*Vertex Attributes*/
+        //Color
+        PIXEL color;
+        double r;
+        double g;
+        double b;
+        //Texture Coordinates
+        double u;
+        double v;
+        //Image Reference
+        void* ptrImage;
+        //Normal Vectors
+        Vertex normal;
+        //Fog Coordinates
+        Vertex fog;
+
+        /*Uniform Attributes*/
+        //Image data
+        BufferImage image();
+        //Light
+        double light;
 };	
 
+/******************************************************
+ * Fragment Shader List
+ * ****************************************************/
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+// This Shader takes three colors and assigns them to each corner of a triangle
+// It then uses linear interpolation to fill the triangle
+void gradiantColorShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+
+    fragment = color;
+}
+
+//This shader draws a trianlge with a given image
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImage;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
 }
 
 /*******************************************************
