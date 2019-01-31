@@ -233,7 +233,37 @@ class Attributes
         }
         
         PIXEL color;
+
+        double u;
+        double v; 
+        void* ptrImg;
+
+        double r;
+        double g;
+        double b;
 };	
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -326,6 +356,25 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);
+
+/*************************************************************
+ * DETERMINANT
+ * Calculates the determinant of two 2D vectors using AD-CB. 
+ ************************************************************/
+double determinant(double v1x, double v1y, double v2x, double v2y) 
+{
+    // AD - CB
+    return v1x * v2y - v1y * v2x;
+}
+
+/*************************************************************
+ * LERP
+ * Linearly interpolates three attributes. 
+ ************************************************************/
+double lerp(double area, double d1, double d2, double d3, double a1, double a2, double a3) 
+{
+    return ((d1 * a3) + (d2 * a1) + (d3 * a2)) / area;
+}             
        
 #endif
