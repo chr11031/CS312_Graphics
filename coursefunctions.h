@@ -139,9 +139,39 @@ void GameOfLife(Buffer2D<PIXEL> & target)
 /****************************************************
  * Solves for the determinate of two given matrices.
 ****************************************************/
-float determinate(Vertex a, Vertex b)
+double determinate(Vertex a, Vertex b)
 {
         return a.x * b.y - a.y * b.x;
+}
+
+/****************************************************
+ * Subtracts the x and y values of two vertexs
+****************************************************/
+Vertex subtractVert(Vertex a, Vertex b)
+{
+        return {a.x - b.x, a.y - b.y};
+}
+
+/****************************************************
+ * Interpolates data according to determinate
+ * values
+****************************************************/
+void interp(Attributes* const attrs, double * interpBin, double const det[3], double totalArea)
+{
+        // Weights to multiple attribute data determined by what percent of the
+        // original triangle the smaller triangles take up
+        double w1 = det[0] / totalArea;
+        double w2 = det[1] / totalArea;
+        double w3 = 1 - w1 - w2; // final third of total area
+
+        // convert attribute data to appropriate data type
+        double * d1 = (double*)(attrs[0]).data;
+        double * d2 = (double*)(attrs[1]).data;
+        double * d3 = (double*)(attrs[2]).data;
+
+        // interpolate according to how length of data in attributes
+        for (int i = 0; i < attrs[0].dLen; i++)
+            interpBin[i] = w1 * d1[i] + w2 * d2[i] + w3 * d3[i];
 }
 
 /***************************************************
@@ -189,7 +219,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        pointAttributes.color = color;
+        pointAttributes.data = &color;
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -208,7 +238,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        attr[0].color = colors1[0];
+        attr[0].data = &colors1[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -216,7 +246,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
         PIXEL colors2[3] = {0xff0000ff, 0xffff0000, 0xffff0000};
-        attr[0].color = colors2[0];
+        attr[0].data = &colors2[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -224,7 +254,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
         PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        attr[0].color = colors3[0];
+        attr[0].data = &colors3[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -232,7 +262,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
         PIXEL colors4[3] = {0xfff00fff, 0xff00ff00, 0xff00ff00};
-        attr[0].color = colors4[0];
+        attr[0].data = &colors4[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -240,7 +270,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff00ffff, 0xff00ff00, 0xff00ff00};
-        attr[0].color = colors5[0];
+        attr[0].data = &colors5[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -248,11 +278,10 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
         PIXEL colors6[3] = {0xffffff00, 0xff00ff00, 0xff00ff00};
-        attr[0].color = colors6[0];
+        attr[0].data = &colors6[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
-
 
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 
@@ -262,17 +291,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 {
         /**************************************************
         * 1. Interpolated color triangle
-        *************************************************/
-        Vertex colorTriangle[3];
-        Attributes colorAttributes[3];
-        colorTriangle[0] = {250, 112, 1, 1};
-        colorTriangle[1] = {450, 452, 1, 1};
-        colorTriangle[2] = {50, 452, 1, 1};
-        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
+        // *************************************************/
+        Vertex colorTriangle[3] =
+        {
+            {250, 112, 1, 1},
+            {450, 452, 1, 1},
+            {50, 452, 1, 1}
+        };
+
+        Attributes colorAttributes[3] = 
+        {
+            RgbAttr(1, 0, 0),
+            RgbAttr(0, 1, 0),
+            RgbAttr(0, 0, 1)
+        };
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
@@ -283,21 +318,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
          * 2. Interpolated image triangle
         ****************************************************/
         Vertex imageTriangle[3];
-        Attributes imageAttributes[3];
         imageTriangle[0] = {425, 112, 1, 1};
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
-        double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
+        Attributes imageAttributes[3] = 
+        {
+            ImageAttr(1, 0),
+            ImageAttr(1, 1),
+            ImageAttr(0, 1)
+        };
 
-        Attributes imageUniforms;
-        // Your code for the uniform goes here
+        static BufferImage myImage = BufferImage("checker.bmp");
+
+        Attributes imageUniforms(&myImage);
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
@@ -402,6 +439,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
+
 }
 
 /********************************************
