@@ -230,13 +230,23 @@ class Attributes
         double g;
         double b;
         
-        double u = 0;
-        double v = 0;
+        double u;
+        double v;
 
+        // void pointer to hold an image for texture-related stuff.
         void * ptrImg;
 
+        // For mouse coordinates. Will possibly be changed later.
+        double mouseX;
+        double mouseY;
+
+        // For matrix tranformations. Will possibly be changed later.
+        double transform[3];
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() {
+            r, g, b, u, v = 0;
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -244,10 +254,25 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
-        // Attributes(BufferImage* i)
-        // {
-        //     image = i;
-        // }
+        // Constructor with passed in red, green, and blue values.
+        Attributes(double & red, double & green, double & blue)
+        {
+            this->r = red;
+            this->g = green;
+            this->b = blue;
+        }
+
+        // Constructor with passed in u and v values.
+        Attributes(double & u, double & v)
+        {
+            this->u = u;
+            this->v = v;
+        }
+
+        Attributes(void * ptr)
+        {
+            this->ptrImg = ptr;
+        }
 };	
 
 // My interpolation function. The determinants of each vertex is divided by the area and multiplied
