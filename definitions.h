@@ -21,6 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_Key 0
+#define Y_Key 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -223,6 +225,16 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        double u;
+        double v;
+        void* ptrImg; //pointer image buffer
+        double attr[16]; //array of attributes, to make it dynamic
+
+        double r;
+        double g;
+        double b;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -232,8 +244,46 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
         PIXEL color;
+
 };	
 
+/*******************************************
+* ImageFragShader
+*    This function is a image fragment shader
+*    Which will assign the vertex of the triangle to the attribute
+* ******************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+	//initializing a buffer image pointer to the buffer image
+	BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+	
+	//assign x and y two vertex attributes attr
+	int x = vertAttr.attr[0] * (ptr->width()-1);
+	int y = vertAttr.attr[1] * (ptr->height()-1);
+	
+	//Create a fragment after assigning coordinated to the triangle
+	fragment = (*ptr)[y][x];
+	
+	}
+	
+/********************************************
+* ColorFragShader
+*   This function is a fragment shader for generating the colors
+*   This will set the Red, Green and Blue for the triangle
+* ********************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+	// assignning the rgb color attributes through shift
+	// shift left 16 for red, left 8 for green, and left 0 for blue
+	// assign attribute 0,1 and 2 respectively
+	PIXEL color = 0xff000000;
+	color += (unsigned int)(vertAttr.attr[1] * 0xff) << 16;
+	color += (unsigned int)(vertAttr.attr[2] * 0xff) << 8;
+	color += (unsigned int)(vertAttr.attr[0] * 0xff) << 0;
+	
+    //assign fragment to color
+	fragment = color;
+}
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
