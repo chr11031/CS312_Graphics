@@ -297,15 +297,15 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         // colorAttributes.color[2] = colors[1];
         // colorAttributes.color[3] = colors[2];
         //maybe take away rgb array and keep attributes array.
-        colorAttributes[0].r = 1.0;
-        colorAttributes[0].g = 0.0;
-        colorAttributes[0].b = 0.0;
-        colorAttributes[1].r = 0.0;
-        colorAttributes[1].g = 1.0;
-        colorAttributes[1].b = 0.0;
-        colorAttributes[2].r = 0.0;
-        colorAttributes[2].g = 0.0;
-        colorAttributes[2].b = 1.0;
+        colorAttributes[0].rgb[0] = 1.0;
+        colorAttributes[0].rgb[1] = 0.0;
+        colorAttributes[0].rgb[2] = 0.0;
+        colorAttributes[1].rgb[0] = 0.0;
+        colorAttributes[1].rgb[1] = 1.0;
+        colorAttributes[1].rgb[2] = 0.0;
+        colorAttributes[2].rgb[0] = 0.0;
+        colorAttributes[2].rgb[1] = 0.0;
+        colorAttributes[2].rgb[2] = 1.0;
         
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
@@ -326,12 +326,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].u = 1;
-        imageAttributes[0].v = 0;
-        imageAttributes[1].u = 1;
-        imageAttributes[1].v = 1;
-        imageAttributes[2].u = 0;
-        imageAttributes[2].v = 1;
+        imageAttributes[0].uv[0] = 1;
+        imageAttributes[0].uv[1] = 0;
+        imageAttributes[1].uv[0] = 1;
+        imageAttributes[1].uv[1] = 1;
+        imageAttributes[2].uv[0] = 0;
+        imageAttributes[2].uv[1] = 1;
 
         // 24 bit/pixel?
         BufferImage myImage("yoshi.bmp");
@@ -386,9 +386,11 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.image = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.setShader(imageFragShader);
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

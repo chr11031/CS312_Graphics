@@ -225,15 +225,11 @@ class Attributes
 {
     public:
         PIXEL color;
-        // Vertex verts[3];
-        // Vertex *lerpVert;
-        // Vertex *currentVert;
         void *image;
-        double r;
-        double g;
-        double b;
-        double u;
-        double v;
+        Vertex *vert;
+        double rgb[3];
+        double uv[2];
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -241,6 +237,12 @@ class Attributes
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
+        }
+
+        ~Attributes()
+        {
+            delete image;
+            delete vert;
         }
 };	
 
@@ -253,6 +255,11 @@ float triangleArea(double v1[2], double v2[2])
     return ((v1[0] * v2[1]) - (v1[1] * v2[0])) / 2;
 }
 
+/***************************************************************************
+ * LINEAR INTERPOLATION
+ * linearly interpolates the values passed in based on the area of the
+ * triangles.
+ **************************************************************************/
 double lerp(float area, float area1, float area2, float area3, double attr1, double attr2, double attr3)
 {
     double lerpedAttr = 0.0;
@@ -272,16 +279,24 @@ void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = 0xff00ff00;
 }
 
+/********************************************************************
+ * COLOR FRAG SHADER
+ * adds the red, green, and blue values to the color of the pixel.
+ *******************************************************************/
 void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.r * 0xff) << 16;
-    color += (unsigned int)(vertAttr.g * 0xff) << 8;
-    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+    color += (unsigned int)(vertAttr.rgb[0] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.rgb[1] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.rgb[2] * 0xff) << 0;
 
     fragment = color;
 }
 
+/*****************************************************************
+ * IMAGE FRAG SHADER 
+ * prints the image to the screen according to the UV coords.
+ *****************************************************************/
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage *ptr = (BufferImage*)uniforms.image;
@@ -289,8 +304,8 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int wid = ptr->width() - 1;
     int hgt = ptr->height() - 1;
 
-    int x = vertAttr.u * wid;
-    int y = vertAttr.v * hgt;
+    int x = vertAttr.uv[0] * wid;
+    int y = vertAttr.uv[1] * hgt;
 
     fragment = (*ptr)[y][x];
 }

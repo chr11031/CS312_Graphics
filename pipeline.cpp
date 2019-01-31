@@ -64,9 +64,9 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     PIXEL color = 0xff000000;
-     color += (unsigned int)(attrs[0].r * 0xff) << 16;
-     color += (unsigned int)(attrs[0].g * 0xff) << 8;
-     color += (unsigned int)(attrs[0].b * 0xff) << 0;
+     color += (unsigned int)(attrs[0].rgb[0] * 0xff) << 16;
+     color += (unsigned int)(attrs[0].rgb[1] * 0xff) << 8;
+     color += (unsigned int)(attrs[0].rgb[2] * 0xff) << 0;
     // Set our pixel according to the attribute value!
     target[(int)v[0].y][(int)v[0].x] = color;
     // std::cout << std::hex << attrs->color[0] << std::endl;
@@ -129,12 +129,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
                 // interpolate colors here into new attributes object
                 Attributes lerpedAttrs;
-                lerpedAttrs.r = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].r, attrs[1].r, attrs[2].r);
-                lerpedAttrs.g = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].g, attrs[1].g, attrs[2].g);
-                lerpedAttrs.b = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].b, attrs[1].b, attrs[2].b);
+                lerpedAttrs.rgb[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
+                lerpedAttrs.rgb[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
+                lerpedAttrs.rgb[2] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
 
-                lerpedAttrs.u = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].u, attrs[1].u, attrs[2].u);
-                lerpedAttrs.v = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].v, attrs[1].v, attrs[2].v);
+                lerpedAttrs.uv[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
+                lerpedAttrs.uv[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
 
                 // check github code on class repo.;
                 frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
@@ -250,8 +250,9 @@ int main()
 
         // TestDrawPixel(frame);
         //GameOfLife(frame);
-        //TestDrawTriangle(frame);
+        // TestDrawTriangle(frame);
         TestDrawFragments(frame);
+        // TestDrawPerspectiveCorrect(frame);
         // FragmentShader frag(greenFragShader);
         // Attributes pointAttributes;
         // Buffer2D<double> image2d();
