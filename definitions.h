@@ -21,6 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -222,23 +224,64 @@ class BufferImage : public Buffer2D<PIXEL>
  **************************************************/
 class Attributes
 {      
+    //so when I tried doing this assignment I just kept getting errors
+    //I think I understand what to do. I need to create a list of 
+    //of all the variables and set it as a list in the rest of the 
+    //program
+    private:
+        
+        
     public:
+        void* ptrImg;
+        double r;
+        double g;
+        double b;
+        double u;
+        double v;
+
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : r(0), g(0), b(0), u(0), v(0){}
+        
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        PIXEL color;
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+
+
+        PIXEL color;
+};  
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+    
 }
 
 /*******************************************************
@@ -253,19 +296,16 @@ class FragmentShader
  
         // Get, Set implicit
         void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
-
         // Assumes simple monotone RED shader
         FragmentShader()
         {
             FragShader = DefaultFragShader;
         }
-
         // Initialize with a fragment callback
         FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(FragSdr);
         }
-
         // Set the shader to a callback function
         void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
@@ -325,6 +365,31 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);   
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}
+
+/****************************************
+ * INTERP
+ * Trying to perdict each the color at a certain point
+ * You get the determinate of the each area and divide it by the area, then multiply it
+ * by the color attribute. Then you add all of those together to find the interpolation.
+ * **************************************/
+double interp(double & areaTriangle, double & firstDet, double & secondDet, double & thirdDet, double & a1, double & a2, double & a3)
+{
+    double w1 = (firstDet/areaTriangle) * a1;
+    double w2 = (secondDet/areaTriangle) * a2;
+    double w3 = (thirdDet/areaTriangle) * a3;
+
+    return (w1 + w2 + w3);
+}          
        
 #endif

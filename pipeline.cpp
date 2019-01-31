@@ -80,6 +80,83 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+
+    //the min and max, x and y coordinates for the triangles, which would create a rectangle 
+    // int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    // int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    // int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    // int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // //the x and y coordinates for each triangle
+    // Vertex a = {(float)triangle[0].x, (float)triangle[0].y};
+    // Vertex b = {(float)triangle[1].x, (float)triangle[1].y};
+    // Vertex c = {(float)triangle[2].x, (float)triangle[2].y};
+
+    // //deciding which points of the square are in the triangle
+    // for (int y = minY; y <= maxY; y++)
+    // {
+    //     for (int x = minX; x <= maxX; x++)
+    //     {
+    //         //the point to fill in or not
+    //         Vertex v = {(float)x, (float)y};
+
+    //         //calculating the barycentric coordinates
+    //         float baryA = (((b.y - c.y)*(v.x - c.x))+((c.x - b.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
+    //         float baryB = (((c.y - a.y)*(v.x - c.x))+((a.x - c.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
+    //         float baryC = 1.0f - baryA - baryB;
+
+    //         //filling in the triangles with color
+    //         if (baryA >= 0.0f && baryB >= 0.0f && baryC >= 0.0f)
+    //         {
+    //             DrawPoint(target, &v, attrs, NULL, NULL);
+    //         }
+    //     }
+    // }
+
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Compute first, second, third X-Y pairs
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
+
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
+    {
+        for(int x = minX; x < maxX; x++)
+        {
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+            target[(int)y][(int)x] = attrs[0].color;
+
+            // Interpolate Attributes for this pixel - In this case the R,G,B values
+            Attributes interpolatedAttribs;
+            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+
+            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+            // Call shader callback
+            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
+        }
+    }
+    
 }
 
 /**************************************************************
@@ -179,13 +256,19 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawPixel(frame);
+        //TestDrawPixel(frame);
+        //GameOfLife(frame);
+        //TestDrawTriangle(frame);
+
+        //BufferImage myImage90("downloadbmp.bmp");
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
