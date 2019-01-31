@@ -72,10 +72,10 @@ double computeDeterminant(double a, double b, double c, double d) {
  * colors.
  * 
  * area - Area of a primitive
- * firstDet - Factor for computing
- *            multiplication of colorAttr1
+ * firstDet - area of sub-triangle 1
  * ...
  * color1 - Color for attribute 1
+ * ...
  * *************************************/
 double interpolate(double area, double firstDet, double secondDet, double thirdDet, double colorAttr1, double colorAttr2, double colorAttr3)
 {
@@ -112,10 +112,8 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    // Make a BoundingBox for this triangle
+    BoundingBox boundingBox(triangle[0], triangle[1], triangle[2]);
 
     // Make two sides (Vectors) of the triangle
     Vertex firstVect = {
@@ -142,8 +140,8 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
 
     double area = computeDeterminant(firstVect.x, -thirdVect.x, firstVect.y, -thirdVect.y);
 
-    for (int y = minY; y <= maxY; y++) {
-        for (int x = minX; x <= maxX; x++) {
+    for (int y = boundingBox.minY; y <= boundingBox.maxY; y++) {
+        for (int x = boundingBox.minX; x <= boundingBox.maxX; x++) {
             // Determinant calculations from class
             double firstDet = computeDeterminant(firstVect.x, x - triangle[0].x, firstVect.y, y - triangle[0].y);
             double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
@@ -197,7 +195,7 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
  **************************************************************************/
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
-                   const Vertex inputVerts[], 
+                   const Vertex inputVerts[],
                    const Attributes inputAttrs[],
                    Attributes* const uniforms,
                    FragmentShader* const frag,                   

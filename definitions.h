@@ -46,6 +46,31 @@ struct Vertex
     double w;
 };
 
+/****************************************************
+ * BOUNDING_BOX
+ * Describes a box within which objects may be drawn. 
+ ****************************************************/
+class BoundingBox
+{
+    public:
+        // Default Constructor
+        BoundingBox() {}
+
+        // Construct a BoundingBox for a triangle
+        BoundingBox(Vertex vert1, Vertex vert2, Vertex vert3)
+        {
+            maxX = MAX3(vert1.x, vert2.x, vert3.x);
+            minX = MIN3(vert1.x, vert2.x, vert3.x);
+            maxY = MAX3(vert1.y, vert2.y, vert3.y);
+            minY = MIN3(vert1.y, vert2.y, vert3.y);
+        }
+
+        int maxX;
+        int minX;
+        int maxY;
+        int minY;
+};
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -232,11 +257,13 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
+        // A single pixel that holds a single combination of RGB
         PIXEL color;
 
         // Reference to an image to interpolate
         void* ptrImg;
 
+        // An array that holds attribute values, such as RGB values or UV Coordinates
         double values[5];
 };	
 
