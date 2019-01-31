@@ -115,7 +115,7 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
     // Make a BoundingBox for this triangle
     BoundingBox boundingBox(triangle[0], triangle[1], triangle[2]);
 
-    // Make two sides (Vectors) of the triangle
+    // Make three sides (Vectors) of the triangle
     Vertex firstVect = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
@@ -130,7 +130,6 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
         1
     };
 
-    // Sample Class Code
     Vertex thirdVect = {
         triangle[0].x - triangle[2].x,
         triangle[0].y - triangle[2].y,
@@ -142,15 +141,18 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
 
     for (int y = boundingBox.minY; y <= boundingBox.maxY; y++) {
         for (int x = boundingBox.minX; x <= boundingBox.maxX; x++) {
-            // Determinant calculations from class
+            // These three determinants determine how much of each attribute we will
+            //  give weight to in interpolation.
             double firstDet = computeDeterminant(firstVect.x, x - triangle[0].x, firstVect.y, y - triangle[0].y);
             double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
             double thirdDet = computeDeterminant(thirdVect.x, x - triangle[2].x, thirdVect.y, y - triangle[2].y);
 
             // Test if this point is in the triangle
             if ((firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0)) {
-                // From Sample Class code
+                // Attributes with which we will shade a fragment
                 Attributes interpolatedAttributes;
+
+                // Iterpolate the passed attributes
                 interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
                 interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
                 interpolatedAttributes.values[2] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[2], attrs[1].values[2], attrs[2].values[2]);
@@ -158,7 +160,7 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* c
                 interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
                 interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
                 
-                // Set the attribute color by sending to fragShader
+                // Shade the fragment using the interpolated attributes and any uniforms
                 frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
             }
         }

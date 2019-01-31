@@ -313,13 +313,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[0] = (Vertex){250, 112, 1, 1};
         colorTriangle[1] = (Vertex){450, 452, 1, 1};
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
-        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].color = colors[0];
-        colorAttributes[1].color = colors[1];
-        colorAttributes[2].color = colors[2];
 
-        // Sample Code from class
+        // Your color code goes here for 'colorAttributes'
         colorAttributes[0].values[0] = 1.0;
         colorAttributes[0].values[1] = 0.0;
         colorAttributes[0].values[2] = 0.0;
