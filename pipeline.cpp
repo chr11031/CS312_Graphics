@@ -86,6 +86,32 @@ float crossProduct(Vertex* const vertex1, Vertex* const vertex2)
 }
 
 /*************************************************************
+ * INTERPOLATE
+ * Assign the appropriate weight to the pixel at it's x and
+ * y coordinate. The weight is determined by its distance
+ * from all three vertices
+ ************************************************************/
+double interoplate(double y, double x, Vertex* const triangle, double attr1, double attr2, double attr3)
+{
+    // % of weight that attribute 1 will be diluted
+    double w1 = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y)) /
+          ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    // % of weight that attribute 2 will be diluted
+    double w2 = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y)) /
+          ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    // % of weight that attribute 3 will be diluted
+    // since the weights are percentages, the third weight will be the 100% - the other 
+    // two calculated percents
+    // Note that the two denominators are the same to calculate w1 and w2. The distance from the vertex with the attribute over the whole
+    // creates a percentage
+    double w3 = 1 - w1 - w2;
+    // return the true interpolated attribute (ex. color) value for this pixel after diluting the
+    // three attributes
+    return ((w1 * attr1) + (w2 * attr2) + (w3 * attr3));
+}
+
+
+/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
@@ -117,9 +143,29 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
             if (( s >= 0) && (t >= 0) && (s + t <= 1))
             {
-                // Color in the pixel with the appropriate color
-                target[(int)y][(int)x] = attrs[0].color;
-            }
+                Attributes interpolatedAttribs;
+
+                // Interpolate the first triangle's color attributes
+                // attr[0] = red
+                // attr[1] = green
+                // attr[2] = blue
+                interpolatedAttribs.attr[0] = interoplate(y, x, triangle, attrs[0].attr[0],
+                                                          attrs[1].attr[0],attrs[2].attr[0]);
+                interpolatedAttribs.attr[1] = interoplate(y, x, triangle, attrs[0].attr[1],
+                                                          attrs[1].attr[1],attrs[2].attr[1]);
+                interpolatedAttribs.attr[2] = interoplate(y, x, triangle, attrs[0].attr[2],
+                                                          attrs[1].attr[2],attrs[2].attr[2]);
+
+                // Interpolate the second triangle's UV attributes
+                // attr[3] = U coordinate
+                // attr[4] = V coordinate
+                interpolatedAttribs.attr[3] = interoplate(y, x, triangle, attrs[0].attr[0], 
+                                                          attrs[1].attr[0], attrs[2].attr[0]);
+                interpolatedAttribs.attr[4] = interoplate(y, x, triangle, attrs[0].attr[1], 
+                                                          attrs[1].attr[1], attrs[2].attr[1]);
+
+                frag->FragShader(target[y][x],interpolatedAttribs, *uniforms);
+            } 
         }
     }
 
@@ -228,7 +274,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
