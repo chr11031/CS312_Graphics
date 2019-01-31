@@ -1,5 +1,8 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include <iostream>
+
+using namespace std;
 
 /***********************************************
  * CLEAR_SCREEN
@@ -79,9 +82,9 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * helper functions to calculate the cross product of two vertecies,
  * min, and max
  ********************************************************************/
-float crossProduct(Vertex v1, Vertex v2)
+float crossProduct(double* v1, double* v2)
 {
-    return (v1.x * v2.y) - (v1.y * v2.x);
+    return (v1[0] * v2[1]) - (v1[1] * v2[0]);
 }
 int min(int num1, int num2)
 {
@@ -93,6 +96,23 @@ int max(int num1, int num2)
     if (num1 > num2) return num1;
     return num2;
 }
+Attributes inter(Attributes* const attrs, double area0, double area1, double area2)
+{
+    Attributes interAtt;
+    /*for(int i = 0; i < attrs[0].colorAttr.size(); i++)
+    {
+        interAtt.colorAttr.at(i) = (attrs[0].colorAttr[i] * area0) + (attrs[1].colorAttr[i] * area1) 
+            + (attrs[2].colorAttr[i] * area2);
+    }*/
+
+    interAtt.r = (attrs[0].r * area0) + (attrs[1].r * area1) + (attrs[2].r * area2);
+    interAtt.g = (attrs[0].g * area0) + (attrs[1].g * area1) + (attrs[2].g * area2);
+    interAtt.b = (attrs[0].b * area0) + (attrs[1].b * area1) + (attrs[2].b * area2);
+    interAtt.u = (attrs[0].u * area0) + (attrs[1].u * area1) + (attrs[2].u * area2);
+    interAtt.v = (attrs[0].v * area0) + (attrs[1].v * area1) + (attrs[2].v * area2);
+
+    return interAtt;
+}
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -103,32 +123,46 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
     //DrawPoint(target, triangle, attrs, uniforms, frag);
     target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[0].color;
-    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[0].color;
+    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
+    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
 
     //bounding box to limit the amount of checking
     int maxX = max(triangle[0].x, max(triangle[1].x, triangle[2].x));
     int minX = min(triangle[0].x, min(triangle[1].x, triangle[2].x));
     int maxY = max(triangle[0].y, max(triangle[1].y, triangle[2].y));
     int minY = min(triangle[0].y, min(triangle[1].y, triangle[2].y));
-    //target[(int)minY][(int)minX] = attrs[0].color;
-    //target[(int)maxY][(int)maxX] = attrs[0].color;
+    
+    /*bounding edges of the triangle
+     *vectors that are a measuremtnt of the edge from triangle[0] to triangle[1] 
+     *and from triangle[1] to triangle[2] and from triangle[2] to triangle[0] */
+    double edge0[] = {(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y)};
+    double edge1[] = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
+    double edge2[] = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y)};
 
-    //vectors that are a measuremtnt of the edge from triangle[0] to triangle[1] and to triangle[3] 
-    Vertex edge01 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
-    Vertex edge02 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y), 1, 1};
+    //area of the whole triangle
+    double negEdge1[] = {-edge1[0], -edge1[1]};
+    double area = crossProduct(negEdge1, edge0);
 
     for (int x = minX; x <= maxX; x++)
     {
-        for (int y = minY; y < maxY; y ++)
+        for (int y = minY; y <= maxY; y ++)
         {
-            Vertex temp = {x - triangle[0].x, y - triangle[0].y, 1, 1};
-            float bound01 = crossProduct(temp, edge02) / crossProduct(edge01, edge02);
-            float bound02 = crossProduct(edge01, temp) / crossProduct(edge01, edge02);
+            //determinates
+            double temp0[] = {triangle[2].x - x, triangle[2].y - y};
+            double area0 = crossProduct(temp0, edge0);
+            double temp1[] = {triangle[0].x - x, triangle[0].y - y};
+            double area1 = crossProduct(temp1, edge1);
+            double temp2[] = {triangle[1].x - x, triangle[1].y - y};
+            double area2 = crossProduct(temp2, edge2);
 
-            if ( (bound01 >= 0) && (bound02 >= 0) && (bound01+bound02 <= 1))
+            if ( (area0 >= 0) && (area1 >= 0) && (area2 >= 0) )
             {
-                target[y][x] = attrs[0].color;
+                area0 /= area; area1 /= area; area2 /= area;
+                //Interpolate attributes
+                Attributes interAttr = inter(attrs, area0, area1, area2);
+
+                //frag callback
+                frag -> FragShader(target[y][x], interAttr, *uniforms);
             }
         }
     }
@@ -237,8 +271,8 @@ int main()
         clearScreen(frame);
 
         // TODO Your code goes here
-            TestDrawTriangle(frame);
-            //GameOfLife(frame);
+            TestDrawFragments(frame);
+            //TestDrawTriangle(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
