@@ -247,20 +247,30 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         *************************************************/
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
-        colorTriangle[0] = {250, 112, 1, 1};
-        colorTriangle[1] = {450, 452, 1, 1};
-        colorTriangle[2] = {50, 452, 1, 1};
+        colorTriangle[0] = {250, 112, 1, 1}; // bottom
+        colorTriangle[1] = {450, 452, 1, 1}; //right
+        colorTriangle[2] = {50, 452, 1, 1}; //left
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        //add red green blue for att
+        colorAttributes[0].collector[0] = 1.0;
+        colorAttributes[1].collector[0] = 0.0;
+        colorAttributes[2].collector[0] = 0.0;
+        colorAttributes[0].collector[1] = 0.0;
+        colorAttributes[1].collector[1] = 1.0;
+        colorAttributes[2].collector[1] = 0.0;
+        colorAttributes[0].collector[2] = 0.0;
+        colorAttributes[1].collector[2] = 0.0;
+        colorAttributes[2].collector[2] = 1.0;
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -270,17 +280,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+        imageAttributes[0].collector[0] = coordinates[0][0];
+        imageAttributes[0].collector[1] = coordinates[0][1];
+        imageAttributes[1].collector[0] = coordinates[1][0];
+        imageAttributes[1].collector[1] = coordinates[1][1];
+        imageAttributes[2].collector[0] = coordinates[2][0];
+        imageAttributes[2].collector[1] = coordinates[2][1];
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("kerrigan.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
-
+        myImageFragShader.FragShader = ImageFragShader;
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
 
@@ -316,7 +333,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;

@@ -78,9 +78,18 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  *Find the area of the triangle between
  * two vectors. 
  ******************************************/
-double Determinant(Vertex v1, Vertex v2) 
+double Determinant(double a, double b, double c, double d) 
 {
-    return (v1.x * v2.y) - (v1.y * v2.x); 
+    return (a * d) - (b * c); 
+}
+
+double Interp(double area, double d1, double d2, double d3, double a1, double a2, double a3) 
+{
+   double percentd1 = (d1/area) * a3; 
+   double percentd2 = (d2/area) * a1; 
+   double percentd3 = (d3/area) * a2; 
+   
+   return percentd1 + percentd2 + percentd3;
 }
 /*************************************************************
  * DRAW_TRIANGLE
@@ -94,42 +103,57 @@ float maxX = MAX3(triangle[0].x,triangle[1].x,triangle[2].x);
 float maxY = MAX3(triangle[0].y,triangle[1].y,triangle[2].y);
 float minX = MIN3(triangle[0].x,triangle[1].x,triangle[2].x);
 float minY = MIN3(triangle[0].y,triangle[1].y,triangle[2].y);
+//first determinant is proportional to 
+// edge corresponds with opposite vertex
 
 Vertex vt1;
 Vertex vt2;
+Vertex vt3;
 
 vt1.x = (triangle[1].x - triangle[0].x);
 vt1.y = (triangle[1].y - triangle[0].y);
 vt1.z = 1;
 vt1.w = 1;
 
-vt2.x = (triangle[2].x - triangle[0].x);
-vt2.y = (triangle[2].y - triangle[0].y);
+vt2.x = (triangle[2].x - triangle[1].x);
+vt2.y = (triangle[2].y - triangle[1].y);
 vt2.z = 1;
 vt2.w = 1;
 
+vt3.x = (triangle[0].x - triangle[2].x);
+vt3.y = (triangle[0].y - triangle[2].y);
+vt3.z = 1;
+vt3.w = 1;
+
+//are (first vecx, -third vex, first vec y, -third vecy)
+double area = Determinant(vt1.x, -vt3.x, vt1.y, -vt3.y);
 //loop through every pixel in box
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {   
-            //get the pixel we are on.
-            Vertex pixelInQuestion;
-            pixelInQuestion.x = (x - triangle[0].x) ;
-            pixelInQuestion.y = (y - triangle[0].y); 
-            pixelInQuestion.z = 1; 
-            pixelInQuestion.w = 1; 
 
             //determine where the pixel is at
-            double detSign1 = Determinant(pixelInQuestion, vt2) / Determinant(vt1,vt2);
-            double detSign2 = Determinant(vt1, pixelInQuestion) / Determinant(vt1,vt2);
+            double detSign1 = Determinant(vt1.x, (x - triangle[0].x), vt1.y, (y - triangle[0].y));
+            double detSign2 = Determinant(vt2.x, (x - triangle[1].x), vt2.y, (y - triangle[1].y));
+            double detSign3 = Determinant(vt3.x, (x - triangle[2].x), vt3.y, (y - triangle[2].y));
             
             //we are inside
-            if((detSign1 >= 0) && (detSign2 >= 0) && (detSign1 + detSign2 <=1))
+            if((detSign1 >= 0) && (detSign2 >= 0) && (detSign3 >= 0))
             {
-                target[y][x] = attrs[0].color;
-            }
+                Attributes interpAtt;
+                interpAtt.collector[0] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[0], attrs[1].collector[0], attrs[2].collector[0]);
+                interpAtt.collector[1] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[1], attrs[1].collector[1], attrs[2].collector[1]);
+                interpAtt.collector[2] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[2], attrs[2].collector[1], attrs[2].collector[2]);
 
+                interpAtt.collector[0] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[0], attrs[1].collector[0], attrs[2].collector[0]);
+                interpAtt.collector[1] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[1], attrs[1].collector[1], attrs[2].collector[1]);
+                
+                frag->FragShader(target[y][x],interpAtt, *uniforms);
+                
+            }
+            //inter.u = interp(area, d1 ,d2, d3, att.u att.u att.u)
+            //inter.v = interp(area, d1 ,d2, d3, att.u att.u att.u)
         }
     }
 }
@@ -226,7 +250,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
-
+    BufferImage img("red.bmp");
     // Draw loop 
     bool running = true;
     while(running) 
@@ -239,7 +263,14 @@ int main()
 
         // Your code goes here
         // TestDrawPixel(frame);
-        TestDrawTriangle(frame);
+       // TestDrawTriangle(frame);
+     //  for (int x = 0; x < 512; x++) {
+       //    for (int y = 0; y < 512; y++) {
+         //      DrawPrimitive();
+           //    frame[y][x] = img[y][x];
+          // }
+       //} 
+         TestDrawFragments(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
