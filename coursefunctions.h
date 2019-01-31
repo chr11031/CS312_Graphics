@@ -293,9 +293,6 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
-        // colorAttributes.color[1] = colors[0];
-        // colorAttributes.color[2] = colors[1];
-        // colorAttributes.color[3] = colors[2];
         //maybe take away rgb array and keep attributes array.
         colorAttributes[0].rgb[0] = 1.0;
         colorAttributes[0].rgb[1] = 0.0;
@@ -334,7 +331,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].uv[1] = 1;
 
         // 24 bit/pixel?
-        BufferImage myImage("yoshi.bmp");
+        BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;

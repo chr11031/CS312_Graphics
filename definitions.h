@@ -241,8 +241,6 @@ class Attributes
 
         ~Attributes()
         {
-            delete image;
-            delete vert;
         }
 };	
 
@@ -304,8 +302,8 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int wid = ptr->width() - 1;
     int hgt = ptr->height() - 1;
 
-    int x = vertAttr.uv[0] * wid;
-    int y = vertAttr.uv[1] * hgt;
+    int x = vertAttr.uv[0] * hgt;
+    int y = vertAttr.uv[1] * wid;
 
     fragment = (*ptr)[y][x];
 }
