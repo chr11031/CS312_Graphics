@@ -1,6 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include "interp.h"
+#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -61,7 +61,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
@@ -201,7 +201,7 @@ void DrawTriangleScanlines(BufferImage & frame, Vertex* triangle, Attributes* at
         int numSteps = (scanVertices[1].x - scanVertices[0].x);
         while(scanVertices[0].x <= scanVertices[1].x)
         {
-            frame[scanVertices[0].y][(int)scanVertices[0].x++] = attrs[0].color;
+	  frame[scanVertices[0].y][(int)scanVertices[0].x++] = 0xffff0000; // Pre-mixed but can be attributes tweaked later
         }
 
         startX += stepLeft;
@@ -244,19 +244,11 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
             if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
-            target[(int)y][(int)x] = attrs[0].color;
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs(areaTriangle, firstDet, secndDet, thirdDet, attrs[0], attrs[1], attrs[2]);
 
-            // Interpolate Attributes for this pixel - In this case the R,G,B values
-            Attributes interpolatedAttribs;
-            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
-        
-            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
-
-            // Call shader callback
-            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }

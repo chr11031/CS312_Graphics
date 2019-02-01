@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -152,9 +153,8 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-	pointAttributes.color = color;
-
-        DrawPrimitive(POINT, target, &vert, &pointAttributes);
+	
+        //DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
 
 /***********************************************
@@ -171,19 +171,24 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
         PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-	attr[0].color = colors1[0];
-	attr[1].color = colors1[1];
-	attr[2].color = colors1[2];
-
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors1[0]);
+ 	attr[1].insertDbl(colors1[1]);
+	attr[2].insertDbl(colors1[2]);
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
         PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-	attr[0].color = colors2[0];
-	attr[1].color = colors2[1];
-	attr[2].color = colors2[2];
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors2[0]);
+ 	attr[1].insertDbl(colors2[1]);
+	attr[2].insertDbl(colors2[2]);
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -191,9 +196,12 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
         PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-	attr[0].color = colors3[0];
-	attr[1].color = colors3[1];
-	attr[2].color = colors3[2];
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors3[0]);
+ 	attr[1].insertDbl(colors3[1]);
+	attr[2].insertDbl(colors3[2]);
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -201,9 +209,12 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
         PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-	attr[0].color = colors4[0];
-	attr[1].color = colors4[1];
-	attr[2].color = colors4[2];
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors4[0]);
+ 	attr[1].insertDbl(colors4[1]);
+	attr[2].insertDbl(colors4[2]);
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -211,9 +222,12 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
         PIXEL colors5[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
-	attr[0].color = colors5[0];
-	attr[1].color = colors5[1];
-	attr[2].color = colors5[2];
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors5[0]);
+ 	attr[1].insertDbl(colors5[1]);
+	attr[2].insertDbl(colors5[2]);
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -221,9 +235,12 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
         PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
-	attr[0].color = colors6[0];
-	attr[1].color = colors6[1];
-	attr[2].color = colors6[2];
+	attr[0].numMembers = 0;
+	attr[1].numMembers = 0;
+	attr[2].numMembers = 0;
+	attr[0].insertDbl(colors5[6]);
+ 	attr[1].insertDbl(colors5[6]);
+	attr[2].insertDbl(colors5[6]);
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -237,22 +254,22 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 {
         /**************************************************
         * 1. Interpolated color triangle
-        *************************************************
+        **************************************************/
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
         colorTriangle[0] = {250, 112, 1, 1};
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-	colorAttributes[0].r = 1.0;
-	colorAttributes[0].g = 0.0;
-	colorAttributes[0].b = 0.0;
-	colorAttributes[1].r = 0.0;
-	colorAttributes[1].g = 1.0;
-	colorAttributes[1].b = 0.0;
-	colorAttributes[2].r = 0.0;
-	colorAttributes[2].g = 0.0;
-	colorAttributes[2].b = 1.0;
+	colorAttributes[0].insertDbl(1.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[1].insertDbl(1.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(1.0);
 
         // Your color code goes here for 'colorAttributes'
 
@@ -263,7 +280,6 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 	// Nothing gets setup this time
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-        */
 
         /****************************************************
          * 2. Interpolated image triangle
@@ -274,12 +290,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        imageAttributes[0].u = coordinates[0][0];
-        imageAttributes[0].v = coordinates[0][1];
-        imageAttributes[1].u = coordinates[1][0];
-        imageAttributes[1].v = coordinates[1][1];
-        imageAttributes[2].u = coordinates[2][0];
-        imageAttributes[2].v = coordinates[2][1];
+        imageAttributes[0].insertDbl(coordinates[0][0]);
+	imageAttributes[0].insertDbl(coordinates[0][1]);
+	imageAttributes[1].insertDbl(coordinates[1][0]);
+        imageAttributes[1].insertDbl(coordinates[1][1]);
+	imageAttributes[2].insertDbl(coordinates[2][0]);
+	imageAttributes[2].insertDbl(coordinates[2][1]);
 
         // Your texture coordinate code goes here for 'imageAttributes'
 
@@ -287,7 +303,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
+        imageUniforms.insertPtr(&myImage);
 
         FragmentShader myImageFragShader;
         myImageFragShader.FragShader = ImageFragShader;
