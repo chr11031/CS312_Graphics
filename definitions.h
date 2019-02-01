@@ -283,7 +283,7 @@ double interp(double area, double d1, double d2, double d3, double t1, double t2
     d2 /= area;
     d3 /= area;
 
-    return (d1 * t1) + (d2 * t2) + (d3 * t3);
+    return (d1 * t3) + (d2 * t1) + (d3 * t2);
 }
 
 // Example of a fragment shader

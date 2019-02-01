@@ -349,7 +349,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].u = 0;
         imageAttributes[2].v = 1;
 
-        static BufferImage myImage("checker.bmp");
+        static BufferImage myImage("khan.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
