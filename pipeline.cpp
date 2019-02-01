@@ -14,9 +14,10 @@ void clearScreen(Buffer2D<PIXEL> & frame, PIXEL color = 0xff000000)
     {
         for(int x = 0; x < w; x++)
         {
-            frame[y][x] = color;
+            //frame[y][x] = color;
         }
     }
+    return;
 }
 
 /************************************************************
@@ -131,12 +132,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T
                 // Interpolate attributes
                 Attributes<T> interpolatedAttribs;
                 //RGB (or alpha ;)
-                interpolatedAttribs.r = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttribs.g = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttribs.b = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                interpolatedAttribs.setR(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
+                interpolatedAttribs.setG(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
+                interpolatedAttribs.setB(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
                 //Image units
-                interpolatedAttribs.u = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                interpolatedAttribs.setU(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
+                interpolatedAttribs.setV(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
 
                 // Shader call back
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);

@@ -301,12 +301,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        imageAttributes[0].u = coordinates[0][0];
-        imageAttributes[0].v = coordinates[0][1];
-        imageAttributes[1].u = coordinates[1][0];
-        imageAttributes[1].v = coordinates[1][1];
-        imageAttributes[2].u = coordinates[2][0];
-        imageAttributes[2].v = coordinates[2][1];
+        imageAttributes[0].setU(coordinates[0][0]);
+        imageAttributes[0].setV(coordinates[0][1]);
+        imageAttributes[1].setU(coordinates[1][0]);
+        imageAttributes[1].setV(coordinates[1][1]);
+        imageAttributes[2].setU(coordinates[2][0]);
+        imageAttributes[2].setV(coordinates[2][1]);
         // Your texture coordinate code goes here for 'imageAttributes'
 
         static BufferImage myImage("TACO.bmp");

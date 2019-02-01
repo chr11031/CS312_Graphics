@@ -3,9 +3,12 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+
+using namespace std;
 
 /******************************************************
  * DEFINES:
@@ -223,7 +226,16 @@ class BufferImage : public Buffer2D<PIXEL>
 template <class T>
 class Attributes
 {      
-    public:
+        private:
+        //public:
+        double u; //for image
+        double v; // ^ ^ ^ ^
+        double r; // red
+        double g; // green
+        double b; // blue
+        double a; // alpha component
+
+        public:
         //if someone wants to just initialize rgba
         //check my draw 
         Attributes(T red, T grn, T blu, T alp) 
@@ -235,17 +247,26 @@ class Attributes
         }
         // Obligatory empty constructor
         Attributes() {}
+        //Setters
+        setR(double red) { r = red; };
+        setG(double grn) { g = grn; };
+        setB(double blu) { b = blu; };
+        setA(double alp) { a = alp; };
+        setU(double uuu) { u = uuu; };
+        setV(double vvv) { v = vvv; };
+        //Getters
+        double getR() const { return r; };
+        double getG() const { return g; };
+        double getB() const { return b; };
+        double getA() const { return a; };
+        double getU() const { return u; };
+        double getV() const { return v; };
 
-        T u; //for image
-        T v; // ^ ^ ^ ^
         void* ptrImg;
-
-        T r; // red
-        T g; // green
-        T b; // blue
-        T a; // alpha component
-
         PIXEL color;
+
+        vector<double> doubleVars; //Vector for additional doubles the user might need
+        vector<T> otherVars; //Vector for additional datatypes
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -260,8 +281,8 @@ void ImageFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Att
     //PIXEL color;
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
 
-    int x = vertAttr.u * (bf->width()-1);
-    int y = vertAttr.v * (bf->height()-1);
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
 
     fragment = (*bf)[y][x];
 }
@@ -270,10 +291,10 @@ template <class T>
 void ColorFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms)
 {
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.a *0xff) << 24;
-    color += (unsigned int)(vertAttr.r *0xff) << 16; 
-    color += (unsigned int)(vertAttr.g *0xff) << 8; 
-    color += (unsigned int)(vertAttr.b *0xff) << 0; 
+    color += (unsigned int)(vertAttr.getA() *0xff) << 24;
+    color += (unsigned int)(vertAttr.getR() *0xff) << 16; 
+    color += (unsigned int)(vertAttr.getG() *0xff) << 8; 
+    color += (unsigned int)(vertAttr.getB() *0xff) << 0; 
 
     fragment = color;
 }
@@ -388,7 +409,7 @@ inline double determinant(const double & a, const double & b, const double & c, 
  * Linear Interpolation
  ****************************************/
 template <class T>
-float interp(const T & area,
+T interp(const T & area,
              const T & det1,
              const T & det2,
              const T & det3,
