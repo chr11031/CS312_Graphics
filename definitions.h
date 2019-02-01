@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -225,11 +226,8 @@ class Attributes
     public:
         // Obligatory empty constructor
         Attributes() {}
-        PIXEL color;                
-        PIXEL colors[3];            // Obtains 3 colors for the Color Fragment Shader
-        Vertex vertPoint;           // Represents p in the barycentric coordinates
-        Vertex vertPoints[3];       // Used for the weights to find p
-        BufferImage *image;         // Pointer attribute for images
+        std::map<char, double> var;            // uses a map to store attribute values
+        BufferImage *image;                    // Pointer attribute for images
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -245,41 +243,17 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     fragment = 0xffff0000;
 }
 
-/***************************************************
- * GET_IMG_PIXEL
- * Gets the pixels for the Image Fragment Shader
- **************************************************/
-Uint32 getImgPixel(SDL_Surface *surface, int x, int y)
+/*******************************************************
+ * INTERPOLATE
+ * Find the ratio between the area of the sub-triangles
+ * and the area of the triangle.
+ * Source:
+ * https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage
+ *******************************************************/
+double interp(const double triangleArea, const double fDet, const double sDet, const double tDet, 
+              const double attr1, const double attr2, const double attr3)
 {
-    int bpp = surface->format->BytesPerPixel;
-    Uint8 *ptr = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
-
-    switch (bpp)
-    {
-        case 1:
-            return *ptr;
-            break;
-
-        case 2:
-            return *(Uint16 *)ptr;
-            break;
-
-        case 3:
-            if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
-                return ptr[0] << 16 | ptr[1] << 8 | ptr[2];
-            else
-                return ptr[0] | ptr[1] << 8 | ptr[2] << 16;
-            break;
-
-        case 4:
-            return *(Uint32 *)ptr;
-            break;
-            
-    
-        default:
-            return 0;
-            break;
-    }
+    return (((fDet / triangleArea) * attr3) + ((sDet / triangleArea) * attr1) + ((tDet / triangleArea) * attr2));
 }
 
 /*******************************************************
