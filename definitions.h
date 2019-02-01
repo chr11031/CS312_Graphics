@@ -229,21 +229,34 @@ class Attributes
     //of all the variables and set it as a list in the rest of the 
     //program
     private:
-        
-        
-    public:
-        void* ptrImg;
         double r;
         double g;
         double b;
         double u;
         double v;
+        
+        
+    public:
+        void* ptrImg;
+     
 
 
         // Obligatory empty constructor
         Attributes() : r(0), g(0), b(0), u(0), v(0){}
-        
 
+        double getR() const {return this->r;}
+        double getG() const {return this->g;}
+        double getB() const {return this->b;}
+        double getU() const {return this->u;}
+        double getV() const {return this->v;}
+
+        void setR(double r){ this->r = r;}
+        void setG(double g){ this->g = g;}
+        void setB(double b){ this->b = b;}
+        void setU(double u){ this->u = u;}
+        void setV(double v){ this->v = v;}
+        
+ 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
@@ -258,8 +271,8 @@ class Attributes
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (bf->width()-1);
-    int y = vertAttr.v * (bf->height()-1);
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
 
     fragment = (*bf)[y][x];
 }
@@ -269,9 +282,9 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.r *0xff) << 16;
-    color += (unsigned int)(vertAttr.g *0xff) << 8;
-    color += (unsigned int)(vertAttr.b *0xff) << 0;
+    color += (unsigned int)(vertAttr.getR() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getG() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getB() *0xff) << 0;
 
     fragment = color;
 }
@@ -383,7 +396,7 @@ inline double determinant(const double & A, const double & B, const double & C, 
  * You get the determinate of the each area and divide it by the area, then multiply it
  * by the color attribute. Then you add all of those together to find the interpolation.
  * **************************************/
-double interp(double & areaTriangle, double & firstDet, double & secondDet, double & thirdDet, double & a1, double & a2, double & a3)
+double interp(double & areaTriangle, double & firstDet, double & secondDet, double & thirdDet, double a1, double a2, double a3)
 {
     double w1 = (firstDet/areaTriangle) * a1;
     double w2 = (secondDet/areaTriangle) * a2;
