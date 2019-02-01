@@ -280,17 +280,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         *************************************************/
         Vertex colorTriangle[3];
         Attributes colorAttributes[3];
-        colorTriangle[0] = (Vertex){250, 112, 1, 1};
-        colorTriangle[1] = (Vertex){450, 452, 1, 1};
-        colorTriangle[2] = (Vertex){50, 452, 1, 1};
+        colorTriangle[2] = (Vertex){250, 112, 1, 1};
+        colorTriangle[0] = (Vertex){450, 452, 1, 1};
+        colorTriangle[1] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
 
         //Set the RGB values for each of the colors of the 
         //RBG values
-        colorAttributes[0].setRGB(1.0,0.0,0.0);
-        colorAttributes[1].setRGB(0.0,1.0,0.0);
-        colorAttributes[2].setRGB(0.0,0.0,1.0);
+        colorAttributes[0].setRGB(1.0,0.0,0.0); //R
+        colorAttributes[1].setRGB(0.0,1.0,0.0); //G
+        colorAttributes[2].setRGB(0.0,0.0,1.0); //B
 
         Attributes defaultUniforms;
         //No need for any changes here.
