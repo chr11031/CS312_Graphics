@@ -32,6 +32,7 @@ double interp(double area, double determinate1, double determinate2, double dete
     return color;
 }
 
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -91,7 +92,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -108,7 +109,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag) //changed Attributes* attrs
 {
     //Creating Bounding Box
     int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
@@ -250,10 +251,10 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
         // Your code goes here
         TestDrawFragments(frame);
