@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -222,9 +223,11 @@ class BufferImage : public Buffer2D<PIXEL>
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+//template class T
 class Attributes
 {     
     private:
+        std::map<std::string, double> mapper;
         double u;
         double v;
         double r;
@@ -232,20 +235,20 @@ class Attributes
         double b; 
     public:
         
-        double getR() const {return this->r;}
-        void setR(double r) {this->r = r;}
+        double getR() {return mapper["r"];}
+        void setR(double r) {mapper["r"] = r;}
 
-        double getG() const {return this->g;}
-        void setG(double g) {this->g = g;}
+        double getG() {return mapper["g"];}
+        void setG(double g) {mapper["g"] = g;}
 
-        double getB() const {return this->b;}
-        void setB(double b) {this->b = b;}
+        double getB() {return mapper["b"];}
+        void setB(double b) {mapper["b"] = b;}
 
-        double getU() const {return this->u;}
-        void setU(double u) {this->u = u;}
+        double getU() {return mapper["u"];}
+        void setU(double u) {mapper["u"] = u;}
 
-        double getV() const {return this->v;}
-        void setV(double v) {this->v = v;}
+        double getV() {return mapper["v"];}
+        void setV(double v) {mapper["v"] = v;}
 
 
         void* ptrImg;
@@ -254,12 +257,12 @@ class Attributes
         Attributes() {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(Attributes & first, Attributes & second, double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
 };	
-void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+void ImageFragShader (PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
     int x = vertAttr.getU() * (bf->width()-1);
@@ -268,7 +271,7 @@ void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attri
 
 }
 
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+void ColorFragShader(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
     color += (unsigned int)(vertAttr.getR() *0xff) << 16;
@@ -278,7 +281,7 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = color;
 }
 // Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+void DefaultFragShader(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
@@ -295,7 +298,7 @@ class FragmentShader
     public:
  
         // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
+        void (*FragShader)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         FragmentShader()
@@ -304,20 +307,20 @@ class FragmentShader
         }
 
         // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
+        FragmentShader(void (*FragSdr)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms))
         {
             setShader(FragSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
+        void setShader(void (*FragSdr)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms))
         {
             FragShader = FragSdr;
         }
 };
 
 // Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
@@ -335,7 +338,7 @@ class VertexShader
 {
     public:
         // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
+        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         VertexShader()
@@ -344,13 +347,13 @@ class VertexShader
         }
 
         // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms))
         {
             setShader(VertSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms))
         {
             VertShader = VertSdr;
         }
@@ -371,13 +374,10 @@ double crossProduct(double v1x, double v1y, double v2x, double v2y)
  ***************************************/
 double interp(double area, double d1, double d2, double d3, double att1, double att2, double att3)
 {
-    //finds the ratio to multiple the attribute with
-    d1 /= area;
-    d2 /= area;
-    d3 /= area;
+    
 
     //mix in the attribute with the how much it makes up of the triangle. 
-    return ((d1 * att1) + (d2 * att2) + (d3 * att3));
+    return ((d1 * att1) + (d2 * att2) + (d3 * att3)) / area;
 }
 
 
@@ -389,8 +389,8 @@ double interp(double area, double d1, double d2, double d3, double att1, double 
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const Attributes inputAttrs[],
-                   Attributes* const uniforms = NULL,
+                   Attributes inputAttrs[],
+                   Attributes* uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);       
