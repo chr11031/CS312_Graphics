@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -227,15 +228,19 @@ class Attributes
     public:
         PIXEL color;
 
-        // Bit map information
-        double coor[2] = {0.0, 0.0};
+        // Utalizing a map for flexability
+        std::map<char, double> myMap;
         void* ptrImg;
 
-        // Colors information
-        double col[3] = {0.0, 0.0, 0.0};
-
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes()
+        {
+            myMap.insert(std::pair<char, double>('u', 0.0));
+            myMap.insert(std::pair<char, double>('v', 0.0));
+            myMap.insert(std::pair<char, double>('r', 0.0));
+            myMap.insert(std::pair<char, double>('g', 0.0));
+            myMap.insert(std::pair<char, double>('b', 0.0));
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -246,38 +251,38 @@ class Attributes
         // Getters
         // Colors
         double getRed() const {
-            return col[0];
+            return myMap.at('r');
         }
 
         double getGreen() const {
-            return col[1];
+            return myMap.at('g');
         }
 
         double getBlue() const {
-            return col[2];
+            return myMap.at('b');
         }
 
         // Bitmap coor
         double getBU() const {
-            return coor[0];
+            return myMap.at('u');
         }
 
         double getBV() const {
-            return coor[1];
+            return myMap.at('v');
         }
 
         // Setters
         // Colors
         void setRed(double value) {
-            col[0] = value;
+            myMap['r'] = value;
         }
 
         void setGreen(double value) {
-            col[1] = value;
+            myMap['g'] = value;
         }
 
         void setBlue(double value) {
-            col[2] = value;
+            myMap['b'] = value;
         }
 
         void setColor(double r, double g, double b) {
@@ -288,11 +293,11 @@ class Attributes
 
         // Bitmap coor
         void setBU(double u) {
-            coor[0] = u;
+            myMap['u'] = u;
         }
 
         void setBV(double v) {
-            coor[1] = v;
+            myMap['v'] = v;
         }
 
         void setCoor(double u, double v) {
