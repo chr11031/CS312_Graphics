@@ -322,17 +322,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].setR(1.0);
-        colorAttributes[0].setG(0.0);
-        colorAttributes[0].setB(0.0);
+        colorAttributes[0].allAttributes[0] = (1.0);
+        colorAttributes[0].allAttributes[1] = (0.0);
+        colorAttributes[0].allAttributes[2] = (0.0);
 
-        colorAttributes[1].setR(0.0);
-        colorAttributes[1].setG(1.0);
-        colorAttributes[1].setB(0.0);
+        colorAttributes[1].allAttributes[0] = (0.0);
+        colorAttributes[1].allAttributes[1] = (1.0);
+        colorAttributes[1].allAttributes[2] = (0.0);
 
-        colorAttributes[2].setR(0.0);
-        colorAttributes[2].setG(0.0);
-        colorAttributes[2].setB(1.0);
+        colorAttributes[2].allAttributes[0] = (0.0);
+        colorAttributes[2].allAttributes[1] = (0.0);
+        colorAttributes[2].allAttributes[2] = (1.0);
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
@@ -355,12 +355,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        imageAttributes[0].setU(coordinates[0][0]);
-        imageAttributes[0].setV(coordinates[0][1]);
-        imageAttributes[1].setU(coordinates[1][0]);
-        imageAttributes[1].setV(coordinates[1][1]);
-        imageAttributes[2].setU(coordinates[2][0]);
-        imageAttributes[2].setV(coordinates[2][1]);
+        imageAttributes[0].allAttributes[3] = coordinates[0][0];
+        imageAttributes[0].allAttributes[4] = coordinates[0][1];
+        imageAttributes[1].allAttributes[3] = coordinates[1][0];
+        imageAttributes[1].allAttributes[4] = coordinates[1][1];
+        imageAttributes[2].allAttributes[3] = coordinates[2][0];
+        imageAttributes[2].allAttributes[4] = coordinates[2][1];
 
         static BufferImage myImage("downloadbmp.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
@@ -409,7 +409,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("downloadbmp.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
@@ -528,7 +528,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("downloadbmp.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;

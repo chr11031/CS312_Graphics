@@ -143,13 +143,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
             // Interpolate Attributes for this pixel - In this case the R,G,B values
             Attributes interpolatedAttribs;
-            interpolatedAttribs.setR(interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
-            interpolatedAttribs.setG(interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
-            interpolatedAttribs.setB(interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
+            interpolatedAttribs.allAttributes[0] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].allAttributes[0], attrs[1].allAttributes[0], attrs[2].allAttributes[0]);
+            interpolatedAttribs.allAttributes[1] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].allAttributes[1], attrs[1].allAttributes[1], attrs[2].allAttributes[1]);
+            interpolatedAttribs.allAttributes[2] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].allAttributes[2], attrs[1].allAttributes[2], attrs[2].allAttributes[2]);
 
 
-            interpolatedAttribs.setU(interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
-            interpolatedAttribs.setV(interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
+            interpolatedAttribs.allAttributes[3] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].allAttributes[3], attrs[1].allAttributes[3], attrs[2].allAttributes[3]);
+            interpolatedAttribs.allAttributes[4] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].allAttributes[4], attrs[1].allAttributes[4], attrs[2].allAttributes[4]);
             // Call shader callback
             frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }

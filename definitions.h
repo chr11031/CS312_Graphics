@@ -234,11 +234,11 @@ class Attributes
     //use ___.allAttributes[0];
     //or use getters and stters
     private:
-        double r;
-        double g;
-        double b;
-        double u;
-        double v;  
+        // double r;
+        // double g;
+        // double b;
+        // double u;
+        // double v;  
         
     public:
         void* ptrImg;
@@ -246,18 +246,19 @@ class Attributes
         // Obligatory empty constructor
         //Attributes() : r(0), g(0), b(0), u(0), v(0){}
         Attributes() {}
+        double allAttributes[5];
 
-        double getR() const {return this->r;}
-        double getG() const {return this->g;}
-        double getB() const {return this->b;}
-        double getU() const {return this->u;}
-        double getV() const {return this->v;}
+        // double getR() const {return this->r;}0
+        // double getG() const {return this->g;}1
+        // double getB() const {return this->b;}2
+        // double getU() const {return this->u;}3
+        // double getV() const {return this->v;}4
 
-        void setR(double r){ this->r = r;}
-        void setG(double g){ this->g = g;}
-        void setB(double b){ this->b = b;}
-        void setU(double u){ this->u = u;}
-        void setV(double v){ this->v = v;}
+        // void setR(double r){ this->r = r;}
+        // void setG(double g){ this->g = g;}
+        // void setB(double b){ this->b = b;}
+        // void setU(double u){ this->u = u;}
+        // void setV(double v){ this->v = v;}
          
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -272,8 +273,8 @@ class Attributes
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.getU() * (bf->width()-1);
-    int y = vertAttr.getV() * (bf->height()-1);
+    int x = vertAttr.allAttributes[3] * (bf->width()-1);
+    int y = vertAttr.allAttributes[4] * (bf->height()-1);
 
     fragment = (*bf)[y][x];
 }
@@ -283,9 +284,9 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.getR() *0xff) << 16;
-    color += (unsigned int)(vertAttr.getG() *0xff) << 8;
-    color += (unsigned int)(vertAttr.getB() *0xff) << 0;
+    color += (unsigned int)(vertAttr.allAttributes[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.allAttributes[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.allAttributes[2] *0xff) << 0;
 
     fragment = color;
 }
