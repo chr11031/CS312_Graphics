@@ -222,27 +222,30 @@ class BufferImage : public Buffer2D<PIXEL>
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+//template <class T>
 class Attributes
 {      
     //so when I tried doing this assignment I just kept getting errors
     //I think I understand what to do. I need to create a list of 
     //of all the variables and set it as a list in the rest of the 
     //program
+    //double allAttributes[4];
+    //then instead of using ___.getR();
+    //use ___.allAttributes[0];
+    //or use getters and stters
     private:
         double r;
         double g;
         double b;
         double u;
-        double v;
-        
+        double v;  
         
     public:
         void* ptrImg;
      
-
-
         // Obligatory empty constructor
-        Attributes() : r(0), g(0), b(0), u(0), v(0){}
+        //Attributes() : r(0), g(0), b(0), u(0), v(0){}
+        Attributes() {}
 
         double getR() const {return this->r;}
         double getG() const {return this->g;}
@@ -255,14 +258,12 @@ class Attributes
         void setB(double b){ this->b = b;}
         void setU(double u){ this->u = u;}
         void setV(double v){ this->v = v;}
-        
- 
+         
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-
 
         PIXEL color;
 };  
