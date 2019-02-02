@@ -227,10 +227,10 @@ class Attributes
 {      
     public:
 
-        // vector to store as many attributes as necessary
+        // vectors to store as many attributes as necessary
         std::vector<double> value;
-
-        void* ptrImg;
+        std::vector<void*> ptrImgs;
+        //void* ptrImg;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -266,7 +266,7 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
  **************************************************/
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    BufferImage* bf = (BufferImage*)uniforms.ptrImgs[0];
     int x = vertAttr.value[0] * (bf->width()-1);
     int y = vertAttr.value[1] * (bf->height()-1);
 

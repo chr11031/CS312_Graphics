@@ -288,7 +288,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         static BufferImage myImage("checker.bmp");
 
         Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
+        imageUniforms.ptrImgs.push_back(&myImage);
 
         // set up the FragShader for color attributes
         FragmentShader myImageFragShader;
