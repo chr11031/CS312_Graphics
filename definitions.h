@@ -230,7 +230,6 @@ class Attributes
         // vectors to store as many attributes as necessary
         std::vector<double> value;
         std::vector<void*> ptrImgs;
-        //void* ptrImg;
 
         // Obligatory empty constructor
         Attributes() {}
