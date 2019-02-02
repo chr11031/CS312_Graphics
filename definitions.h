@@ -228,11 +228,7 @@ class Attributes
 {     
     private:
         std::map<std::string, double> mapper;
-        double u;
-        double v;
-        double r;
-        double g;
-        double b; 
+ 
     public:
         
         double getR() {return mapper["r"];}
