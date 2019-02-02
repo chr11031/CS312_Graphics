@@ -228,37 +228,49 @@ class Attributes
 {     
     private:
         std::map<std::string, double> mapper;
- 
+        double u;
+        double v;
+        double r;
+        double g;
+        double b; 
     public:
         
-        double getR() {return mapper["r"];}
+        double getR() const {return mapper.at("r");}
         void setR(double r) {mapper["r"] = r;}
 
-        double getG() {return mapper["g"];}
+        double getG() const {return mapper.at("g");}
         void setG(double g) {mapper["g"] = g;}
 
-        double getB() {return mapper["b"];}
+        double getB() const {return mapper.at("b");}
         void setB(double b) {mapper["b"] = b;}
 
-        double getU() {return mapper["u"];}
+        double getU() const {return mapper.at("u");}
         void setU(double u) {mapper["u"] = u;}
 
-        double getV() {return mapper["v"];}
+        double getV() const {return mapper.at("v");}
         void setV(double v) {mapper["v"] = v;}
 
 
         void* ptrImg;
         PIXEL color;
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() 
+        {
+            mapper.insert(std::pair<std::string, double>("r",0.0));
+            mapper.insert(std::pair<std::string, double>("g",0.0));
+            mapper.insert(std::pair<std::string, double>("b",0.0));
+            mapper.insert(std::pair<std::string, double>("u",0.0));
+            mapper.insert(std::pair<std::string, double>("v",0.0));
+
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(Attributes & first, Attributes & second, double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
 };	
-void ImageFragShader (PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
+void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
     int x = vertAttr.getU() * (bf->width()-1);
@@ -267,7 +279,7 @@ void ImageFragShader (PIXEL & fragment, Attributes & vertAttr, Attributes & unif
 
 }
 
-void ColorFragShader(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
     color += (unsigned int)(vertAttr.getR() *0xff) << 16;
@@ -277,7 +289,7 @@ void ColorFragShader(PIXEL & fragment, Attributes & vertAttr, Attributes & unifo
     fragment = color;
 }
 // Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms)
+void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
@@ -294,7 +306,7 @@ class FragmentShader
     public:
  
         // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms);
+        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         FragmentShader()
@@ -303,20 +315,20 @@ class FragmentShader
         }
 
         // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms))
+        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(FragSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, Attributes & vertAttr, Attributes & uniforms))
+        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             FragShader = FragSdr;
         }
 };
 
 // Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms)
+void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
@@ -334,7 +346,7 @@ class VertexShader
 {
     public:
         // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms);
+        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
 
         // Assumes simple monotone RED shader
         VertexShader()
@@ -343,13 +355,13 @@ class VertexShader
         }
 
         // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms))
+        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(VertSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, Attributes & vertAttr, Attributes & uniforms))
+        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             VertShader = VertSdr;
         }
@@ -385,8 +397,8 @@ double interp(double area, double d1, double d2, double d3, double att1, double 
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   Attributes inputAttrs[],
-                   Attributes* uniforms = NULL,
+                   const Attributes inputAttrs[],
+                   Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);       

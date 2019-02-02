@@ -58,7 +58,7 @@ void processUserInputs(bool & running)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     
     //frag->FragShader(&target, *attrs, *uniforms);
@@ -70,7 +70,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  * DRAW_TRIANGLE
  * Renders a line to the screen.
  ***************************************/
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* attrs, Attributes* uniforms, FragmentShader* const frag)
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
 }
@@ -80,7 +80,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* attr
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* attrs, Attributes* uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     //get mins and maxs for barycentric square
     int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
@@ -136,8 +136,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes inputAttrs[], const int& numIn, 
-                                 Attributes* uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
+                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
     if(vert == NULL)
@@ -162,8 +162,8 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   Attributes inputAttrs[],
-                   Attributes* uniforms,
+                   const Attributes inputAttrs[],
+                   Attributes* const uniforms,
                    FragmentShader* const frag,                   
                    VertexShader* const vert,
                    Buffer2D<double>* zBuf)
