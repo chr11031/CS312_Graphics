@@ -2,8 +2,6 @@
 #include "SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
-#include "math.h"
-#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H

@@ -331,7 +331,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].uv[1] = 1;
 
         // 24 bit/pixel?
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("yoshi.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;

@@ -1,8 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <cmath>
-#include <iostream>
-#include <iomanip>
+//#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -253,20 +251,6 @@ int main()
         // TestDrawTriangle(frame);
         TestDrawFragments(frame);
         // TestDrawPerspectiveCorrect(frame);
-        // FragmentShader frag(greenFragShader);
-        // Attributes pointAttributes;
-        // Buffer2D<double> image2d();
-        // BufferImage image("Mario-icon.bmp");
-        // for (int x = 0; x < 256; x++)
-        // {
-        //     for (int y = 0; y < 256; y++)
-        //     {
-        //         Vertex vert;
-        //         vert.x = x;
-        //         vert.y = y;
-        //         DrawPrimitive(POINT, frame, &vert,  &pointAttributes, NULL, &frag, NULL, &image2d)
-        //     }
-        // }
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
