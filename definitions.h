@@ -227,12 +227,7 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {     
     private:
-        std::map<std::string, double> mapper;
-        double u;
-        double v;
-        double r;
-        double g;
-        double b; 
+        std::map<std::string, double> mapper; 
     public:
         
         double getR() const {return mapper.at("r");}
