@@ -369,6 +369,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         BufferImage myImage("Assets/checker.bmp");
         // Ensure the checkboard image is in this directory
+        
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
