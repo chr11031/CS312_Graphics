@@ -125,7 +125,7 @@ double interoplate(double y, double x, Vertex* const triangle, double attr1, dou
     double k = 1 - i - j;
 
     //get the three attributes and return the color interpolated attributes
-    return ((i * attr1) + (j * attr2) + (k * attr3));
+    return ((k * attr1) + (i * attr2) + (j* attr3));
 }
 	
 /*************************************************************
