@@ -232,6 +232,10 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
         PIXEL color;
+        double attr[16]; // to be more dynamic, just use an array of attributes that would be of type
+                         // double:
+                         // color rgb, UV coordinates, normal vectors, fog coordinates, ECT.
+        void* ptrImg;    // for the imgBuffer attribute, but may be re-purposed
 };	
 
 // Example of a fragment shader
@@ -239,6 +243,32 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+   // assign buffer pointer to the buffer image
+   BufferImage* bfPtr = (BufferImage*)uniforms.ptrImg;
+   // assign x to attr[0] (U coordinate * (image width -1))
+   int x = vertAttr.attr[0] * (bfPtr->width() - 1);
+   // assign y to attr[0] (U coordinate * (image width -1))
+   int y = vertAttr.attr[1] * (bfPtr->height() - 1);
+
+   // this is the new fragment after casting the image coordinates onto the triangle
+   fragment = (*bfPtr)[y][x];
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+   // set the rgb color attributes by creating a hex color through shifts
+   // shift 16 for red, 8 for green, and none for blue
+   // attr[0] = red; attr[1] = green; attr[2] = blue
+    PIXEL color = 0xff000000;
+    color += (unsigned int) (vertAttr.attr[0] *0xff) << 16;
+    color += (unsigned int) (vertAttr.attr[1] *0xff) << 8;
+    color += (unsigned int) (vertAttr.attr[2] *0xff) << 0;
+
+    fragment = color;
 }
 
 /*******************************************************
@@ -271,6 +301,7 @@ class FragmentShader
         {
             FragShader = FragSdr;
         }
+
 };
 
 // Example of a vertex shader
