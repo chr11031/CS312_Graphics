@@ -167,6 +167,7 @@ class BufferImage : public Buffer2D<PIXEL>
         // Free dynamic memory
         ~BufferImage()
         {
+            // return;
             // De-Allocate pointers for column references
             free(grid);
 
@@ -224,22 +225,93 @@ class Attributes
 {      
     public:
         PIXEL color;
+        // Individual red, green, blue, u and v variables to easier handle interpolation.
+        double r;
+        double g;
+        double b;
+        
+        double u;
+        double v;
+
+        // void pointer to hold an image for texture-related stuff.
+        void * ptrImg;
+
+        // For mouse coordinates. Will possibly be changed later.
+        double mouseX;
+        double mouseY;
+
+        // For matrix tranformations. Will possibly be changed later.
+        double transform[3];
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() {
+            r, g, b, u, v = 0;
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Constructor with passed in red, green, and blue values.
+        Attributes(double & red, double & green, double & blue)
+        {
+            this->r = red;
+            this->g = green;
+            this->b = blue;
+        }
+
+        // Constructor with passed in u and v values.
+        Attributes(double & u, double & v)
+        {
+            this->u = u;
+            this->v = v;
+        }
+
+        Attributes(void * ptr)
+        {
+            this->ptrImg = ptr;
+        }
 };	
+
+// My interpolation function. The determinants of each vertex is divided by the area and multiplied
+// with the specific color weights of each vertex.
+double interp(double area, double d1, double d2, double d3, double t1, double t2, double t3)
+{
+    d1 /= area;
+    d2 /= area;
+    d3 /= area;
+
+    return (d1 * t3) + (d2 * t1) + (d3 * t2);
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+// Color fragment shader, which assigns a color to a pixel based on the color weights passed in.
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;
+
+    fragment = color;
+}
+
+// Image fragment shader, which draws an image over a rendered triangle.
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
 }
 
 /*******************************************************
