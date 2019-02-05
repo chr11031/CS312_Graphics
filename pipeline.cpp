@@ -67,14 +67,36 @@ double computeDeterminant(double a, double b, double c, double d) {
 }
 
 /****************************************
+ * INTERPOLATE
+ * Interpolates (mixes) components from 3
+ * colors.
+ * 
+ * area - Area of a primitive
+ * firstDet - area of sub-triangle 1
+ * ...
+ * color1 - Color for attribute 1
+ * ...
+ * *************************************/
+double interpolate(double area, double firstDet, double secondDet, double thirdDet, double attr1, double attr2, double attr3)
+{
+    // Divide the subtriangle area by the entire triangle area
+    //  Then, multiply the result by whatever the attribute value is
+    double component1 = (secondDet / area) * attr1;
+    double component2 = (thirdDet / area) * attr2;
+    double component3 = (firstDet / area) * attr3;
+
+    // We add the components together to get a single interpolated attribute value
+    return component1 + component2 + component3;
+}
+
+/****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
@@ -93,46 +115,56 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> &target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    // target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
+    // Make a BoundingBox for this triangle
+    BoundingBox boundingBox(triangle[0], triangle[1], triangle[2]);
 
-    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-
-    // Make two sides (Vectors) of the triangle
-    Vertex side1 = {
+    // Make three sides (Vectors) of the triangle
+    Vertex firstVect = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
         1,
         1
     };
 
-    Vertex side2 = {
-        triangle[2].x - triangle[0].x,
-        triangle[2].y - triangle[0].y,
+    Vertex secondVect = {
+        triangle[2].x - triangle[1].x,
+        triangle[2].y - triangle[1].y,
         1,
         1
     };
 
-    for (int x = minX; x <= maxX; x++) {
-        for (int y = minY; y <= maxY; y++) {
-            // Make a Vector that spans from the triangle[0] Vertex to the current values of x and y
-            Vertex testVector = {
-                x - triangle[0].x,
-                y - triangle[0].y,
-                1,
-                1
-            };
+    Vertex thirdVect = {
+        triangle[0].x - triangle[2].x,
+        triangle[0].y - triangle[2].y,
+        1,
+        1
+    };
 
-            double det1 = computeDeterminant(testVector.x, side2.x, testVector.y, side2.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
-            double det2 = computeDeterminant(side1.x, testVector.x, side1.y, testVector.y) / computeDeterminant(side1.x, side2.x, side1.y, side2.y);
+    double area = computeDeterminant(firstVect.x, -thirdVect.x, firstVect.y, -thirdVect.y);
+
+    for (int y = boundingBox.minY; y <= boundingBox.maxY; y++) {
+        for (int x = boundingBox.minX; x <= boundingBox.maxX; x++) {
+            // These three determinants determine how much of each attribute we will
+            //  give weight to in interpolation.
+            double firstDet = computeDeterminant(firstVect.x, x - triangle[0].x, firstVect.y, y - triangle[0].y);
+            double secondDet = computeDeterminant(secondVect.x, x - triangle[1].x, secondVect.y, y - triangle[1].y);
+            double thirdDet = computeDeterminant(thirdVect.x, x - triangle[2].x, thirdVect.y, y - triangle[2].y);
 
             // Test if this point is in the triangle
-            if ((det1 >= 0) && (det2 >= 0) && ((det1 + det2) <= 1)) {
-                // Give the point color (Draw point)
-                target[y][x] = attrs[0].color;
+            if ((firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0)) {
+                // Attributes with which we will shade a fragment
+                Attributes interpolatedAttributes;
+
+                // Iterpolate the passed attributes
+                interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
+                interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
+                interpolatedAttributes.values[2] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[2], attrs[1].values[2], attrs[2].values[2]);
+
+                interpolatedAttributes.values[0] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[0], attrs[1].values[0], attrs[2].values[0]);
+                interpolatedAttributes.values[1] = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].values[1], attrs[1].values[1], attrs[2].values[1]);
+                
+                // Shade the fragment using the interpolated attributes and any uniforms
+                frag->FragShader(target[y][x], interpolatedAttributes, *uniforms);
             }
         }
     }
@@ -168,7 +200,7 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
  **************************************************************************/
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
-                   const Vertex inputVerts[], 
+                   const Vertex inputVerts[],
                    const Attributes inputAttrs[],
                    Attributes* const uniforms,
                    FragmentShader* const frag,                   
@@ -209,6 +241,15 @@ void DrawPrimitive(PRIMITIVES prim,
     }
 }
 
+// Here, I will make a FragmentShader callback function
+void GreenFragmentShader(PIXEL & fragment, const Attributes & vertexAttr, const Attributes & uniforms)
+{
+    // OK, so we will zero out the red and blue and just leave the rest
+    //  which will be green
+    
+    fragment = vertexAttr.color & 0xff00ff00;
+}
+
 /*************************************************************
  * MAIN:
  * Main game loop, initialization, memory management
@@ -229,6 +270,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
+    BufferImage bmpImage("../battletoads.bmp");
 
     // Draw loop 
     bool running = true;
@@ -240,9 +282,30 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawPixel(frame);
-        //GameOfLife(frame);
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        // TestDrawTriangle(frame);
+
+        // Attributes attrs;
+        // FragmentShader greenSdr(GreenFragmentShader);
+
+        // // Here, we will make a double for loop
+        // for (int y = 0; y < 256; y++) {
+        //     for (int x = 0; x < 256; x++) {
+        //         //frame[y][x] = bmpImage[y][x];
+        //         //Attributes attrs;
+        //         // FragmentShader fragSdr(DefaultFragShader);                
+                
+        //         attrs.color = bmpImage[y][x];
+
+        //         Vertex v;
+        //         v.x = x;
+        //         v.y = y;
+        //         v.z = 1;
+        //         v.w = 1;
+
+        //         DrawPrimitive(POINT, frame, &v, &attrs, NULL, &greenSdr);
+        //     }
+        // }
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -280,6 +280,24 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
 
+void GradientFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
+    // Sample Class code
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.values[0] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.values[1] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.values[2] * 0xff) << 0;
+
+    fragment = color;
+}
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int x = vertAttr.values[0] * (ptr->width() - 1);
+    int y = vertAttr.values[1] * (ptr->height() - 1);
+
+    fragment = (*ptr)[y][x];
+}
 
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 
@@ -295,10 +313,19 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[0] = (Vertex){250, 112, 1, 1};
         colorTriangle[1] = (Vertex){450, 452, 1, 1};
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
-        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
 
-        FragmentShader myColorFragShader;
+        // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].values[0] = 1.0;
+        colorAttributes[0].values[1] = 0.0;
+        colorAttributes[0].values[2] = 0.0;
+        colorAttributes[1].values[0] = 0.0;
+        colorAttributes[1].values[1] = 1.0;
+        colorAttributes[1].values[2] = 0.0;
+        colorAttributes[2].values[0] = 0.0;
+        colorAttributes[2].values[1] = 0.0;
+        colorAttributes[2].values[2] = 1.0;
+
+        FragmentShader myColorFragShader(GradientFragShader);
         // Your code for the color fragment shader goes here
 
         Attributes colorUniforms;
@@ -316,14 +343,21 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].values[0] = coordinates[0][0];
+        imageAttributes[0].values[1] = coordinates[0][1];
+        imageAttributes[1].values[0] = coordinates[1][0];
+        imageAttributes[1].values[1] = coordinates[1][1];
+        imageAttributes[2].values[0] = coordinates[2][0];
+        imageAttributes[2].values[1] = coordinates[2][1];
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("image_128.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
+        imageUniforms.ptrImg = &myImage;
         // Your code for the uniform goes here
 
-        FragmentShader myImageFragShader;
+        FragmentShader myImageFragShader(ImageFragShader);
         // Your code for the image fragment shader goes here
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
