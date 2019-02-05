@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -223,7 +224,6 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        PIXEL color;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -236,7 +236,21 @@ class Attributes
 
         /// My Code
         PIXEL color;
-};	
+
+        void * ptrImg;  // points to the .bmp
+
+        std::vector<double> values; // vector to allow for as many as the user would like
+
+        // easier to add another value to the vector
+        void add(const double value) { values.push_back(value); }
+
+        // clears the vector for future use
+        void reset() { values.clear(); }
+
+        // I'm confused about what the Attributes class needs to be able to do in the future,
+        //    does it need more vectors of other data types? Does it need methods to access it's
+        //    values instead of direct access? Are other data types needed?
+};
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

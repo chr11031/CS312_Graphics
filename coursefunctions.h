@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -309,7 +310,6 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
 
-
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 
  * interpolation for Project 03. 
@@ -319,43 +319,64 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         /**************************************************
         * 1. Interpolated color triangle
         *************************************************/
-        Vertex colorTriangle[3];
-        Attributes colorAttributes[3];
-        colorTriangle[0] = {250, 112, 1, 1};
-        colorTriangle[1] = {450, 452, 1, 1};
-        colorTriangle[2] = {50, 452, 1, 1};
+        Vertex myTriangle[3];
+        Attributes myAttributes[3];
+        myTriangle[0] = {250, 112, 1, 1};
+        myTriangle[1] = {450, 452, 1, 1};
+        myTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        myAttributes[0].add(1.0);
+        myAttributes[0].add(0.0);
+        myAttributes[0].add(0.0);
+        myAttributes[1].add(0.0);
+        myAttributes[1].add(1.0);
+        myAttributes[1].add(0.0);
+        myAttributes[2].add(0.0);
+        myAttributes[2].add(0.0);
+        myAttributes[2].add(1.0);
 
-        FragmentShader myColorFragShader;
+        FragmentShader myFragShader;
         // Your code for the color fragment shader goes here
+        myFragShader.setShader(ColorFragShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
+        DrawPrimitive(TRIANGLE, target, myTriangle, myAttributes, &colorUniforms, &myFragShader);
+
+        myAttributes[0].reset();
+        myAttributes[1].reset();
+        myAttributes[2].reset();
 
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
-        Vertex imageTriangle[3];
-        Attributes imageAttributes[3];
-        imageTriangle[0] = {425, 112, 1, 1};
-        imageTriangle[1] = {500, 252, 1, 1};
-        imageTriangle[2] = {350, 252, 1, 1};
+        myTriangle[0] = {425, 112, 1, 1};
+        myTriangle[1] = {500, 252, 1, 1};
+        myTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
+        // r and g are used for the x and y
+        myAttributes[0].add(coordinates[0][0]);
+        myAttributes[0].add(coordinates[0][1]);
+        myAttributes[1].add(coordinates[1][0]);
+        myAttributes[1].add(coordinates[1][1]);
+        myAttributes[2].add(coordinates[2][0]);
+        myAttributes[2].add(coordinates[2][1]);
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("../Google Drive/G-Sync/Computer Graphics/babboon.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
-        FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
+        // IMPLEMENT CALLBACK BETWEEN THESE TWO THINGS
+        myFragShader.setShader(ImageFragShader);
 
-        DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
+        DrawPrimitive(TRIANGLE, target, myTriangle, myAttributes, &imageUniforms, &myFragShader);
 }
 
 /************************************************
@@ -435,7 +456,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
@@ -530,6 +551,29 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
 
+/************************************************
+ * DETERMINANT of two matrices
+ ***********************************************/
+float Determinant(float A, float B, float C, float D)
+{
+        return ((A * D) - (B * C));
+}
 
+/************************************************
+ * INTERP interpolates values between points based
+ * on the percentage each determinant area is of the whole
+ ***********************************************/
+Attributes Interpolate(const double totalArea, const double firsD, const double seconD, const double thirD, const Attributes * attrs)
+{
+        Attributes interpolated;
+        // each determinant of the triangle is a percentage of the total area, so multiply that times the color
+        // at the opposite end of the triangle from that vertex, which tells you how much color to apply
+        for (int i = 0; i < attrs[0].values.size(); i++)
+        {
+                interpolated.values.push_back((firsD * attrs[2].values[i] + seconD * attrs[0].values[i] + thirD * attrs[1].values[i]) / totalArea);
+        }
+
+        return interpolated;
+}
 
 #endif
