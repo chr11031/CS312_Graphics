@@ -94,14 +94,14 @@ int crossProduct (Vertex vertex1, Vertex vertex2)
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
    //DrawPoint(target,&(triangle[0]),&(attrs[0]),NULL,NULL);
-
-   /* get the bounding box of the triangle */
+   /*
+   // get the bounding box of the triangle 
    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    /* spanning vectors of edge (v1,v2) and (v1,v3) */
+    // spanning vectors of edge (v1,v2) and (v1,v3) 
     Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
     Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
 
@@ -121,8 +121,52 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
          //cout << s << ", " << t << "          " << v.x << ", " << v.y << endl;
 
          if ((s >= 0) && (t >= 0) && (s + t <= 1))
-         { /* inside triangle */
+         {  
+             // inside triangle
             DrawPoint(target, &v, attrs, NULL, NULL);
+         }
+      }
+   }
+   */
+   int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+   int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+   int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+   // Compute first, second, third X-Y pairs
+   double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+   double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+   double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+   // Compute area of the whole triangle
+   double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
+
+   // Loop through every pixel in the grid
+   for(int y = minY; y < maxY; y++)
+   {
+      for(int x = minX; x < maxX; x++)
+      {  
+         // Determine if the pixel is in the triangle by the determinant's sign
+         double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+         double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+         double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+
+         // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+         if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+         {
+            target[(int)y][(int)x] = attrs[0].color;
+
+            // Interpolate Attributes for this pixel - In this case the R,G,B values
+            Attributes interpolatedAttribs;
+            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+            // Call shader callback
+            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
          }
       }
    }
@@ -230,7 +274,8 @@ int main()
         // Refresh Screen
         //clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

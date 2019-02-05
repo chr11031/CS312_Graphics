@@ -22,6 +22,8 @@
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 //#define crossProduct(A,B,C,D) (A * D) - (B * C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -233,7 +235,36 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
         PIXEL color;
-};	
+        double r;
+        double g;
+        double b;
+        double u;
+        double v;
+        void* ptrImg;
+};
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+     fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragmentShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniform)
+{
+
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -326,6 +357,25 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
-       
+                   Buffer2D<double>* zBuf = NULL);
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}        
+
+/****************************************
+ * INTERPOLATION
+ * 
+ ***************************************/
+ double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2)
+ {
+    return (attr2 * firstDet + attr0 * secndDet + attr1 * thirdDet) / areaTriangle;    
+ }
+
 #endif
