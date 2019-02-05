@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -25,6 +26,16 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+int MaxNum(const int & num1, const int & num2)
+{
+    return (num1 > num2) ? num1 : num2;
+}
+
+int MinNum(const int & num1, const int & num2)
+{
+    return (num1 < num2) ? num1 : num2;
+}
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -45,6 +56,37 @@ struct Vertex
     double z;
     double w;
 };
+
+Uint32 getpixel(SDL_Surface *surface, int x, int y)
+{
+    int bpp = surface->format->BytesPerPixel;
+    /* Here p is the address to the pixel we want to retrieve */
+    Uint8 *p = (Uint8 *)surface->pixels + y * surface->pitch + x * bpp;
+
+    switch(bpp) {
+    case 1:
+        return *p;
+        break;
+
+    case 2:
+        return *(Uint16 *)p;
+        break;
+
+    case 3:
+        if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+            return p[0] << 16 | p[1] << 8 | p[2];
+        else
+            return p[0] | p[1] << 8 | p[2] << 16;
+        break;
+
+    case 4:
+        return *(Uint32 *)p;
+        break;
+
+    default:
+        return 0;       /* shouldn't happen, but avoids warnings */
+    }
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -142,8 +184,7 @@ class Buffer2D
  ***************************************************/
 class BufferImage : public Buffer2D<PIXEL>
 {
-    protected:       
-        SDL_Surface* img;                   // Reference to the Surface in question
+    protected:
         bool ourSurfaceInstance = false;    // Do we need to de-allocate?
 
         // Private intialization setup
@@ -159,11 +200,12 @@ class BufferImage : public Buffer2D<PIXEL>
             for(int i = 0; i < h; i++)
             {
                 grid[i] = row;
-                row -= w;                    
+                row -= w;                  
             }
         }
 
     public:
+        SDL_Surface* img;                   // Reference to the Surface in question
         // Free dynamic memory
         ~BufferImage()
         {
@@ -226,7 +268,10 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
         PIXEL color;
-
+        PIXEL colors[3];
+        Vertex vertexPoint;
+        Vertex vertexPoints[3];
+        BufferImage * image;
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
