@@ -60,7 +60,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = *((PIXEL *) attrs[0].data);
 }
 
 /****************************************
@@ -91,25 +91,44 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     minX = MAX(minX, 0);
     minY = MAX(minY, 0);
 
-    Vertex v1 = { triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y };
-    Vertex v2 = { triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y };
+    Vertex v1 = { triangle[0].x, triangle[0].y };
+    Vertex v2 = { triangle[1].x, triangle[1].y };
+    Vertex v3 = { triangle[2].x, triangle[2].y };
+
+    // needed for interpolation
+    float totalArea = determinate(subtractVert(v2, v1), subtractVert(v3, v1));
+
+    // interpolated values are used once so the same container can be used
+    // for every pixel
+    double * interpBin = new double[attrs[0].dLen];
+    Attributes interpAttr(interpBin);
+
     Vertex p;
-
-    for (int x = minX; x <= maxX; x++)
+    for (p.x = minX; p.x <= maxX; p.x++)
     {
-        for (int y = minY; y <= maxY; y++)
+        for (p.y = minY; p.y <= maxY; p.y++)
         {
-            p.x = x - triangle[0].x; 
-            p.y = y - triangle[0].y;
 
-            float u = determinate(v1, v2);
-            float s = determinate(p, v2) / u;
-            float t = determinate(v1, p) / u;
+            // Compare the point with every edge in counterclock wise order
+            double det[3] =
+            {
+                determinate(subtractVert(v2, v1), subtractVert(p, v1)),
+                determinate(subtractVert(v3, v2), subtractVert(p, v2)),
+                determinate(subtractVert(v1, v3), subtractVert(p, v3))
+            };
 
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
-                target[(int)y][(int)x] = attrs[0].color;
+            // if a determinate is postive then the point is to the left of the
+            // edge represented by the determinate. If all three are positive
+            // then the point is in the triangle
+            if (det[0] >= 0 && det[1] >= 0 && det[2]>= 0)
+            {
+                interp(attrs, interpBin, det, totalArea);
+                frag->FragShader(target[(int)p.y][(int)p.x], interpAttr, *uniforms);
+            }
         }
     }
+
+    delete [] interpBin;
 }
 
 /**************************************************************
@@ -215,7 +234,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

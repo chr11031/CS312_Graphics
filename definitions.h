@@ -223,22 +223,88 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        PIXEL color;
-        // Obligatory empty constructor
-        Attributes() {}
+        void * data;
+        int dLen; // Know how much data is in an array
+
+        // No need for an empty constructor as this constructor will
+        // be called when no parameters are provided
+        Attributes(void * data = nullptr, int dLen = -1) 
+        {
+            this->data = data;
+            this->dLen = dLen;
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+};
+
+/*******************************************************
+ * Contains values for RgbAttributes
+ ******************************************************/
+class RgbAttr : public Attributes
+{
+    public:
+        RgbAttr(double red = 0, double green = 0, double blue = 0) 
+        {
+            rgb[0] = red;
+            rgb[1] = green;
+            rgb[2] = blue;
+            this->data = rgb;
+            this->dLen = 3;
+        }
+
+    private:
+        double rgb[3];
+};
+
+/*******************************************************
+ * Contains values for ImageAttributes
+ ******************************************************/
+class ImageAttr : public Attributes
+{
+    public:
+        ImageAttr(double u = 0, double v = 0) 
+        {
+            uv[0] = u;
+            uv[1] = v;
+            this->data = uv;
+            this->dLen = 2;
+        }
+
+    private:
+        double uv[2];
+};
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.data;
+    double * data = (double *)vertAttr.data;
+    int x = data[0] * (bf->width()-1);
+    int y = data[1] * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    double * data = (double*) vertAttr.data;
+    color += (unsigned int)(data[0] *0xff) << 16;
+    color += (unsigned int)(data[1] *0xff) << 8;
+    color += (unsigned int)(data[2] *0xff) << 0;
+
+    fragment = color;
 }
 
 /*******************************************************
