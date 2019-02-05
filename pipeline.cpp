@@ -1,6 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <cmath>
+//#include <cmath>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -61,8 +61,13 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
+    PIXEL color = 0xff000000;
+     color += (unsigned int)(attrs[0].rgb[0] * 0xff) << 16;
+     color += (unsigned int)(attrs[0].rgb[1] * 0xff) << 8;
+     color += (unsigned int)(attrs[0].rgb[2] * 0xff) << 0;
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = color;
+    // std::cout << std::hex << attrs->color[0] << std::endl;
 }
 
 /****************************************
@@ -74,17 +79,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
-/*******************************************************
- * CROSS_PRODUCT
- * calculates the cross product of the given vertices.
- ******************************************************/
-float crossProduct(Vertex *v1, Vertex *v2)
-{
-    float product = 0;
-    product = (v1->x * v2->y) - (v1->y * v2->x);
-    return product;
-}
-
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -94,62 +88,60 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
     // we only want to look at the box that the triangle is in. If we go outside
     // that box we are just wasting processing power and speed.
-    int maxX = fmax(triangle->x, fmax((triangle + 1)->x, (triangle + 2)->x));
-    int minX = fmin(triangle->x, fmin((triangle + 1)->x, (triangle + 2)->x));
-    int maxY = fmax(triangle->y, fmax((triangle + 1)->y, (triangle + 2)->y));
-    int minY = fmin(triangle->y, fmin((triangle + 1)->y, (triangle + 2)->y));
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
     
     // vector from vertex 1 to vertex 2
-    Vertex * vs1 = new Vertex;
-    vs1->x = triangle->x - (triangle + 1)->x;
-    vs1->y = triangle->y - (triangle + 1)->y;
+    double vs1[2] = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y)};
 
     // vector from vertex 2 to vertex 3
-    Vertex * vs2 = new Vertex;
-    vs2->x = (triangle + 2)->x - (triangle + 1)->x;
-    vs2->y = (triangle + 2)->y - (triangle + 1)->y;
+    double vs2[2] = {(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y)};
     
     // vector from vertex 3 to vertex 1
-    Vertex * vs3 = new Vertex;
-    vs3->x = (triangle + 2)->x - triangle->x;
-    vs3->y = (triangle + 2)->y - triangle->y;
+    double vs3[2] = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
+
+    float totalArea = triangleArea(vs1, vs2);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            // create the vector to be compared with the three side vectors.
-            Vertex * q = new Vertex;
-            q->x = x - triangle->x;
-            q->y = y - triangle->y;
+            // create the vectors to be compared with the three side vectors.
+            double q1[2] = {x - triangle[0].x, y - triangle[0].y};
+            double q2[2] = {x - triangle[1].x, y - triangle[1].y};
+            double q3[2] = {x - triangle[2].x, y - triangle[2].y};
 
             // find the cross products of the three outside vectors with
             // the vector pointing to the point to be drawn
-            float ted = crossProduct(q, vs1) / crossProduct(vs3, vs2);
-            float rufus = crossProduct(q, vs2) / crossProduct(vs3, vs2);
-            float bill = crossProduct(q, vs3) / crossProduct(vs3, vs2);
+            float areaT1 = triangleArea(vs2, q2);
+            float areaT3 = triangleArea(vs1, q1);
+            float areaT2 = triangleArea(vs3, q3);
 
-            // If the cross products are less than zero then the pixel is outside of the triangle.
-            if ( (ted >= 0) && (bill >= 0) && ((rufus >= 0) && (rufus <= 1)))
+            // If any of the cross products are less than zero then the pixel is outside of the triangle.
+            if ( (areaT1 >= 0) && (areaT3 >= 0) && ((areaT2 >= 0)))
             {
                 //The point is inside the triangle.
-                //create the point for drawpoint to color.
-                Vertex * pVertex = new Vertex;
-                pVertex->x = x;
-                pVertex->y = y;
+                target[y][x] = attrs[0].color;
+
+                // interpolate colors here into new attributes object
+                Attributes lerpedAttrs;
+                lerpedAttrs.rgb[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
+                lerpedAttrs.rgb[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
+                lerpedAttrs.rgb[2] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
+
+                lerpedAttrs.uv[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
+                lerpedAttrs.uv[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
+
+                // check github code on class repo.;
+                frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
+
                 // draw the point.
-                DrawPoint(target, pVertex, attrs, uniforms, frag);
-                // free up memory
-                delete pVertex;
+                // DrawPoint(target, pVertex, attrs, uniforms, frag);
             }
-            // free up more memory
-            delete q;
         }
     }
-    // free up even more memory
-    delete vs1;
-    delete vs2;
-    delete vs3;
 }
 
 /**************************************************************
@@ -256,7 +248,9 @@ int main()
 
         // TestDrawPixel(frame);
         //GameOfLife(frame);
-        TestDrawTriangle(frame);
+        // TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        // TestDrawPerspectiveCorrect(frame);
 
         //TestDrawPixel(frame);
         // GameOfLife(frame);

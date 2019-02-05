@@ -2,7 +2,6 @@
 #include "SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
-#include "math.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -221,9 +220,14 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
+{
     public:
         PIXEL color;
+        void *image;
+        Vertex *vert;
+        double rgb[3];
+        double uv[2];
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -232,13 +236,74 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        ~Attributes()
+        {
+        }
 };	
+
+/*******************************************************
+ * CROSS_PRODUCT
+ * calculates the cross product of the given vertices.
+ ******************************************************/
+float triangleArea(double v1[2], double v2[2])
+{
+    return ((v1[0] * v2[1]) - (v1[1] * v2[0])) / 2;
+}
+
+/***************************************************************************
+ * LINEAR INTERPOLATION
+ * linearly interpolates the values passed in based on the area of the
+ * triangles.
+ **************************************************************************/
+double lerp(float area, float area1, float area2, float area3, double attr1, double attr2, double attr3)
+{
+    double lerpedAttr = 0.0;
+    lerpedAttr = (area1/area * attr1) + (area2/area * attr2) + (area3/area * attr3);
+    return lerpedAttr;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red.
     fragment = 0xffff0000;
+}
+
+void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = 0xff00ff00;
+}
+
+/********************************************************************
+ * COLOR FRAG SHADER
+ * adds the red, green, and blue values to the color of the pixel.
+ *******************************************************************/
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.rgb[0] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.rgb[1] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.rgb[2] * 0xff) << 0;
+
+    fragment = color;
+}
+
+/*****************************************************************
+ * IMAGE FRAG SHADER 
+ * prints the image to the screen according to the UV coords.
+ *****************************************************************/
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage *ptr = (BufferImage*)uniforms.image;
+
+    int wid = ptr->width() - 1;
+    int hgt = ptr->height() - 1;
+
+    int x = vertAttr.uv[0] * hgt;
+    int y = vertAttr.uv[1] * wid;
+
+    fragment = (*ptr)[y][x];
 }
 
 /*******************************************************
