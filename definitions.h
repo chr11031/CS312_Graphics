@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +22,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -220,12 +223,41 @@ class BufferImage : public Buffer2D<PIXEL>
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+//template class T
 class Attributes
-{      
+{     
+    private:
+        std::map<std::string, double> mapper; 
     public:
+        
+        double getR() const {return mapper.at("r");}
+        void setR(double r) {mapper["r"] = r;}
+
+        double getG() const {return mapper.at("g");}
+        void setG(double g) {mapper["g"] = g;}
+
+        double getB() const {return mapper.at("b");}
+        void setB(double b) {mapper["b"] = b;}
+
+        double getU() const {return mapper.at("u");}
+        void setU(double u) {mapper["u"] = u;}
+
+        double getV() const {return mapper.at("v");}
+        void setV(double v) {mapper["v"] = v;}
+
+
+        void* ptrImg;
         PIXEL color;
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() 
+        {
+            mapper.insert(std::pair<std::string, double>("r",0.0));
+            mapper.insert(std::pair<std::string, double>("g",0.0));
+            mapper.insert(std::pair<std::string, double>("b",0.0));
+            mapper.insert(std::pair<std::string, double>("u",0.0));
+            mapper.insert(std::pair<std::string, double>("v",0.0));
+
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -233,7 +265,24 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 };	
+void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
+    fragment = (*bf)[y][x];
 
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.getR() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getG() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getB() *0xff) << 0;
+
+    fragment = color;
+}
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -312,14 +361,28 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
-
-float crossProduct(Vertex v1, Vertex v2)
+/****************************************
+ * CROSS_PRODUCT
+ * returns the determinant 
+ ***************************************/
+double crossProduct(double v1x, double v1y, double v2x, double v2y)
 {
-    float a = v1.x * v2.y;
-    float b = v2.x * v1.y;
-    float det = a - b;
-    return det;
+    
+    return (v1x*v2y - v1y*v2x);
 }
+
+/****************************************
+ * INTERP
+ * Linear interpolation between three points
+ ***************************************/
+double interp(double area, double d1, double d2, double d3, double att1, double att2, double att3)
+{
+    
+
+    //mix in the attribute with the how much it makes up of the triangle. 
+    return ((d1 * att1) + (d2 * att2) + (d3 * att3)) / area;
+}
+
 
 // Stub for Primitive Drawing function
 /****************************************
