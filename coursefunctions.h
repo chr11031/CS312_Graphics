@@ -102,7 +102,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                                         } else if(count >= 4){
                                                 grid[y][x] = 0;
                                         }
-                                        grid[y][x] = gridTmp[y][(x + 1 + 64) % 64];
+                                        //grid[y][x] = gridTmp[y][(x + 1 + 64) % 64];
 
                                 }else if (grid[y][x] == 0){
                                         if(count == 3){
@@ -128,7 +128,7 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                         if(grid[yScal][xScal] == 0)
                         {
                                 // Dead Color
-                                target[y][x] = 0x000000;
+                                target[y][x] = 0xff000000;
                         }
                         else
                         {
@@ -203,48 +203,67 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         verts[0] = (Vertex){100, 362, 1, 1};
         verts[1] = (Vertex){150, 452, 1, 1};
         verts[2] = (Vertex){50, 452, 1, 1};
-        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000}; //RED
         // Your color code goes here for 'attr'
+        attr[0].color = colors1[0];
+        attr[1].color = colors1[1];
+        attr[2].color = colors1[2];
+        
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = (Vertex){300, 402, 1, 1};
         verts[1] = (Vertex){250, 452, 1, 1};
         verts[2] = (Vertex){250, 362, 1, 1};
-        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00}; //GREEN
         // Your color code goes here for 'attr'
+        attr[0].color = colors2[0];
+        attr[1].color = colors2[1];
+        attr[2].color = colors2[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = (Vertex){450, 362, 1, 1};
         verts[1] = (Vertex){450, 452, 1, 1};
         verts[2] = (Vertex){350, 402, 1, 1};
-        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff}; //BLUE
         // Your color code goes here for 'attr'
+        attr[0].color = colors3[0];
+        attr[1].color = colors3[1];
+        attr[2].color = colors3[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = (Vertex){110, 262, 1, 1};
         verts[1] = (Vertex){60, 162, 1, 1};
         verts[2] = (Vertex){150, 162, 1, 1};
-        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000}; //RED
         // Your color code goes here for 'attr'
+        attr[0].color = colors4[0];
+        attr[1].color = colors4[1];
+        attr[2].color = colors4[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = (Vertex){210, 252, 1, 1};
         verts[1] = (Vertex){260, 172, 1, 1};
         verts[2] = (Vertex){310, 202, 1, 1};
-        PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00}; //GREEN
         // Your color code goes here for 'attr'
+        attr[0].color = colors5[0];
+        attr[1].color = colors5[1];
+        attr[2].color = colors5[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = (Vertex){370, 202, 1, 1};
         verts[1] = (Vertex){430, 162, 1, 1};
         verts[2] = (Vertex){470, 252, 1, 1};
-        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff}; //BLUE
         // Your color code goes here for 'attr'
+        attr[0].color = colors6[0];
+        attr[1].color = colors6[1];
+        attr[2].color = colors6[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -267,14 +286,25 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
 
-        FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        //Set the RGB values for each of the colors of the 
+        //RBG values
+        colorAttributes[0].setRGB(1.0,0.0,0.0);
+        colorAttributes[1].setRGB(0.0,1.0,0.0);
+        colorAttributes[2].setRGB(0.0,0.0,1.0);
 
-        Attributes colorUniforms;
+        Attributes defaultUniforms;
+        //No need for any changes here.
+
+        // Your code for the color fragment shader goes here
+        FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = ColorFragShader;
+
         // Your code for the uniform goes here, if any (don't pass NULL here)
+        Attributes colorUniforms;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-
+        //to test the first triangle.
+        //return;
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -284,15 +314,22 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = (Vertex){500, 252, 1, 1};
         imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("image.bmp");
+        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].setUV(coordinates[1][0], coordinates[1][1]);
+        imageAttributes[1].setUV(coordinates[0][1], coordinates[0][1]);
+        imageAttributes[2].setUV(coordinates[2][0], coordinates[2][1]);
+
+        //static is ultra necessary
+        static BufferImage myImage("Assets/optimusprimehead.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
+        imageUniforms.ptrImg = &myImage;
         // Your code for the uniform goes here
 
         FragmentShader myImageFragShader;
+        myImageFragShader.FragShader = ImageFragShader;
         // Your code for the image fragment shader goes here
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
@@ -330,7 +367,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("Assets/checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
@@ -375,7 +412,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)

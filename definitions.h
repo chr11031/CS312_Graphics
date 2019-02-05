@@ -1,8 +1,12 @@
 #define SDL_MAIN_HANDLED
-#include "/Users/ronaldmunoz/Documents/College/Winter 2019/CS 312 - Conputer Graphics/SDL2-2.0.9/include/SDL.h"
+#include "/Users/ronaldmunoz/Documents/College/Winter 2019/CS 312 - Computer Graphics/SDL2-2.0.9/include/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
+#include <iostream>
+using namespace std;
+
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +25,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+ #define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -223,6 +229,19 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        //coordinates.
+        double u;
+        double v;
+
+        //add RGB values.
+        double r;
+        double g;
+        double b; 
+
+        //pointer for image buffer
+        void* ptrImg;
+
+        //classic color pixel value
         PIXEL color;
 
         // Obligatory empty constructor
@@ -233,6 +252,82 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+
+        //Set the RGB values of pixel the attributes class using doubles.
+        void setRGB(double R, double G, double B)
+        {
+            this->r = R;
+            this->g = G;
+            this->b = B;
+        }
+
+        //Set the RGB values of the pixel attributes class using color codes.
+        void setRGB(Uint32 R, Uint32 G, Uint32 B)
+        {
+            this->r = (double)R;
+            this->g = (double)G;
+            this->b = (double)B;
+        }
+
+        /*Vector must have values in form R G B U V*/
+        void setRGBUV(vector<double> &vect)
+        {
+            if(vect.size() != 4)
+            {
+                cout << "The vector is not of a valid size, check you values" << endl;
+            } 
+            else
+            {
+                //This is not what a normalize vector does! But it helps to get an idea of how to manage vectors.
+                this->setRGB(vect[0],vect[1],vect[2]);
+                this->setUV(vect[3], vect[4]);
+            }
+            
+        }
+
+        //Set the U V values for the pixel attributes.
+        void setUV(double U, double V)
+        {
+            this->u = U;
+            this->v = V;
+        }
+
+        //Set Image data with a 2D Buffered Image.
+        void setImageData(BufferImage myImage)
+        {
+            this->ptrImg = &myImage;
+        }
+
+        void setFogCoord(double fogCoord)
+        {
+            //Your code goes here
+        }
+
+        void setCustomAttributes()
+        {
+            //Your code goes here
+        }
+
+        void setTransofmations(vector<double> &transformationMatrix)
+        {
+            //Your code goes here
+        }
+
+        void setLightSourceInfo(double light)
+        {
+            //Your code goes here
+        }
+
+        void mouseInfo(int x, int y)
+        {
+            //Your code goes here
+        }
+
+        void time(double time)
+        {
+            //Your code goes here
+        }
+        
 };	
 
 // Example of a fragment shader
@@ -241,6 +336,37 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
 }
+
+void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+
+    PIXEL avgChannel = ((vertAttr.color >> 16) && 0xff) + 
+                        ((vertAttr.color >> 8) && 0xff) + 
+                        ((vertAttr.color) && 0xff);
+    avgChannel /= 3;
+    fragment = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
+}
+
+// Image Fragment Shader 
+ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+ {
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+ }
+
+  // My Fragment Shader for color interpolation
+ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+ {
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+ }
 
 /*******************************************************
  * FRAGMENT_SHADER
@@ -258,6 +384,7 @@ class FragmentShader
         // Assumes simple monotone RED shader
         FragmentShader()
         {
+            //FragShader = DefaultFragShader;
             FragShader = DefaultFragShader;
         }
 
