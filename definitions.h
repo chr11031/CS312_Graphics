@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -143,7 +144,6 @@ class Buffer2D
 class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
-        SDL_Surface* img;                   // Reference to the Surface in question
         bool ourSurfaceInstance = false;    // Do we need to de-allocate?
 
         // Private intialization setup
@@ -164,6 +164,7 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 
     public:
+        SDL_Surface* img;           // Reference to the Surface in question
         // Free dynamic memory
         ~BufferImage()
         {
@@ -225,13 +226,14 @@ class Attributes
     public:
         // Obligatory empty constructor
         Attributes() {}
+        std::map<char, double> var;            // uses a map to store attribute values
+        BufferImage *image;                    // Pointer attribute for images
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-        PIXEL color;
 };	
 
 // Example of a fragment shader
@@ -239,6 +241,19 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/*******************************************************
+ * INTERPOLATE
+ * Find the ratio between the area of the sub-triangles
+ * and the area of the triangle.
+ * Source:
+ * https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/rasterization-stage
+ *******************************************************/
+double interp(const double triangleArea, const double fDet, const double sDet, const double tDet, 
+              const double attr1, const double attr2, const double attr3)
+{
+    return (((fDet / triangleArea) * attr3) + ((sDet / triangleArea) * attr1) + ((tDet / triangleArea) * attr2));
 }
 
 /*******************************************************

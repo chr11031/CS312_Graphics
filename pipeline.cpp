@@ -63,7 +63,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 {
     // Your code goes here
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].var.at('color');
 }
 
 /****************************************
@@ -75,14 +75,14 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
-
-/****************************************
- * CROSS_Product
- * Find the cross product of two vectors
- ***************************************/
-float CrossProduct(const Vertex & v1, const Vertex & v2)
+/*************************************************************
+ * DETERMINANT
+ * Finds the determinant of the coordinates given, in our
+ * case a 2x2 matrix
+ ************************************************************/
+inline double determinant(const double &A, const double &B, const double &C, const double &D)
 {
-    return (v1.x * v2.y) - (v1.y * v2.x);
+    return ((A * D) - (B * C));
 }
 
 /*************************************************************
@@ -92,27 +92,48 @@ float CrossProduct(const Vertex & v1, const Vertex & v2)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Creates the bounding box
     int maxX = fmax(triangle[0].x, fmax(triangle[1].x, triangle[2].x));     // Find the max x vertex by searching through the verticies of the triangle
     int minX = fmin(triangle[0].x, fmin(triangle[1].x, triangle[2].x));     // Find the min x vertex by searching through the verticies of the triangle
     int maxY = fmax(triangle[0].y, fmax(triangle[1].y, triangle[2].y));     // Find the max y vertex by searching through the verticies of the triangle
     int minY = fmin(triangle[0].y, fmin(triangle[1].y, triangle[2].y));     // Find the min y vertex by searching through the verticies of the triangle
-
-    Vertex v1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex v2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
-
+    
+    // get the edges of the triangle as shown in scratchpixel.com
+    double fVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double sVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double tVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+    
+    // find the area of the entire triangle
+    double triangleArea = determinant(fVec[0], -tVec[0], fVec[1], -tVec[1]);
+    
     // loop through the space of the triangle
-    for (int y = minY; y <= maxY; y++)
+    for (int x = minX; x <= maxX; x++)
     {
-        for (int x = minX; x <= maxX; x++)
+        for (int y = minY; y <= maxY; y++)
         {
-            Vertex vt = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            // check to see if the pixel is within the bounds of the triangle
+            double fDet = determinant(fVec[0], x - triangle[0].x, fVec[1], y - triangle[0].y);
+            double sDet = determinant(sVec[0], x - triangle[1].x, sVec[1], y - triangle[1].y);
+            double tDet = determinant(tVec[0], x - triangle[2].x, tVec[1], y - triangle[2].y);
+           
+           // if all the determinants are 0 or positive, then P is inside the triangle
+           if (fDet >= 0 && sDet >= 0 && tDet >= 0)
+           {
+               target[y][x] = attrs[0].var['color'];
 
-            float a = CrossProduct(vt, v2) / CrossProduct(v1, v2);
-            float b = CrossProduct(v1, vt) / CrossProduct(v1, v2);
+                // interpolated attributes for the colored triangle
+                Attributes interpAttr;
+                interpAttr.var['r'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
+                interpAttr.var['g'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
+                interpAttr.var['b'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
 
-            if ((a >= 0) && (b >= 0) && (a + b <= 1))
-                target[y][x] = attrs[0].color;
+                // interpolated attributes for the image trianlge
+                interpAttr.var['u'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
+                interpAttr.var['v'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
+
+                // callback for frag shader
+                frag->FragShader(target[y][x], interpAttr, *uniforms);
+           }
         }
     }
 }
@@ -207,22 +228,23 @@ int main()
     FRAME_BUF = SDL_CreateRGBSurface(0, S_WIDTH, S_HEIGHT, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
-    BufferImage frame(FRAME_BUF);
+    BufferImage frame(FRAME_BUF);    
 
     // Draw loop 
     bool running = true;
     while(running) 
     {           
         // Handle user inputs
-        // processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-        // clearScreen(frame);
+        clearScreen(frame);
 
         // Your code goes here
         // GameOfLife(frame);              // This will run the Game of Life
-        // TestDrawPixel(frame);
-        TestDrawTriangle(frame);
+        // TestDrawPixel(frame);           // This will draw a pixel 
+        // TestDrawTriangle(frame);        // This will draw a triangle
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
