@@ -77,6 +77,7 @@ class Buffer2D
 
     public:
         // Free dynamic memory
+        /*
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
@@ -86,6 +87,7 @@ class Buffer2D
             }
             free(grid);
         }
+        */
 
         // Size-Specified constructor, no data
         Buffer2D(const int & wid, const int & hgt)
@@ -224,16 +226,33 @@ class Attributes
 {      
     public:
 
-        // Public member variable
-        PIXEL color;
+        // Public member variables
+        PIXEL color; 
+        int numValues; // number of values to interpolate (3 for rgb, 2 for UV, etc.)
+        void* pointerImg; // address -> pointer without a base type
+        double attrValues[5]; // according to the slides, we will likely have at most 5 attribute values
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : numValues(0) {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
+        }
+
+        void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
+        {
+            double w1 = det1 / area;
+            double w2 = det2 / area;
+            double w3 = 1 - w2 - w1;
+
+            for (int i = 0; i < numValues; i++)
+            {
+                attrValues[i] = vertAttrs[0].attrValues[i] * w2 +
+                                vertAttrs[1].attrValues[i] * w3 +
+                                vertAttrs[2].attrValues[i] * w1;
+            }
         }
 };	
 
@@ -242,6 +261,14 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL avgChannel = ((vertAttr.color >> 16) && 0xff) + ((vertAttr.color >> 8) && 0xff) + ((vertAttr.color) && 0xff);
+    
+    avgChannel /= 3;
+    fragment = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
 }
 
 /*******************************************************
