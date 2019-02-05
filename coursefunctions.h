@@ -251,13 +251,26 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
+        
+        colorAttributes[0].color=colors[0];
+        colorAttributes[0].values[0] = 1.0;
+        colorAttributes[0].values[1] = 0.0;
+        colorAttributes[0].values[2] = 0.0;
+        colorAttributes[1].values[0] = 0.0;
+        colorAttributes[1].values[1] = 1.0;
+        colorAttributes[1].values[2] = 0.0;
+        colorAttributes[2].values[0] = 0.0;
+        colorAttributes[2].values[1] = 0.0;
+        colorAttributes[2].values[2] = 1.0;
+        for (int i = 0; i < 3; i++)
+            colorAttributes[i].numValues = 3;
+
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = avgColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
+        
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
@@ -270,16 +283,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].values[0] = 1;
+        imageAttributes[0].values[1] = 0;
+        imageAttributes[1].values[0] = 1;
+        imageAttributes[1].values[1] = 1;
+        imageAttributes[2].values[0] = 0;
+        imageAttributes[2].values[1] = 1;
+        for (int i = 0; i < 3; i++)
+            imageAttributes[i].numValues = 2;
 
-        BufferImage myImage("image.bmp");
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
-
+        //Greatest album of all time
+        BufferImage myImage("best.bmp");
+        
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.pointer = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = imageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }

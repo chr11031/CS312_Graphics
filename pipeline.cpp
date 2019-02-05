@@ -74,14 +74,22 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*************************************************************
- * DRAW_TRIANGLE
  * Finds the determinant.
  ************************************************************/
 double Determinant(int ax, int ay, int bx, int by)
 {
-    return (ax * by) - (ay * bx); 
+    return (ax * by) - (ay * bx);
 }
 
+double interpolate(double area, double det1, double det2, double det3, double c1, double c2, double c3)
+{
+    //Finding where the point is in the traingle and how much color is in each part
+    det1 /= area;
+    det2 /= area;
+    det3 /= area;
+
+    return (det1 * c3) + (det2 * c1) + (det3 * c2);
+}
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -96,23 +104,41 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxx = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
     int maxy = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //gets the values of the two other vectors relative to the origin
+    //gets the values of the two other vectors relative to eachother
     double vx = triangle[1].x - triangle[0].x;
     double vy = triangle[1].y - triangle[0].y;
-    double wx = triangle[2].x - triangle[0].x;
-    double wy = triangle[2].y - triangle[0].y;
-    double detvw = Determinant(vx, vy, wx, wy);
+    double wx = triangle[2].x - triangle[1].x;
+    double wy = triangle[2].y - triangle[1].y;
+    double ux = triangle[0].x - triangle[2].x;
+    double uy = triangle[0].y - triangle[2].y;
+
+    //finds the area of the triangle using the determinant.
+    double area = Determinant(vx, vy, -ux, -uy);
     //loops for each possible x and y value
     for (int x = minx; x <= maxx; x++)
     {
         for(int y = miny; y <= maxy; y++)
         {
-            double deta = Determinant(x - triangle[0].x, y - triangle[0].y, wx, wy) / detvw;
-            double detb = Determinant(vx, vy, x - triangle[1].x, y - triangle[1].y) / detvw;
-            
-            //the determinants must be positive, and the total area must not be bigger than the triangle
-            if (deta >= 0 && detb >= 0 && (deta + detb <= 1))
+            //As much as I liked the praise for only doing 3 determinant calculations
+            //per pixel, I need all 3 to interpolate properly. This also fixed the jagged
+            //edges on my triangles.
+            double deta = Determinant(vx, vy, x - triangle[0].x, y - triangle[0].y);
+            double detb = Determinant(wx, wy, x - triangle[1].x, y - triangle[1].y);
+            double detc = Determinant(ux, uy, x - triangle[2].x, y - triangle[2].y);
+            //the determinants must be positive for it to be in the triangle
+            if (deta >= 0 && detb >= 0 && detc >= 0)
+            {
+                //for if just sent empty pixels.
                 target[y][x] = attrs[0].color;
+                Attributes newattribs;
+                newattribs.numValues= attrs[0].numValues;
+                //interpolates attributes (may clean up later)
+                for (int i = 0; i < newattribs.numValues; i++)
+                    newattribs.values[i] = interpolate(area, deta, detb, detc, attrs[0].values[i], attrs[1].values[i], attrs[2].values[i]);
+
+                //sends the new attributes to the fragment shader
+                frag->FragShader(target[y][x], newattribs, *uniforms);
+            }
         }
     }
 }
@@ -219,7 +245,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
