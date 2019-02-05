@@ -226,14 +226,54 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
 
-        PIXEL color;
+        // Initialize with colors
+        Attributes(double red, double green, double blue) : r(red), g(green), b(blue) {}
+
+        // Member variables
+        PIXEL color; // DEPRECATED - use r,g,b instead
+        double r;
+        double g;
+        double b;
+        // UV texture coordinates
+        double u;
+        double v;
+        void* ptrImg;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+};
+
+/***************************************************
+ * INTERP - Function used to interpolate values,
+ * taking advantage of the determinant's relationship
+ * to the area of the triangle
+ **************************************************/
+double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
+    return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
+}
+
+/***************************************************
+ * Fragment shaders used in week 03 project
+ **************************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
+    fragment = 0xff000000
+        | (((unsigned int)(vertAttr.r * 0xff)) << 16)
+        | (((unsigned int)(vertAttr.g * 0xff)) << 8)
+        |  ((unsigned int)(vertAttr.b * 0xff));
+}
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int width = ptr->width();
+    int height = ptr->height();
+    int x = vertAttr.u * (width - 1);
+    int y = vertAttr.v * (height - 1);
+    fragment = (*ptr)[y][x];
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
