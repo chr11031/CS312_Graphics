@@ -223,6 +223,20 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        // Image
+        double u;
+        double v; 
+        void* ptrImg;
+
+        // Color
+        double r;
+        double g;
+        double b;
+
+        // Other attributes
+        double other[16];
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -240,6 +254,25 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+// Color a pixel a specific color
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // 0xaarrggbb
+    fragment = 0xFF00;
+    fragment = (unsigned int)(fragment + vertAttr.r * 255) << 8;
+    fragment = (unsigned int)(fragment + vertAttr.g * 255) << 8;
+    fragment = (unsigned int)(fragment + vertAttr.b * 255);
+}
+
+// Color a pixel based on a bitmap image
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* buffer = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (buffer -> width()  - 1);
+    int y = vertAttr.v * (buffer -> height() - 1);
+    fragment = (*buffer)[y][x];
 }
 
 /*******************************************************

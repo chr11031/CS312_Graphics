@@ -73,47 +73,80 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/***********************************************
+ * Determinant
+ * Calculate the determinant from two vectors
+ ***********************************************/
+inline int determinant(int a, int b, int c, int d)
+{
+    return (a * d - b * c);
+}
+
+// Find the value of a point based on the vertices
+double interpolate(int area, int det[3], double attr0, double attr1, double attr2)
+{
+    // determinant * attribute / area
+    double value = 0;
+    value += det[0] * attr0;
+    value += det[1] * attr1;
+    value += det[2] * attr2;
+
+    return value / area;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, 
+                  Vertex* const tri, 
+                  Attributes* const attrs, 
+                  Attributes* const uniforms, 
+                  FragmentShader* const frag)
 {
     // Find a bounding box for the triangle
-    int minx = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int miny = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int maxx = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxy = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minx = MIN3(tri[0].x, tri[1].x, tri[2].x);
+    int miny = MIN3(tri[0].y, tri[1].y, tri[2].y);
+    int maxx = MAX3(tri[0].x, tri[1].x, tri[2].x);
+    int maxy = MAX3(tri[0].y, tri[1].y, tri[2].y);
+
+    // Find the area of the triangle
+    int area = determinant(tri[1].x - tri[0].x,
+                           tri[2].x - tri[0].x,
+                           tri[1].y - tri[0].y,
+                           tri[2].y - tri[0].y);
     
     // Loop through every pixel in the bounding box
     for(int y = miny; y < maxy; y++)
         for(int x = minx; x < maxx; x++)
         {
-            // Side 1
-            int a1 = triangle[1].x - triangle[0].x;
-            int b1 = x             - triangle[0].x;
-            int c1 = triangle[1].y - triangle[0].y;
-            int d1 = y             - triangle[0].y;
-            
-            // Side 2
-            int a2 = triangle[2].x - triangle[1].x;
-            int b2 = x             - triangle[1].x;
-            int c2 = triangle[2].y - triangle[1].y;
-            int d2 = y             - triangle[1].y;
-            
-            // Side 3
-            int a3 = triangle[0].x - triangle[2].x;
-            int b3 = x             - triangle[2].x;
-            int c3 = triangle[0].y - triangle[2].y;
-            int d3 = y             - triangle[2].y;
-            
-            // Draw the pixel if it is to the left of each side (if the determinants are all non-negative)
-            if (a1 * d1 - b1 * c1 >= 0 && // Side 1
-                a2 * d2 - b2 * c2 >= 0 && // Side 2
-                a3 * d3 - b3 * c3 >= 0)   // Side 3
+            // Find the determinant for each side
+            int det[3];
+            for (int s = 0; s < 3; s++)
             {
-                target[y][x] = attrs[0].color;
+                det[s] = determinant(tri[(s + 2) % 3].x - tri[(s + 1) % 3].x,
+                                                      x - tri[(s + 1) % 3].x,
+                                     tri[(s + 2) % 3].y - tri[(s + 1) % 3].y,
+                                                      y - tri[(s + 1) % 3].y);
+            }
+
+            // Draw the pixel if it is to the left of each side (if the determinants are all non-negative)
+            if (det[0] >= 0 && // Side 1
+                det[1] >= 0 && // Side 2
+                det[2] >= 0)   // Side 3
+            {
+                Attributes interpAttr;
+
+                // Interpolate!
+                interpAttr.r = interpolate(area, det, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpAttr.g = interpolate(area, det, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpAttr.b = interpolate(area, det, attrs[0].b, attrs[1].b, attrs[2].b);
+                interpAttr.u = interpolate(area, det, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpAttr.v = interpolate(area, det, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Use the shader
+                frag->FragShader(target[y][x], interpAttr, *uniforms);
             }
         }
 }
@@ -220,7 +253,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
