@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +22,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -217,12 +220,17 @@ class BufferImage : public Buffer2D<PIXEL>
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
- * primitive as a whole OR per-vertex. Will be 
+ * primitive as a whole OR per-vertex. Will be
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
 {      
     public:
+
+        // vectors to store as many attributes as necessary
+        std::vector<double> value;
+        std::vector<void*> ptrImgs;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -234,6 +242,35 @@ class Attributes
 
         PIXEL color;
 };	
+
+/***************************************************
+ * FragShader uses interpolated color values against
+ * a percentage "weight" to compute correct color 
+ **************************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case simple colors
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.value[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.value[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.value[2] *0xff) << 0;
+
+    fragment = color;
+}
+
+/***************************************************
+ * FragShader uses interpolated coordinate values 
+ * against a percentage "weight" to compute correct 
+ * coordinate 
+ **************************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImgs[0];
+    int x = vertAttr.value[0] * (bf->width()-1);
+    int y = vertAttr.value[1] * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
