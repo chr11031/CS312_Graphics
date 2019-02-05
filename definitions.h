@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +22,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -143,7 +146,6 @@ class Buffer2D
 class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
-        SDL_Surface* img;                   // Reference to the Surface in question
         bool ourSurfaceInstance = false;    // Do we need to de-allocate?
 
         // Private intialization setup
@@ -212,6 +214,8 @@ class BufferImage : public Buffer2D<PIXEL>
             SDL_FreeFormat(format);
             setupInternal();
         }
+        
+        SDL_Surface* img; // Reference to the Surface in question
 };
 
 /***************************************************
@@ -232,8 +236,32 @@ class Attributes
             // Your Code goes here after clipping is done
         }
 
-        PIXEL color;
+        // Use a map to store the values needed for the attributes. 
+        // TODO: This could be made private later with getters and setters to help.
+        std::map<char, double> var;
+        void* ptrImg; // A pointer for the image
 };	
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.var.at('u') * (bf->width() - 1);
+    int y = vertAttr.var.at('v') * (bf->height() - 1);
+
+    fragment = (*bf)[y][x];
+}
+
+ // My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.var.at('r') *0xff) << 16;
+    color += (unsigned int)(vertAttr.var.at('g') *0xff) << 8;
+    color += (unsigned int)(vertAttr.var.at('b') *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -326,6 +354,16 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+    return (A*D - B*C);
+}          
        
 #endif
