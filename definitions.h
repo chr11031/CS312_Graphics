@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "shaders.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -223,7 +224,10 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        PIXEL color;
+        // Used for the color of the point or u=a v=r
+        double argb[4];
+        // For now points to the image, but can later point to other assets
+        void* ptr;
 
         // Obligatory empty constructor
         Attributes() {}
