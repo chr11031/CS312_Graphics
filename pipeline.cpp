@@ -13,6 +13,25 @@ double crossProduct(Vertex v1, Vertex v2)
     return result;
 }
 
+/************************************************
+ * INTERPOLATION
+ * 
+ * interpolates the colors using the weighing
+ * method discussed in the reading.
+ * **********************************************/
+
+double interp(double area, double determinate1, double determinate2, double determinate3, double & triColor1, double & triColor2, double & triColor3)
+{
+    // Barycentric Coordinates Holders
+    double triArea1 = determinate1 / area;
+    double triArea2 = determinate2 / area;
+    double triArea3 = determinate3 / area;
+
+    //Now is the time to relate the colors to the position in the triangle
+    double color = triArea1 * triColor1 + triArea2 * triColor2 + triArea3 * triColor3;
+    return color;
+}
+
 
 /***********************************************
  * CLEAR_SCREEN
@@ -92,27 +111,45 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag) //changed Attributes* attrs
 {
+    //Creating Bounding Box
     int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
     int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
     int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
     int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
 
-    Vertex vs1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y), 1, 1};
-    Vertex vs2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y), 1, 1};
+    //I'm modifying the code to be doubles from vertexes althought secretly it is the same thing
+    double firstVector[]  = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y)};
+    double secondVector[] = {(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y)};
+    double thirdVector[]  = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
 
+    //Time to get the area of the whole triangle
+    double areaTriangle = determinant(firstVector[X_KEY], -thirdVector[X_KEY], firstVector[Y_KEY], -thirdVector[Y_KEY]);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            Vertex q = {(x - triangle[0].x), (y - triangle[0].y), 1, 1};
+                            // Determine if the pixel is in the triangle by the determinant's sign
+                double firstDet = determinant(firstVector[X_KEY], x - triangle[0].x, firstVector[Y_KEY], y - triangle[0].y);
+                double secndDet = determinant(secondVector[X_KEY], x - triangle[1].x, secondVector[Y_KEY], y - triangle[1].y);
+                double thirdDet = determinant(thirdVector[X_KEY], x - triangle[2].x, thirdVector[Y_KEY], y - triangle[2].y);
 
-            float s = (float) crossProduct(q, vs2) / crossProduct(vs1, vs2);
-            float t = (float) crossProduct(vs1, q) / crossProduct(vs1, vs2);
-
-            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
-            { /* inside triangle */
+                // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+                if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+                {
                 target[(int)y][(int)x] = attrs[0].color;
+
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs;
+                interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }
@@ -123,8 +160,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
-                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
     if(vert == NULL)
@@ -221,7 +257,7 @@ int main()
         //clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

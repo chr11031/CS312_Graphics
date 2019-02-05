@@ -21,6 +21,9 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+//Project 03 added X_Key and Y_KEY
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -223,6 +226,16 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        //These veriables will hold color and positions of texture
+        double u;
+        double v; 
+        void* ptrImg;
+
+        double r;
+        double g;
+        double b;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -234,11 +247,55 @@ class Attributes
         PIXEL color;
 };	
 
+/**********************************************************
+ *          IMAGE_FRAGMENT_SHADER
+ *  @description
+ * Passed fragment and attributes this function takes every
+ * pixel of the image and then stretches it... well more
+ * like places each pixel inside the polygon.
+ * *******************************************************/
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+/**********************************************************
+ *          COLOR_FRAGMENT_SHADER
+ * This function translates the colors into their appropriate
+ * position in this case a gradient across the polygon.
+ * *******************************************************/
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
+
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
 }
 
 /*******************************************************
