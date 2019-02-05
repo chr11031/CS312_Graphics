@@ -177,63 +177,61 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         * 6 Flat color triangles below
         *************************************************/
        
-        PIXEL red[3] = {0xffff0000, 0xffff0000, 0xffff0000};
-        PIXEL lime[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
-        PIXEL blue[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
+        PIXEL red = 0xffff0000;
+        PIXEL lime = 0xff00ff00;
+        PIXEL blue = 0xff0000ff;
 
         Vertex verts[3];
         Attributes attr[3];
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
-        attr[0].color = red[0];
-        attr[1].color = red[1];
-        attr[2].color = red[2];
+        attr[0].color = red;
+        attr[1].color = red;
+        attr[2].color = red;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        attr[0].color = lime[0];
-        attr[1].color = lime[1];
-        attr[2].color = lime[2];
+        attr[0].color = lime;
+        attr[1].color = lime;
+        attr[2].color = lime;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        attr[0].color = blue[0];
-        attr[1].color = blue[1];
-        attr[2].color = blue[2];
+        attr[0].color = blue;
+        attr[1].color = blue;
+        attr[2].color = blue;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        attr[0].color = red[0];
-        attr[1].color = red[1];
-        attr[2].color = red[2];
+        attr[0].color = red;
+        attr[1].color = red;
+        attr[2].color = red;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {210, 252, 1, 1};
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
-        attr[0].color = lime[0];
-        attr[1].color = lime[1];
-        attr[2].color = lime[2];
+        attr[0].color = lime;
+        attr[1].color = lime;
+        attr[2].color = lime;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        attr[0].color = blue[0];
-        attr[1].color = blue[1];
-        attr[2].color = blue[2];
+        attr[0].color = attr[1].color = attr[2].color = blue;
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -254,13 +252,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
-        // Your color code goes here for 'colorAttributes'
+
+        colorAttributes[0].colorAttr.push_back(1.0);
+        colorAttributes[0].colorAttr.push_back(0.0);
+        colorAttributes[0].colorAttr.push_back(0.0);
+        colorAttributes[0].colorAttr.shrink_to_fit();
+        colorAttributes[1].colorAttr.push_back(0.0);
+        colorAttributes[1].colorAttr.push_back(1.0);
+        colorAttributes[1].colorAttr.push_back(0.0);
+        colorAttributes[1].colorAttr.shrink_to_fit();
+        colorAttributes[2].colorAttr.push_back(0.0);
+        colorAttributes[2].colorAttr.push_back(0.0);
+        colorAttributes[2].colorAttr.push_back(1.0);
+        colorAttributes[2].colorAttr.shrink_to_fit();
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
@@ -273,16 +282,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.push_back(0);
+        imageAttributes[0].colorAttr.shrink_to_fit();
+        imageAttributes[1].colorAttr.push_back(1);
+        imageAttributes[1].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.shrink_to_fit();
+        imageAttributes[2].colorAttr.push_back(0);
+        imageAttributes[2].colorAttr.push_back(1);
+        imageAttributes[0].colorAttr.shrink_to_fit();
 
-        BufferImage myImage("image.bmp");
+        BufferImage myImage("foothills.bmp"); //TODO find an image of 24bit
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }

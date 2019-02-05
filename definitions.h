@@ -3,6 +3,9 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
+
+using namespace std;
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -150,7 +153,7 @@ class BufferImage : public Buffer2D<PIXEL>
         void setupInternal()
         {
             // Allocate pointers for column references
-            h = img->h;
+            h = img -> h;
             w = img->w;
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
 
@@ -224,6 +227,10 @@ class Attributes
 {   
     public:
         PIXEL color;
+        void* ptrImg;
+
+        vector<double> colorAttr;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -240,6 +247,25 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/* creating a full color from rgb parts*/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int) (vertAttr.colorAttr[0] *0xff) << 16;
+    color += (unsigned int) (vertAttr.colorAttr[1] *0xff) << 8;
+    color += (unsigned int) (vertAttr.colorAttr[2] *0xff) << 0;
+    fragment = color;
+}
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color;
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.colorAttr[0] * (ptr->width()-1);
+    int y = vertAttr.colorAttr[1] * (ptr->height()-1);
+    fragment = (*ptr)[y][x];
 }
 
 /*******************************************************
