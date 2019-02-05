@@ -76,7 +76,9 @@ void DrawPoint(Buffer2D<PIXEL> & target,
                FragmentShader* const frag)
 {
     // Set our pixel according to the attribute calue!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    PIXEL fragment = 0;
+    frag->FragShader(fragment, *attrs, *uniforms);
+    target[(int)v[0].y][(int)v[0].x] = fragment;
 }
 
 /****************************************
@@ -99,27 +101,45 @@ void DrawTriangle(Buffer2D<PIXEL> & target,
                   Attributes* const uniforms, 
                   FragmentShader* const frag)
 {
+    // Establish our mins and maxes
     int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
     int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
     int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
     int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
 
+    // Establish our verteces of our bounding box
     Vertex vs1 = (Vertex){triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
     Vertex vs2 = (Vertex){triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
 
+    // Establish a constant denominator for our barycentric interpolation
+    float denom = ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+
+    // iterate through our bounding box in terms of x and y
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            
+            // Determine if the vertex is in the triangle with cross product.
             Vertex q = (Vertex){x - triangle[0].x, y - triangle[0].y};
             float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
             float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
 
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            if ((s >= 0) && (t >= 0) && (s + t <= 1) /*is in triangle*/)
             {
                 Vertex vert = {x,y,1,1};
-                DrawPoint(target, &vert, attrs, uniforms, frag);
+                // Determine the weights barycentric interpolation                
+                float w1 = ((triangle[1].y - triangle[2].y) * (vert.x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (vert.y - triangle[2].y)) / denom;                    
+                float w2 = ((triangle[2].y - triangle[0].y) * (vert.x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (vert.y - triangle[2].y)) / denom;
+                float w3 = 1 - w1 - w2;
+
+                // iterpolate the attributes with our weights predetermined
+                Attributes interpolateAttrs; // Our new interpolated attributes
+                interpolateAttrs.vars[0] = w1 * attrs[0].vars[0] + w2 * attrs[1].vars[0] + w3 * attrs[2].vars[0];
+                interpolateAttrs.vars[1] = w1 * attrs[0].vars[1] + w2 * attrs[1].vars[1] + w3 * attrs[2].vars[1];
+                interpolateAttrs.vars[2] = w1 * attrs[0].vars[2] + w2 * attrs[1].vars[2] + w3 * attrs[2].vars[2];
+                
+                // Send our interpolated the shader to finalize the fragment
+                frag->FragShader(target[y][x], interpolateAttrs, *uniforms);
             }
         }     
     }
@@ -225,12 +245,9 @@ int main()
         processUserInputs(running);
 
         // Refresh Screen
-         clearScreen(frame);
+        clearScreen(frame);
 
-        //TestDrawPixel(frame); //Project 01 - red dot
-        //GameOfLife(frame); //TA 01 - The game of life
-
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
