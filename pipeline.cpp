@@ -100,15 +100,31 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*******************************************************
- * crossProduct
+ * determinant
  *   By taking the two vertex point we can times them together and
  *   Perform the cross product of the two and return the float
  * ******************************************************/
-float crossProduct(Vertex one, Vertex two)
+double determinant(const double & v1x, const double & v2x, const double & v1y, const double & v2y)
 {
-    float crossPro = 0.0;
-    crossPro = (one.x * two.y) - (one.y * two.x);
-    return crossPro; 
+    double determin;
+    determin = (v1x * v2y) - (v2x * v1y);
+    return determin; 
+}
+
+/****************************************************
+ * Interpolation
+ *   Area = Area + area + area
+ *   Area = 1/2 Determinate
+ * *****************************************************/
+double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
+{
+    //Finding where the point is in the traingle and how much color is in each part
+    firstDet /= areaTriangle;
+    secndDet /= areaTriangle;
+    thirdDet /= areaTriangle;
+
+    return (firstDet * attrs1) + (secndDet * attrs2) + (thirdDet * attrs3);
+
 }
 
 /*************************************************************
@@ -125,36 +141,46 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
     int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
 
-    //Finding the vertex lines between two points
-    Vertex vs1;
-    vs1.x = ((int)triangle[1].x - (int)triangle[0].x);
-    vs1.y = ((int)triangle[1].y - (int)triangle[0].y);
-    Vertex vs2;
-    vs2.x = (int)triangle[2].x - (int)triangle[0].x;
-    vs2.y = (int)triangle[2].y - (int)triangle[0].y;
+    //Finding the vertexis of the triangles
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x -  triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    //Find the area of the triangle that you want
+    double areaTriangle = determinant(firstVec[X_Key], -thirdVec[X_Key], firstVec[Y_Key], -thirdVec[Y_Key]);
    
    //Two for loops to go through both the y and the x 
-    for (int x = minX; x <= maxX; x++)
+    for (int y = minY; y < maxY; y++)
     {
-        for (int y = minY; y <= maxY; y++)
+        for (int x = minX; x < maxX; x++)
         {
-            //Our original vertex that we take the  x and y positing that we are at in the box
-            Vertex q;
-            q.x = (x - (int)triangle[0].x);
-            q.y = (y - (int)triangle[0].y);
 
-            //We find the cross product of each part and then divid them to find were we are if we are in the triangle
-            float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
-            float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
+          //Take the determinant of the differnt vertexes 
+          double firstDet = determinant(firstVec[X_Key], x - triangle[0].x, firstVec[Y_Key], y - triangle[0].y);
+          double secndDet = determinant(secndVec[X_Key], x - triangle[1].x, secndVec[Y_Key], y - triangle[1].y);
+          double thirdDet = determinant(thirdVec[X_Key], x - triangle[2].x, thirdVec[Y_Key], y - triangle[2].y);
 
-            //If we are in the traingle these conditions will be true
-            if ( (s >= 0) && (t >= 0) && (s + t <= 1))
-            {
-                //set the point that we are at to send to the draw point
-                Vertex myPoint[1];
-                myPoint[0] = { x , y };
-                DrawPoint(target, myPoint, attrs, uniforms, frag);
-            }    
+          //IF the determinates are in the triangle
+          if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+          {
+
+              target[(int)y][(int)x] = attrs[0].color;
+
+
+              Attributes interpolatedAttribs;
+              //Color attributes for the color triangle. Finding the interpolation for that color to know how much of each
+              interpolatedAttribs.newColor[0] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[0], attrs[1].newColor[0], attrs[2].newColor[0]);
+              interpolatedAttribs.newColor[1] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[1], attrs[1].newColor[1], attrs[2].newColor[1]);
+              interpolatedAttribs.newColor[2] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[2], attrs[1].newColor[2], attrs[2].newColor[2]);
+
+              //Color attributes for the picture triangle
+              interpolatedAttribs.newColor[3] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[3], attrs[1].newColor[3], attrs[1].newColor[3]);
+              interpolatedAttribs.newColor[4] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[4], attrs[1].newColor[4], attrs[1].newColor[4]);
+
+              //calling to the fragment shader of either the color or picture triangle. 
+              frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+
+          }
         }
     }
     
@@ -263,7 +289,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

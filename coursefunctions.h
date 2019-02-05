@@ -322,21 +322,36 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         * 1. Interpolated color triangle
         *************************************************/
         Vertex colorTriangle[3];
-        Attributes colorAttributes[3];
+        Attributes colorAttribute[3];
         colorTriangle[0] = {250, 112, 1, 1};
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+      
+        //different color attributes
+        colorAttribute[0].newColor[0] = 1.0;
+        colorAttribute[0].newColor[1] = 0.0;
+        colorAttribute[0].newColor[2] = 0.0;
+        colorAttribute[1].newColor[0] = 0.0;
+        colorAttribute[1].newColor[1] = 1.0;
+        colorAttribute[1].newColor[2] = 0.0;
+        colorAttribute[2].newColor[0] = 0.0;
+        colorAttribute[2].newColor[1] = 0.0;
+        colorAttribute[2].newColor[2] = 1.0;
+
         // Your color code goes here for 'colorAttributes'
 
-        FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
 
+        FragmentShader myColorFragShader;
+        //fragment shader for colors
+        myColorFragShader.FragShader = ColorFragShader;
+        // Your code for the color fragment shader goes here
+        
+        
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
-
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttribute, &colorUniforms, &myColorFragShader);
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -346,16 +361,27 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+        
         // Your texture coordinate code goes here for 'imageAttributes'
+        //attributes for the image
+        imageAttributes[0].newColor[3] = coordinates[0][0];
+        imageAttributes[0].newColor[4] = coordinates[0][1];
+        imageAttributes[1].newColor[3] = coordinates[1][0];
+        imageAttributes[1].newColor[4] = coordinates[1][1];
+        imageAttributes[2].newColor[3] = coordinates[2][0];
+        imageAttributes[2].newColor[4] = coordinates[2][1];
+        
 
-        BufferImage myImage("image.bmp");
+        static BufferImage myImage("C:\\Users\\Brooke\\Documents\\School\\cs312\\CS312_Graphics\\checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        //Pointer to the image attributes
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
+        // Fragment shader for the image
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }

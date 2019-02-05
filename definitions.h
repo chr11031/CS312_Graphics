@@ -23,6 +23,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_Key 0
+#define Y_Key 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -152,6 +154,7 @@ class BufferImage : public Buffer2D<PIXEL>
         void setupInternal()
         {
             // Allocate pointers for column references
+            
             h = img->h;
             w = img->w;
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
@@ -228,12 +231,51 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {}
         PIXEL color;
+        
+        //Attributes for shaders 
+        //Changes to make this class more flexable
+        double newColor[5];
+        void* ptrImg;
+
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+};
+
+/*******************************************
+ * ImageFragShader
+ *    This is the image fragment shader
+ * ******************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    //Pointer for the buffer image
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    //With our two vertex attributes 
+    int x = vertAttr.newColor[4] * (ptr->width()-1);
+    int y = vertAttr.newColor[3] * (ptr->height()-1);
+
+    //Create the point
+    fragment = (*ptr)[y][x];
+
+}
+
+/********************************************
+ * ColorFragShader
+ *   This is the fragment shader for the colors
+ * ********************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.newColor[1] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.newColor[2] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.newColor[0] * 0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
