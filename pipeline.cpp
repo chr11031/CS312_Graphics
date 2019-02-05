@@ -81,32 +81,49 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     //First we will find all the minimum and maximum X and Y points
-    //to create the bounding box.
+    //to create the bounding box
     int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
     int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
     int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //Find the edges of (triangle[0], triangle[1]) and (triangle[0], triangle[2])
-    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
-    
-    //Loop throught the box around the triangle
+    //A little setup for future calculations and ensure that we are
+    //doing things in counter-clockwise order
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secondVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    //Find the area of the triangle for later calculations using negatives as
+    //appropriate so as to not get a negative value here
+    double area = calcArea(firstVec[0], -thirdVec[0], firstVec[1], -thirdVec[1]);
+
+    //Loop through the box around the triangle
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            Vertex w0 = {x - triangle[0].x, y - triangle[0].y, 1, 1};
+            //We now find the area of the triangles using the current point
+            //as a new vector to see if the point is in the triangle
+            double firstDet = calcArea(firstVec[0], x - triangle[0].x, firstVec[1], y - triangle[0].y);
+            double secondDet = calcArea(secondVec[0], x - triangle[1].x, secondVec[1], y - triangle[1].y);
+            double thirdDet = calcArea(thirdVec[0], x - triangle[2].x, thirdVec[1], y - triangle[2].y);
 
-            //Every pixel is then calculated with the coordinates of the points
-            float w1 = ((w0.x * vs2.y) - (w0.y * vs2.x)) / ((vs1.x * vs2.y) - (vs1.y * vs2.x));
-            float w2 = ((vs1.x * w0.y) - (vs1.y * w0.x)) / ((vs1.x * vs2.y) - (vs1.y * vs2.x));
-
-            //If the point is found inside the triangle, draw it.
-            if ((w1 >= 0) && (w2 >= 0) && (w1 + w2 <= 1))
+            //If the point is found inside the triangle, draw it
+            if ((firstDet >= 0) && (secondDet >= 0) && (thirdDet >= 0))
             {
-                Vertex vert = {x, y, 1, 1};
-                DrawPrimitive(POINT, target, &vert, attrs);
+                Attributes interpAttrs;
+
+                //Interpolation for Gradiant Triangle
+                interpAttrs.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpAttrs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpAttrs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                //Interpolation for Image
+                interpAttrs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpAttrs.v = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                //Call shader callback
+                frag->FragShader(target[y][x], interpAttrs, *uniforms);
             }
         }
     }
@@ -202,7 +219,7 @@ int main()
     FRAME_BUF = SDL_CreateRGBSurface(0, S_WIDTH, S_HEIGHT, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000);
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
-    BufferImage frame(FRAME_BUF);
+    BufferImage frame(FRAME_BUF); //FRAME_BUF
 
     // Draw loop 
     bool running = true;
@@ -214,8 +231,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // Your code goes here
-        TestDrawTriangle(frame);
+        // Test Draw Functions
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
