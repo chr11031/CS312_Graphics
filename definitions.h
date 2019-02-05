@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +22,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -225,15 +228,110 @@ class Attributes
     public:
         PIXEL color;
 
+        // Utalizing a map for flexability
+        std::map<char, double> myMap;
+        void* ptrImg;
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes()
+        {
+            myMap.insert(std::pair<char, double>('u', 0.0));
+            myMap.insert(std::pair<char, double>('v', 0.0));
+            myMap.insert(std::pair<char, double>('r', 0.0));
+            myMap.insert(std::pair<char, double>('g', 0.0));
+            myMap.insert(std::pair<char, double>('b', 0.0));
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Getters
+        // Colors
+        double getRed() const {
+            return myMap.at('r');
+        }
+
+        double getGreen() const {
+            return myMap.at('g');
+        }
+
+        double getBlue() const {
+            return myMap.at('b');
+        }
+
+        // Bitmap coor
+        double getBU() const {
+            return myMap.at('u');
+        }
+
+        double getBV() const {
+            return myMap.at('v');
+        }
+
+        // Setters
+        // Colors
+        void setRed(double value) {
+            myMap['r'] = value;
+        }
+
+        void setGreen(double value) {
+            myMap['g'] = value;
+        }
+
+        void setBlue(double value) {
+            myMap['b'] = value;
+        }
+
+        void setColor(double r, double g, double b) {
+            setRed(r);
+            setGreen(g);
+            setBlue(b);
+        }
+
+        // Bitmap coor
+        void setBU(double u) {
+            myMap['u'] = u;
+        }
+
+        void setBV(double v) {
+            myMap['v'] = v;
+        }
+
+        void setCoor(double u, double v) {
+            setBU(u);
+            setBV(v);
+        }
+
 };	
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Creats a buffer for the image
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+
+    int x = vertAttr.getBU() * (bf->width()-1);
+    int y = vertAttr.getBV() * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+
+
+    color += (unsigned int)(vertAttr.getRed() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getGreen() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getBlue() *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader 
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -326,6 +424,28 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);       
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * X, Y components from 2 vectors.
+ ***************************************/
+inline double determinant(const double & V1x, const double & V2x, const double & V1y, const double & V2y)
+{
+  return ((V1x * V2y) - (V1y * V2x));
+}
+
+/****************************************************
+ * Interpolation
+ *  Finds the point on the triangle
+ *  Then figgures out the color value based off of the 
+ *  attributes and 
+ * *****************************************************/
+double interp(double area, double *det, double attrs1, double attrs2, double attrs3)
+{
+    return ((det[0] / area) * attrs1) + ((det[1] / area) * attrs2) + ((det[2] / area) * attrs3);
+}
        
+
 #endif
