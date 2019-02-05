@@ -78,9 +78,22 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * CrossProduct
  * computes the cross product (also the determinant) of a 2X2 matrix
  **********************************************************************/
-float CrossProduct(Vertex const v1, Vertex const v2)
+double CrossProduct(double a, double b, double c, double d)
 {
-    return ((v1.x * v2.y) - (v1.y * v2.x));
+    return ((a * d) - (b * c));
+}
+
+/***************************************************
+ * interpolate
+ * interpolate the color of each pixel to make the correct shading in the triangles.
+ ***************************************************************/
+double interpolate(double area, double det1, double det2, double det3, double const color1, double const color2, double const color3)
+{
+    double c1 = (det2 / area) * color1;
+    double c2 = (det3 / area) * color2;
+    double c3 = (det1 / area) * color3;
+
+    return c1 + c2 + c3;
 }
 
 /*************************************************************
@@ -91,12 +104,12 @@ float CrossProduct(Vertex const v1, Vertex const v2)
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     //create the bounding box with the max and min x, y values
-    float maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    float minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    float maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    float minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //establish 2 vertices
+    //establish 3 vertices and make sure it's the correct winding order
     Vertex vect01 = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
@@ -105,31 +118,42 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     };
     
     Vertex vect02 = {
-        triangle[2].x - triangle[0].x,
-        triangle[2].y - triangle[0].y,
+        triangle[2].x - triangle[1].x,
+        triangle[2].y - triangle[1].y,
         1,
         1
     };
 
-    //loop through and compute determinants
-    for(int i = minX; i <= maxX; i++)
-    {
-        for(int j = minY; j <=maxY; j++)
-        {
-            Vertex v = {
-                i - triangle[0].x,
-                j - triangle[0].y,
-                1,
-                1
-            };
+    Vertex vect03 = {
+        triangle[0].x - triangle[2].x,
+        triangle[0].y - triangle[2].y,
+        1,
+        1
+    };
 
-            float det1 = (float)CrossProduct(v, vect02) / CrossProduct(vect01, vect02);
-            float det2 = (float)CrossProduct(vect01, v) / CrossProduct(vect01, vect02);
-        
+    //calculate the area using two vectors
+    double area = CrossProduct(vect01.x, -vect03.x, vect01.y, -vect03.y);
+
+    //loop through and compute determinants
+    for(int x = minX; x <= maxX; x++)
+    {
+        for(int y = minY; y <=maxY; y++)
+        {
+            double det1 = CrossProduct(vect01.x, x - triangle[0].x, vect01.y, y - triangle[0].y);
+            double det2 = CrossProduct(vect02.x, x - triangle[1].x, vect02.y, y - triangle[1].y);
+            double det3 = CrossProduct(vect03.x, x - triangle[2].x, vect03.y, y - triangle[2].y);
             //draw the pixel if inside the triangle
-            if ((det1 >= 0) && (det2 >= 0) && (det1 + det2 <= 1))
+            if ((det1 >= 0) && (det2 >= 0) && (det3 >= 0))
             {
-                target[j][i] = attrs[0].color;
+                Attributes interpolatedAttribs;
+                //calculate percentages for colors or coordinates
+                for(int i = 0; i <= attrs->size; i++)
+                {
+                    interpolatedAttribs.cc[i] = interpolate(area, det1, det2, det3, attrs[0].cc[i], attrs[1].cc[i], attrs[2].cc[i]);
+                }
+
+                //call shader
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }
@@ -226,6 +250,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
+    BufferImage img ("starcraftskerri.bmp");
 
     // Draw loop 
     bool running = true;
@@ -237,8 +262,17 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        // for (int i = 1; i <= 224; i++)
+        // {
+        //     for (int j = 1; j <= 224; j++)
+        //     {
+        //         frame[j][i] = img[j][i];
+        //     }
+        // }
 
+        
+        TestDrawFragments(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
