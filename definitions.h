@@ -3,9 +3,12 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <vector>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+
+using namespace std;
 
 /******************************************************
  * DEFINES:
@@ -220,13 +223,50 @@ class BufferImage : public Buffer2D<PIXEL>
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+template <class T>
 class Attributes
 {      
-    public:
+        private:
+        //public:
+        double u; //for image
+        double v; // ^ ^ ^ ^
+        double r; // red
+        double g; // green
+        double b; // blue
+        double a; // alpha component
+
+        public:
+        //if someone wants to just initialize rgba
+        //check my draw 
+        Attributes(T red, T grn, T blu, T alp) 
+        {
+            r = red;
+            g = grn;
+            b = blu;
+            a = alp;
+        }
         // Obligatory empty constructor
         Attributes() {}
+        //Setters
+        setR(double red) { r = red; };
+        setG(double grn) { g = grn; };
+        setB(double blu) { b = blu; };
+        setA(double alp) { a = alp; };
+        setU(double uuu) { u = uuu; };
+        setV(double vvv) { v = vvv; };
+        //Getters
+        double getR() const { return r; };
+        double getG() const { return g; };
+        double getB() const { return b; };
+        double getA() const { return a; };
+        double getU() const { return u; };
+        double getV() const { return v; };
 
+        void* ptrImg;
         PIXEL color;
+
+        vector<double> doubleVars; //Vector for additional doubles the user might need
+        vector<T> otherVars; //Vector for additional datatypes
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -235,8 +275,33 @@ class Attributes
         }
 };	
 
+template <class T>
+void ImageFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms)
+{
+    //PIXEL color;
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+template <class T>
+void ColorFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.getA() *0xff) << 24;
+    color += (unsigned int)(vertAttr.getR() *0xff) << 16; 
+    color += (unsigned int)(vertAttr.getG() *0xff) << 8; 
+    color += (unsigned int)(vertAttr.getB() *0xff) << 0; 
+
+    fragment = color;
+}
+
 // Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+template <class T>
+void DefaultFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
@@ -248,12 +313,13 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
  * function for shading pixels. See 'DefaultFragShader'
  * for an example. 
  ******************************************************/
+template <class T>
 class FragmentShader
 {
     public:
  
         // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
+        void (*FragShader)(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms);
 
         // Assumes simple monotone RED shader
         FragmentShader()
@@ -262,20 +328,21 @@ class FragmentShader
         }
 
         // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
+        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms))
         {
             setShader(FragSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
+        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes<T> & vertAttr, const Attributes<T> & uniforms))
         {
             FragShader = FragSdr;
         }
 };
 
 // Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+template <class T>
+void DefaultVertShader(Vertex & vertOut, Attributes<T> & attrOut, const Vertex & vertIn, const Attributes<T> & vertAttr, const Attributes<T> & uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
@@ -289,11 +356,12 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
  * attributes. See 'DefaultVertShader' for a pass-through
  * shader example.
  *********************************************************/
+template <class T>
 class VertexShader
 {
     public:
         // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
+        void (*VertShader)(Vertex & vertOut, Attributes<T> & attrOut, const Vertex & vertIn, const Attributes<T> & vertAttr, const Attributes<T> & uniforms);
 
         // Assumes simple monotone RED shader
         VertexShader()
@@ -302,13 +370,13 @@ class VertexShader
         }
 
         // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes<T> & attrOut, const Vertex & vertIn, const Attributes<T> & vertAttr, const Attributes<T> & uniforms))
         {
             setShader(VertSdr);
         }
 
         // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes<T> & attrOut, const Vertex & vertIn, const Attributes<T> & vertAttr, const Attributes<T> & uniforms))
         {
             VertShader = VertSdr;
         }
@@ -319,13 +387,41 @@ class VertexShader
  * DRAW_PRIMITIVE
  * Prototype for main drawing function.
  ***************************************/
+template <class T>
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const Attributes inputAttrs[],
-                   Attributes* const uniforms = NULL,
-                   FragmentShader* const frag = NULL,
-                   VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
-       
+                   const Attributes<T> inputAttrs[],
+                   Attributes<T>* const uniforms = NULL,
+                   FragmentShader<T>* const frag = NULL,
+                   VertexShader<T>* const vert = NULL,
+                   Buffer2D<double>* zBuf = NULL);      
+
+/****************************************
+ * Determinant: Returns the cross product
+ ***************************************/       
+inline double determinant(const double & a, const double & b, const double & c, const double & d)
+{
+    return (a * d - b * c);
+}
+
+/*****************************************
+ * Linear Interpolation
+ ****************************************/
+template <class T>
+T interp(const T & area,
+             const T & det1,
+             const T & det2,
+             const T & det3,
+             const T & attrs0, 
+             const T & attrs1, 
+             const T & attrs2)
+{
+    // Individual percentages as template types
+    T componentR = (det1 / area) * attrs0;
+    T componentG = (det2 / area) * attrs1;
+    T componentB = (det3 / area) * attrs2;
+
+    return (componentR + componentG + componentB);
+};
 #endif
