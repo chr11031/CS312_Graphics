@@ -231,7 +231,11 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-        PIXEL color;
+        // Currently only using r, g, b for colors and u, v for bitmap/texture
+        double r = 0.0, g = 0.0, b = 0.0, u = 0.0, v = 0.0;
+        
+        // Pointer to hold the address for an image.
+        void* ptrImg;
 };	
 
 // Example of a fragment shader
@@ -240,6 +244,32 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
 }
+
+/**************************************************
+ * COLOR_FRAG_SHADER
+ * Handles the color value for a fragment
+ **************************************************/
+void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value to the PIXEL variable called fragment
+    fragment = 0xff000000
+    | (((unsigned int)(vertAttr.r * 0xff)) << 16)
+    | (((unsigned int)(vertAttr.g * 0xff)) << 8)
+    |  ((unsigned int)(vertAttr.b * 0xff));
+}
+
+/**************************************************
+ * IMAGE_FRAG_SHADER
+ * Handles an image passed through a pointer and 
+ * places a pixel from the image to fragment.
+ **************************************************/
+void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bi = (BufferImage*) uniforms.ptrImg;
+    int x = vertAttr.u * (bi->width() - 1);
+    int y = vertAttr.v * (bi->height() - 1);
+    fragment = (*bi)[y][x];
+};
 
 /*******************************************************
  * FRAGMENT_SHADER

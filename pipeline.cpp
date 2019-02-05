@@ -1,6 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <algorithm>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -61,21 +60,16 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-}
-
-int crossProduct(int ax, int ay, int bx, int by) {
-    return ax * by - ay * bx;
 }
 
 /*************************************************************
@@ -85,27 +79,45 @@ int crossProduct(int ax, int ay, int bx, int by) {
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
-    int minX = std::min(triangle[0].x, std::min(triangle[1].x, triangle[2].x));
-    int maxY = std::max(triangle[0].y, std::max(triangle[1].y, triangle[2].y));
-    int minY = std::min(triangle[0].y, std::min(triangle[1].y, triangle[2].y));
+    // Getting the max/min height and width of a square for the bounding box.
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    Vertex vertex1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex vertex2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
 
+    /* Created variables outside loop to prevent them from being created and destoryed each loop. */
+    double dom = 0;
+    double s = 0;
+    double t = 0;
+    Attributes attr;
+    Vertex q;
+    // Loop through bounding box
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            Vertex q = {x - triangle[0].x, y - triangle[0].y};
-            int r =  crossProduct(vs1.x, vs1.y, vs2.x, vs2.y);
-            float s = (float)crossProduct(q.x, q.y, vs2.x, vs2.y) / r;
-            float t = (float)crossProduct(vs1.x, vs1.y, q.x, q.y) / r;
+            q = {x - triangle[0].x, y - triangle[0].y};
+            dom = getCrossProduct(vertex1.x, vertex1.y, vertex2.x, vertex2.y);
+            s = getCrossProduct(q.x, q.y, vertex2.x, vertex2.y) / dom;
+            t = getCrossProduct(vertex1.x, vertex1.y, q.x, q.y) / dom;
 
+            // Handle graphics inside triangle
             if (s >= 0 && t >= 0 && s + t <= 1)
-            { /* inside triangle */
-                target[y][x] = attrs[0].color;
+            {
+                // The RED, GREEN, BLUE fragments
+                attr.r = getInterpolation(x, y, triangle, attrs[0].r, attrs[1].r, attrs[2].r);
+                attr.g = getInterpolation(x, y, triangle, attrs[0].g, attrs[1].g, attrs[2].g);
+                attr.b = getInterpolation(x, y, triangle, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                // The TEXTURE/BITMAP fragment
+                attr.u = getInterpolation(x, y, triangle, attrs[0].u, attrs[1].u, attrs[2].u);
+                attr.v = getInterpolation(x, y, triangle, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Draw fragment
+                frag->FragShader(target[y][x], attr, *uniforms);
             }
         }
     }
@@ -202,7 +214,6 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
-
     // Draw loop 
     bool running = true;
     while(running) 
@@ -212,9 +223,8 @@ int main()
 
         // Refresh Screen
         clearScreen(frame);
-
-        // Your code goes here
-        TestDrawTriangle(frame);
+        
+        TestDrawFragments(frame);
         //GameOfLife(frame);
 
         // Push to the GPU
