@@ -8,9 +8,9 @@
  * OUTPUTS: double
  * Finds and returns the determinant of the two given vertices.
  * *******************************************************/
-double determinant(Vertex v1, Vertex v2)
+double determinant(const double &A, const double &B, const double &C, const double &D)
 {
-    return ((v1.x * v2.y) - (v1.y * v2.x));
+    return ((A * D) - (B * C));
 }
 
 /***********************************************
@@ -65,6 +65,8 @@ void processUserInputs(bool & running)
     }
 }
 
+//double interpolation(const double &w1, const double &w2)
+
 /****************************************
  * DRAW_POINT
  * Renders a point to the screen with the
@@ -72,7 +74,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
@@ -105,49 +107,48 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     };
 
 
-    // Obtain the first two vectors 
-    Vertex vector1 = {triangle[1].x - triangle[0].x,
+    // vectors necessary to get interpolation weights 
+    Vertex vector01 = {triangle[1].x - triangle[0].x,
                       triangle[1].y - triangle[0].y};
-    Vertex vector2 = {triangle[2].x - triangle[1].x,
+    Vertex vector12 = {triangle[2].x - triangle[1].x,
                       triangle[2].y - triangle[1].y};
-    Vertex vector3 = {triangle[0].x - triangle[2].x,
+    Vertex vector20 = {triangle[0].x - triangle[2].x,
                       triangle[0].y - triangle[2].y};
 
+    double area = determinant(vector01.x, -vector20.x, vector01.y, -vector20.y);
+
     // Obtained from the point we are looking at in the loop
-    Vertex tempVector;
+    Vertex pointVector;
 
-    // Variables to hold the determinants
-    double determinant1;
-    double determinant2;
-    double determinant3;
-    for (int x = boxMin.x; x <= boxMax.x; x++)
+    // Variables to hold the weights
+    double det1;
+    double det2;
+    double det3;
+    for (int y = boxMin.y; y <= boxMax.y; y++)
     {
-        for (int y = boxMin.y; y <= boxMax.y; y++)
+        for (int x = boxMin.x; x <= boxMax.x; x++)
         {
-            // Create vector from first vertex in triangle
-            tempVector = {x -  triangle[0].x, y - triangle[0].y};
+            // Obtain the first determinant
+            pointVector = {x - triangle[0].x, y - triangle[0].y};
+            det1 = determinant(vector01.x, pointVector.x, vector01.y, pointVector.y);
 
-            // Find the ratio of area to whole triangle
-            determinant1 = determinant(vector1, tempVector); 
+            // Obtain the second determinant
+            pointVector = {x - triangle[1].x, y - triangle[1].y};
+            det2 = determinant(vector12.x, pointVector.x, vector12.y, pointVector.y);
 
-            tempVector = {x - triangle[1].x, y - triangle[1].y};
+            // Obatin the third determinant
+            pointVector = {x - triangle[2].x, y - triangle[2].y};
+            det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
-            // Find the ratio of area to whole triangle
-            determinant2 = determinant(vector2, tempVector);
 
-            tempVector = {x - triangle[2].x, y - triangle[2].y};
-
-            determinant3 = determinant(vector3, tempVector);
-
-    
-            // If the two ratios are positive and they don't take up more than the area of the
-            // original triangle than this point is in the triangle
-            if ((determinant1 >= 0) && 
-                (determinant2 >= 0) && 
-                (determinant3 >= 0))
+            if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
-                Vertex point = {x, y};
-                DrawPoint(target, &point, attrs, uniforms, frag);
+                Attributes interpolatedAttrs;
+                interpolatedAttrs.valuesToInterpolate = attrs[0].valuesToInterpolate;
+
+                interpolatedAttrs.interpolateValues(area, det1, det2, det3, attrs);
+
+                frag->FragShader(target[y][x], interpolatedAttrs, *uniforms);
             }
         }
     }
@@ -245,6 +246,8 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
 
+    BufferImage bmpImage("c.bmp");
+
     // Draw loop 
     bool running = true;
     while(running) 
@@ -258,7 +261,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

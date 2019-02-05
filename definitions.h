@@ -224,7 +224,7 @@ class Attributes
 {      
     public:
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : valuesToInterpolate(0) {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -232,15 +232,26 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
-        PIXEL color;
-};	
+        void interpolateValues(const double &area, const double &d1, const double &d2, const double &d3, Attributes* vertAttrs)
+        {
+            double w1 = d1 / area;
+            double w2 = d2 / area;
+            double w3 = 1 - w1 - w2;
 
-// Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    // Output our shader color value, in this case red
-    fragment = 0xffff0000;
-}
+            for (int i = 0; i < valuesToInterpolate; i++)
+            {
+                attrValues[i] = vertAttrs[0].attrValues[i] * w2 +
+                                vertAttrs[1].attrValues[i] * w3 +
+                                vertAttrs[2].attrValues[i] * w1;
+            }
+        }
+
+        PIXEL color;
+        double attrValues[5];
+        int valuesToInterpolate;
+        void* ptrImage;
+};  
+
 
 /*******************************************************
  * FRAGMENT_SHADER
@@ -257,9 +268,7 @@ class FragmentShader
 
         // Assumes simple monotone RED shader
         FragmentShader()
-        {
-            FragShader = DefaultFragShader;
-        }
+        {}
 
         // Initialize with a fragment callback
         FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
