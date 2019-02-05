@@ -74,16 +74,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*************************************************************
- * DETERMINANT
- * Calculates the determinant of two 2D vectors using AD-CB. 
- ************************************************************/
-double determinant(double v1x, double v1y, double v2x, double v2y) 
-{
-    // AD - CB
-    return v1x * v2y - v1y * v2x;
-}
-
-/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
@@ -100,28 +90,36 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     double maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
     // Create the two vectors that are two sides of the triangle by moving their starting point to the origin.
-    double v1x = triangle[1].x - triangle[0].x;
-    double v1y = triangle[1].y - triangle[0].y;
-    double v2x = triangle[2].x - triangle[0].x;
-    double v2y = triangle[2].y - triangle[0].y;
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[0], -thirdVec[0], firstVec[1], -thirdVec[1]);
 
     for(int y = minY; y <= maxY; y++)
     {
         for(int x = minX; x <= maxX; x++) // Using x for the inner loop for better spacial locality.
         {       
-            // Calculate and store this so it doesn't have to be calculated twice.
-            double detV1V2 = determinant(v1x, v1y, v2x, v2y);
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[0], x - triangle[0].x, firstVec[1], y - triangle[0].y);
+            double secndDet = determinant(secndVec[0], x - triangle[1].x, secndVec[1], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[0], x - triangle[2].x, thirdVec[1], y - triangle[2].y);
 
-            // s and t are scalars for v1 and v2 respectively. If p = <x, y>, then s * v1 + t * v2 = p
-            double s = determinant(x - triangle[0].x, y - triangle[0].y, v2x, v2y) / detV1V2;
-            double t = determinant(v1x, v1y, x - triangle[1].x, y - triangle[1].y) / detV1V2;
-
-            /* If either s or t is negative then p is outside v1 and v2. 
-               If the sum of s and t is greater than one then p is between v1 and v2, but it is past the end of the triangle.*/
-            if(s >= 0 && t >= 0 && s + t <= 1)
+            // If any of the determinants are negative, then the fragment is outside the triangle 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
-                // p is inside. Draw it.
-                target[(int)y][(int)x] = color;
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs;
+                interpolatedAttribs.r = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                interpolatedAttribs.u = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }     
         }
     }
@@ -229,7 +227,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawTriangle(frame);
+        TestDrawFragments(frame);
+        //TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
