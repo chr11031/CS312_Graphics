@@ -223,6 +223,14 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+       // double r, g, b,u,v;
+       //I tryed using an array to make it more dynamic but its hard for me to think
+       // farther ahead of what we will do since I feel like I am barely catching up
+       // I don't know if an array is more efficient either because I don't think
+       // array access are cheap but I thats what I did.
+        double collector[4];
+        void* ptrImg;
+        PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
 
@@ -232,7 +240,6 @@ class Attributes
             // Your code goes here when clipping is implemented
 
         }
-        PIXEL color;
 };	
 
 // Example of a fragment shader
@@ -241,7 +248,27 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
 }
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.collector[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.collector[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.collector[2] *0xff) << 0;
 
+    fragment = color;
+}
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color;
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int x = vertAttr.collector[0] * (ptr->width() - 1);
+    int y = vertAttr.collector[1] * (ptr->height() - 1);
+    // color = (*ptr)[y][x];
+
+    fragment = (*ptr)[y][x];
+}
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
