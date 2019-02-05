@@ -111,6 +111,24 @@ float crossProduct(Vertex one, Vertex two)
 }
 
 /*************************************************************
+* INTERPOLATE
+* This function will x and y xoordinates the required pixel and weight to the
+* of the triangle 
+************************************************************/
+double interoplate(double y, double x, Vertex* const triangle, double attr1, double attr2, double attr3)
+{
+	 // calculating how much color goies in the first point of the triangle
+	double i = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y)) / ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    // calculating how much color goies in the second point of the triangle
+    double j = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y)) / ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    // calculating how much color goies in the third point of the triangle which is 100% - i and j
+    double k = 1 - i - j;
+
+    //get the three attributes and return the color interpolated attributes
+    return ((k * attr1) + (i * attr2) + (j* attr3));
+}
+	
+/*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
@@ -145,13 +163,22 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex *const triangle, Attributes *c
             float s = (float)crossProduct(vertQ, verTwo) / crossProduct(verOne, verTwo);
             float t = (float)crossProduct(verOne, vertQ) / crossProduct(verOne, verTwo);
 
-            //true when in triangle
+            //true only when in triangle
             if ((s >= 0) && (t >= 0) && (s + t <= 1))
             {
-                //call drawpoint and pass the variables
-                Vertex myPoint[1];
-                myPoint[0] = (Vertex){x, y};
-                DrawPoint(target, myPoint, attrs, uniforms, frag);
+                Attributes interpolatedAttribs;
+
+                // Interpolate Attributes for this pixel - In this case the R,G,B values as attr 0,1,2 respeectively
+	            interpolatedAttribs.attr[0] = interoplate(y, x, triangle, attrs[0].attr[0],attrs[1].attr[0],attrs[2].attr[0]);
+	            interpolatedAttribs.attr[1] = interoplate(y, x, triangle, attrs[0].attr[1],attrs[1].attr[1],attrs[2].attr[1]);
+	            interpolatedAttribs.attr[2] = interoplate(y, x, triangle, attrs[0].attr[2],attrs[1].attr[2],attrs[2].attr[2]);
+
+                //Interpolate Attributes for this pixel - in this case U and V coordinate as attr 3, 4 respectively
+	            interpolatedAttribs.attr[3] = interoplate(y, x, triangle, attrs[0].attr[0],attrs[1].attr[0], attrs[2].attr[0]);
+	            interpolatedAttribs.attr[4] = interoplate(y, x, triangle, attrs[0].attr[1],attrs[1].attr[1], attrs[2].attr[1]);
+                    
+                //calling the shader callback
+                frag->FragShader(target[y][x],interpolatedAttribs, *uniforms);
             }
         }
     }
@@ -260,7 +287,8 @@ int main()
         clearScreen(frame);
 
         //TestDrawPixel(frame);
-        TestDrawTriangle(frame);
+        //TestDrawTriangle(frame);
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -251,9 +251,20 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
+        colorAttributes[0].attr[0] = 1.0;
+	colorAttributes[0].attr[1] = 0.0;
+	colorAttributes[0].attr[2] = 0.0;
+	colorAttributes[1].attr[0] = 0.0;
+	colorAttributes[1].attr[1] = 1.0;
+	colorAttributes[1].attr[2] = 0.0;
+	colorAttributes[2].attr[0] = 0.0;
+	colorAttributes[2].attr[1] = 0.0;
+	colorAttributes[2].attr[2] = 1.0;
+        
 
         FragmentShader myColorFragShader;
-        // Your code for the color fragment shader goes here
+        //color shader for the colors in the triangle
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
@@ -269,16 +280,30 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = (Vertex){500, 252, 1, 1};
         imageTriangle[2] = (Vertex){350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributes'
+        
+        //  texture coordinate code goes here for 'imageAttributes'
+        imageAttributes[0].attr[0] = coordinates[0][0];
+	imageAttributes[0].attr[1] = coordinates[0][1];
+	imageAttributes[1].attr[0] = coordinates[1][0];
+	imageAttributes[1].attr[1] = coordinates[1][1];
+	imageAttributes[2].attr[0] = coordinates[2][0];
+	imageAttributes[2].attr[1] = coordinates[2][1];
 
-        BufferImage myImage("image.bmp");
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
-
+        //BufferImage myImage("image.bmp");
+        // an image in this directory(powers of 2 dimensions)
+        static BufferImage myImage("checker.bmp");
+        
         Attributes imageUniforms;
         // Your code for the uniform goes here
 
+        //a pinter image to the attributes
+        imageUniforms.ptrImg = &myImage;
+
         FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
+
+        // Fragment shader for the image
+	myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
