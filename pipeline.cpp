@@ -102,12 +102,18 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // vector from vertex 3 to vertex 1
     double vs3[2] = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
 
-    float totalArea = triangleArea(vs1, vs2);
+    float totalArea = 1/triangleArea(vs1, vs2);
+
+    int s = MIN3(triangle[0].y, triangle[1].y, triangle[2].y) 
+            - MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
+
+            
+            
             // create the vectors to be compared with the three side vectors.
             double q1[2] = {x - triangle[0].x, y - triangle[0].y};
             double q2[2] = {x - triangle[1].x, y - triangle[1].y};
@@ -115,9 +121,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
             // find the cross products of the three outside vectors with
             // the vector pointing to the point to be drawn
-            float areaT1 = triangleArea(vs2, q2);
-            float areaT3 = triangleArea(vs1, q1);
-            float areaT2 = triangleArea(vs3, q3);
+            float areaT1 = 1/triangleArea(vs2, q2);
+            float areaT3 = 1/triangleArea(vs1, q1);
+            float areaT2 = 1/triangleArea(vs3, q3);
 
             // If any of the cross products are less than zero then the pixel is outside of the triangle.
             if ( (areaT1 >= 0) && (areaT3 >= 0) && ((areaT2 >= 0)))
@@ -134,11 +140,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 lerpedAttrs.uv[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
                 lerpedAttrs.uv[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
 
-                // check github code on class repo.;
                 frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
-
-                // draw the point.
-                // DrawPoint(target, pVertex, attrs, uniforms, frag);
             }
         }
     }
@@ -249,8 +251,8 @@ int main()
         // TestDrawPixel(frame);
         //GameOfLife(frame);
         // TestDrawTriangle(frame);
-        TestDrawFragments(frame);
-        // TestDrawPerspectiveCorrect(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

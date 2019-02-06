@@ -331,7 +331,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].uv[1] = 1;
 
         // 24 bit/pixel?
-        BufferImage myImage("yoshi.bmp");
+        BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
@@ -358,25 +358,39 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         // Artificially projected, viewport transformed
         double divA = 6;
         double divB = 40;
-        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
-                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+        //                               x                             y                 z       w
+        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },  // LR
+                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },  // L
+                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },  // LR
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }}; // R
 
-        Vertex verticesImgA[3];
+        Vertex verticesImgA[3];          // L
         Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
-        Vertex verticesImgB[3];        
+        Vertex verticesImgB[3];         // R
         Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
-
+        //                                LR                 R                LR               L
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].uv[0] = coordinates[0][0];
+        imageAttributesA[0].uv[1] = coordinates[0][1];
+        imageAttributesA[1].uv[0] = coordinates[2][0];
+        imageAttributesA[1].uv[1] = coordinates[2][1];
+        imageAttributesA[2].uv[0] = coordinates[3][0];
+        imageAttributesA[2].uv[1] = coordinates[3][1];
+
+        imageAttributesB[0].uv[0] = coordinates[0][0];
+        imageAttributesB[0].uv[1] = coordinates[0][1];
+        imageAttributesB[1].uv[0] = coordinates[1][0];
+        imageAttributesB[1].uv[1] = coordinates[1][1];
+        imageAttributesB[2].uv[0] = coordinates[2][0];
+        imageAttributesB[2].uv[1] = coordinates[2][1];
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
