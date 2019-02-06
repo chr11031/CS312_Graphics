@@ -13,6 +13,19 @@ double determinant(const double &A, const double &B, const double &C, const doub
     return ((A * D) - (B * C));
 }
 
+double interpolateZ(const double & area, const double & det1, const double & det2, const double & det3,
+                  const Vertex vertices[3])
+{
+    double w1 = det1 / area;
+    double w2 = det2 / area;
+    double w3 = 1 - w1 - w2;
+
+    double fractionalZ = vertices[0].w * w2 +
+                         vertices[1].w * w3 +
+                         vertices[2].w * w1;
+    return 1 / fractionalZ;
+}
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -143,10 +156,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
+                double correctedZ = 0.0;
                 Attributes interpolatedAttrs;
                 interpolatedAttrs.valuesToInterpolate = attrs[0].valuesToInterpolate;
 
+                correctedZ = interpolateZ(area, det1, det2, det3, triangle);
                 interpolatedAttrs.interpolateValues(area, det1, det2, det3, attrs);
+                interpolatedAttrs.correctPerspective(correctedZ);
 
                 frag->FragShader(target[y][x], interpolatedAttrs, *uniforms);
             }
@@ -261,7 +277,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
