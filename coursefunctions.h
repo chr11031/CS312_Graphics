@@ -345,37 +345,48 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         * 1. Image quad (2 TRIs) Code (texture interpolated)
         **************************************************/
         // Artificially projected, viewport transformed
-        double divA = 6;
-        double divB = 40;
+        const double divA = 6;
+        const double divB = 40;
+        //Insertig the X, Y, Z AND D values of 4 divverent vertexes.
         Vertex quad[] = {(Vertex){(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          (Vertex){(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          (Vertex){(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
                          (Vertex){(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
 
+        //first triangle to the right
         Vertex verticesImgA[3];
         Attributes imageAttributesA[3];
-        verticesImgA[0] = quad[0];
-        verticesImgA[1] = quad[1];
-        verticesImgA[2] = quad[2];
+        verticesImgA[0] = quad[0];//00
+        verticesImgA[1] = quad[1];//10
+        verticesImgA[2] = quad[2];//11
 
+        //Triangle to the left
         Vertex verticesImgB[3];        
         Attributes imageAttributesB[3];
-        verticesImgB[0] = quad[2];
-        verticesImgB[1] = quad[3];
-        verticesImgB[2] = quad[0];
+        verticesImgB[0] = quad[2];//11
+        verticesImgB[1] = quad[3];//01
+        verticesImgB[2] = quad[0];//00
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("Assets/checker.bmp");
+        imageAttributesA[0].setUV(coordinates[0][0], coordinates[0][1]);
+        imageAttributesA[1].setUV(coordinates[1][0], coordinates[1][1]);
+        imageAttributesA[2].setUV(coordinates[2][0], coordinates[2][1]);
+
+        imageAttributesB[0].setUV(coordinates[2][0], coordinates[2][1]);
+        imageAttributesB[1].setUV(coordinates[3][0], coordinates[3][1]);
+        imageAttributesB[2].setUV(coordinates[0][0], coordinates[0][1]);
+
+        static BufferImage myImage("Assets/checker.bmp");
         // Ensure the checkboard image is in this directory
-        
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.FragShader = FragShaderUVwithoutImage;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

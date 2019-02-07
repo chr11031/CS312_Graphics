@@ -2,6 +2,7 @@
 #include "coursefunctions.h"
 #include <algorithm>
 
+
 using namespace std;
 
 /***********************************************
@@ -81,7 +82,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * crossProduct
  * returns corss product of the vectors
  ************************************************************/
-int crossProduct(int ax, int ay, int bx, int by) 
+int crossProduct(const int ax, const int ay, const int bx, const int by) 
 {
 	return ax * by - ay * bx;
 }
@@ -93,7 +94,7 @@ int crossProduct(int ax, int ay, int bx, int by)
   ***************************************/
  inline double determinant(const double & A, const double & B, const double & C, const double & D)
  {
-   return (A*D - B*C);
+   return ((A*D) - (B*C));
  }
 
 /****************************************
@@ -102,14 +103,14 @@ int crossProduct(int ax, int ay, int bx, int by)
   * depending on their proximity to the
   * vertexes it is close to.
   ***************************************/
- double interp(double area, double firstDet, double secondDet, double thirdDet, double r, double g, double b)
+ double interp(const double area, const double firstDet,const double secondDet,const double thirdDet,const double r,const double g,const double b)
  {
-    firstDet  /= area;   //How much of the first color
-    secondDet /= area;   //How much of the second color
-    thirdDet  /= area;   //How much of the third color
+    //firstDet  /= area;   //How much of the first color
+    //secondDet /= area;   //How much of the second color
+    //thirdDet  /= area;   //How much of the third color
 
     // how much from each color into each pixel.
-    return (firstDet * r) + (secondDet * g) + (thirdDet * b);
+    return ((firstDet/area) * b) + ((secondDet/area) * r) + ((thirdDet/area) * g);
  }
 
 /*************************************************************
@@ -136,31 +137,35 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
 
     // Loop through every pixel in the grid
-    for(int y = minY; y < maxY; y++)
+    for(int x = minX; x <= maxX; x++)
     {
-        for(int x = minX; x < maxX; x++)
+        for(int y = minY; y <= maxY; y++)
         {
             // Determine if the pixel is in the triangle by the determinant's sign
-            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
-            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
-            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+            double firstDet = crossProduct(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = crossProduct(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = crossProduct(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
             // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
             if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
-            target[(int)y][(int)x] = attrs[0].color;
+                // get the zvalue of the pixel by interpolating the z(w) value of the triangle it is at.
+                double zVal = reciprocal(interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w));
 
-            // Interpolate Attributes for this pixel - In this case the R,G,B values
-            Attributes interpolatedAttribs;
-            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                target[y][x] = attrs[0].color;
 
-            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs;
 
-            // Call shader callback
-            frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+                interpolatedAttribs.r = zVal * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = zVal * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = zVal * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                interpolatedAttribs.u = zVal * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = zVal * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
     }
@@ -270,7 +275,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

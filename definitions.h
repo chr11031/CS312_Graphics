@@ -7,7 +7,6 @@
 #include <iostream>
 using namespace std;
 
-
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
@@ -26,7 +25,7 @@ using namespace std;
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 #define X_KEY 0
- #define Y_KEY 1
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -211,6 +210,7 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            //SDL_LockSurface(img);
             setupInternal();
         }
 };
@@ -234,7 +234,7 @@ class Attributes
         double b; 
 
         //pointer for image buffer
-        void* ptrImg;
+        BufferImage * ptrImg;
 
         //classic color pixel value
         PIXEL color;
@@ -249,7 +249,7 @@ class Attributes
         }
 
         //Set the RGB values of pixel the attributes class using doubles.
-        void setRGB(double R, double G, double B)
+        void setRGB(const double R,const double G,const double B)
         {
             this->r = R;
             this->g = G;
@@ -281,7 +281,7 @@ class Attributes
         }
 
         //Set the U V values for the pixel attributes.
-        void setUV(double U, double V)
+        void setUV(const double U, const double V)
         {
             this->u = U;
             this->v = V;
@@ -344,10 +344,9 @@ void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attribu
 // Image Fragment Shader 
  void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
  {
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    BufferImage *bf = (BufferImage*)uniforms.ptrImg;
     int x = vertAttr.u * (bf->width()-1);
     int y = vertAttr.v * (bf->height()-1);
-
     fragment = (*bf)[y][x];
  }
 
@@ -362,6 +361,43 @@ void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attribu
 
     fragment = color;
  }
+
+//reciprocal function
+double reciprocal(const double value)
+{
+	return 1 / value;
+}
+
+//lerp function
+double lerp(double v0, double v1, double t) 
+{
+  return v0 + ( (v1 - v0) * t);
+}
+
+ // Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.u * 8;
+    int ySquare = attributes.v * 8;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // I switch the colors to be able to mirror how the work of the others would look like. 
+    // One even, one odd - white square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffffffff;
+    }
+    // Both even or both odd - red square
+    else
+    {
+        fragment = 0xffff0000;
+        
+    }
+}
 
 /*******************************************************
  * FRAGMENT_SHADER
