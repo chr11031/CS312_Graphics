@@ -133,12 +133,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
                 // interpolate colors here into new attributes object
                 Attributes lerpedAttrs;
-                lerpedAttrs.rgb[0] = zt *lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
-                lerpedAttrs.rgb[1] = zt *lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
-                lerpedAttrs.rgb[2] = zt *lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
+                lerpedAttrs.rgb[0] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
+                lerpedAttrs.rgb[1] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
+                lerpedAttrs.rgb[2] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
 
-                lerpedAttrs.uv[0] = zt *lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
-                lerpedAttrs.uv[1] = zt *lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
+                lerpedAttrs.uv[0] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
+                lerpedAttrs.uv[1] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
 
 
                 frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
