@@ -69,6 +69,23 @@ float crossProduct(const double & a, const double & b, const double & c, const d
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
+double interpZ(const double &det1, const double &det2, const double &det3, const double &area, const Vertex vertices[3])
+{
+    double w1 = det1 / area;
+    double w2 = det2 / area;
+    double w3 = 1 - w2 - w1;
+
+    double w = vertices[0].w * w2 + vertices[1].w * w3 + vertices[2].w * w1;
+    double z = 1.0 / w;
+
+    return z;
+}
+
+/****************************************
+ * DRAW_POINT
+ * Renders a point to the screen with the
+ * appropriate coloring.
+ ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Set our pixel according to the attribute value!       
@@ -118,10 +135,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // now we are checking to see if the area ratio (a or b) are positive, then we see if combined they equal or are less than the actual triangle area
             if ((det1 >= 0) && (det2 >= 0) && (det3 >= 0))
             {
+                double correctZ = interpZ(det1, det2, det3, area, triangle);
+
                 Attributes interpolatedAttribs;
                 interpolatedAttribs.numValues = attrs[0].numValues;
                 interpolatedAttribs.interpolateValues(det1, det2, det3, area, attrs);
-  
+                interpolatedAttribs.correctPerspective(correctZ);
+                
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
         }
@@ -234,7 +254,8 @@ int main()
         // TestDrawPixel(frame);
         // GameOfLife(frame); // to run this, comment out other draw function, clearscreen, and processuserinputs
         // TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
