@@ -322,14 +322,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         * 1. Interpolated color triangle
         *************************************************/
         Vertex colorTriangle[3];
-        Attributes colorAttribute[3];
+        Attributes colorAttributes[3];
         colorTriangle[0] = {250, 112, 1, 1};
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
       
+        colorAttributes[0].insertDbl(1.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[1].insertDbl(1.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(1.0);
+
         //different color attributes
-        colorAttribute[0].newColor[0] = 1.0;
+        /*colorAttribute[0].newColor[0] = 1.0;
         colorAttribute[0].newColor[1] = 0.0;
         colorAttribute[0].newColor[2] = 0.0;
         colorAttribute[1].newColor[0] = 0.0;
@@ -337,7 +347,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorAttribute[1].newColor[2] = 0.0;
         colorAttribute[2].newColor[0] = 0.0;
         colorAttribute[2].newColor[1] = 0.0;
-        colorAttribute[2].newColor[2] = 1.0;
+        colorAttribute[2].newColor[2] = 1.0;*/
 
         // Your color code goes here for 'colorAttributes'
 
@@ -351,7 +361,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttribute, &colorUniforms, &myColorFragShader);
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
         /****************************************************
          * 2. Interpolated image triangle
         ****************************************************/
@@ -364,12 +374,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         
         // Your texture coordinate code goes here for 'imageAttributes'
         //attributes for the image
-        imageAttributes[0].newColor[3] = coordinates[0][0];
-        imageAttributes[0].newColor[4] = coordinates[0][1];
-        imageAttributes[1].newColor[3] = coordinates[1][0];
-        imageAttributes[1].newColor[4] = coordinates[1][1];
-        imageAttributes[2].newColor[3] = coordinates[2][0];
-        imageAttributes[2].newColor[4] = coordinates[2][1];
+        imageAttributes[0].insertDbl(coordinates[0][0]);
+	imageAttributes[0].insertDbl(coordinates[0][1]);
+	imageAttributes[1].insertDbl(coordinates[1][0]);
+        imageAttributes[1].insertDbl(coordinates[1][1]);
+	imageAttributes[2].insertDbl(coordinates[2][0]);
+	imageAttributes[2].insertDbl(coordinates[2][1]);
         
 
         static BufferImage myImage("C:\\Users\\Brooke\\Documents\\School\\cs312\\CS312_Graphics\\checker.bmp");
@@ -377,7 +387,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 
         Attributes imageUniforms;
         //Pointer to the image attributes
-        imageUniforms.ptrImg = &myImage;
+        //imageUniforms.ptrImg = &myImage;
+        imageUniforms.insertPtr(&myImage);
 
         FragmentShader myImageFragShader;
         // Fragment shader for the image
@@ -398,6 +409,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         // Artificially projected, viewport transformed
         double divA = 6;
         double divB = 40;
+                        //    x                                   y                     z       w
         Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
@@ -416,16 +428,36 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        //double coordinates[4][2] = { {0, 0}, {1, 0}, {1, 1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        //Attributes imageAttributesA[3];
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        //Attributes imageAttributesB[3];
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+         
+
+        BufferImage myImage("C:\\Users\\Brooke\\Documents\\School\\cs312\\CS312_Graphics\\checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.insertPtr(&myImage);
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

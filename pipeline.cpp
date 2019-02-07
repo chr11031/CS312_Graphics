@@ -107,7 +107,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 double determinant(const double & v1x, const double & v2x, const double & v1y, const double & v2y)
 {
     double determin;
-    determin = (v1x * v2y) - (v2x * v1y);
+    determin = ((v1x * v2y) - (v2x * v1y)) / 2;
     return determin; 
 }
 
@@ -119,12 +119,10 @@ double determinant(const double & v1x, const double & v2x, const double & v1y, c
 double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
 {
     //Finding where the point is in the traingle and how much color is in each part
-    firstDet /= areaTriangle;
-    secndDet /= areaTriangle;
-    thirdDet /= areaTriangle;
+    double interpolated = 0.0;
+    interpolated = (firstDet/areaTriangle * attrs1) + (secndDet/areaTriangle * attrs2) + (thirdDet/areaTriangle * attrs3);
 
-    return (firstDet * attrs1) + (secndDet * attrs2) + (thirdDet * attrs3);
-
+    return interpolated;
 }
 
 /*************************************************************
@@ -164,20 +162,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
           if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
           {
 
-              target[(int)y][(int)x] = attrs[0].color;
+              double zt = 1/interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
-
-              Attributes interpolatedAttribs;
-              //Color attributes for the color triangle. Finding the interpolation for that color to know how much of each
-              interpolatedAttribs.newColor[0] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[0], attrs[1].newColor[0], attrs[2].newColor[0]);
-              interpolatedAttribs.newColor[1] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[1], attrs[1].newColor[1], attrs[2].newColor[1]);
-              interpolatedAttribs.newColor[2] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[2], attrs[1].newColor[2], attrs[2].newColor[2]);
-
-              //Color attributes for the picture triangle
-              interpolatedAttribs.newColor[3] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[3], attrs[1].newColor[3], attrs[1].newColor[3]);
-              interpolatedAttribs.newColor[4] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[4], attrs[1].newColor[4], attrs[1].newColor[4]);
-
+              Attributes interpolatedAttribs(areaTriangle, firstDet, secndDet, thirdDet, attrs[0], attrs[1], attrs[2]);
               //calling to the fragment shader of either the color or picture triangle. 
+
+              interpolatedAttribs.mathfunction(zt);
+
               frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
 
           }
@@ -289,9 +280,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        //TestDrawTriangle(frame);
-        TestDrawFragments(frame);
-
+          TestDrawPerspectiveCorrect(frame);
+        //TestDrawFragments(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
