@@ -121,15 +121,18 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
            {
                target[y][x] = attrs[0].var['color'];
 
-                // interpolated attributes for the colored triangle
+                // Take the reciprocal to get the perspective correct
+                double correctZ = 1 / interp(triangleArea, fDet, sDet, tDet, triangle[0].w, triangle[1].w, triangle[2].w);
+                
+                // interpolated attributes for the colored triangle using the perspective correction
                 Attributes interpAttr;
-                interpAttr.var['r'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
-                interpAttr.var['g'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
-                interpAttr.var['b'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
+                interpAttr.var['r'] = correctZ * interp(triangleArea, fDet, sDet, tDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
+                interpAttr.var['g'] = correctZ * interp(triangleArea, fDet, sDet, tDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
+                interpAttr.var['b'] = correctZ * interp(triangleArea, fDet, sDet, tDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
 
-                // interpolated attributes for the image trianlge
-                interpAttr.var['u'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
-                interpAttr.var['v'] = interp(triangleArea, fDet, sDet, tDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
+                // interpolated attributes for the image triangle using the perspective correction
+                interpAttr.var['u'] = correctZ * interp(triangleArea, fDet, sDet, tDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
+                interpAttr.var['v'] = correctZ * interp(triangleArea, fDet, sDet, tDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
 
                 // callback for frag shader
                 frag->FragShader(target[y][x], interpAttr, *uniforms);
@@ -244,7 +247,8 @@ int main()
         // GameOfLife(frame);              // This will run the Game of Life
         // TestDrawPixel(frame);           // This will draw a pixel 
         // TestDrawTriangle(frame);        // This will draw a triangle
-        TestDrawFragments(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
