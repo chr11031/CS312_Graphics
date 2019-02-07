@@ -391,16 +391,28 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        imageAttributesA[0].u = coordinates[0][0];
+        imageAttributesA[0].v = coordinates[0][1];
+        imageAttributesA[1].u = coordinates[1][0];
+        imageAttributesA[1].v = coordinates[1][1];
+        imageAttributesA[2].u = coordinates[2][0];
+        imageAttributesA[2].v = coordinates[2][1];
+        imageAttributesB[0].u = coordinates[2][0];
+        imageAttributesB[0].v = coordinates[2][1];
+        imageAttributesB[1].u = coordinates[3][0];
+        imageAttributesB[1].v = coordinates[3][1];
+        imageAttributesB[2].u = coordinates[0][0];
+        imageAttributesB[2].v = coordinates[0][1];
+
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = imageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
