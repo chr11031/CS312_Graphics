@@ -62,7 +62,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 {
     // Your code goes here
     // Set our pixel according to the attribute value!     
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    // target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -91,6 +91,7 @@ double Interp(double area, double d1, double d2, double d3, double a1, double a2
    
    return percentd1 + percentd2 + percentd3;
 }
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -112,18 +113,18 @@ Vertex vt3;
 
 vt1.x = (triangle[1].x - triangle[0].x);
 vt1.y = (triangle[1].y - triangle[0].y);
-vt1.z = 1;
-vt1.w = 1;
+vt1.z = (triangle[1].z - triangle[0].z);
+vt1.w = (triangle[1].w - triangle[0].w);
 
 vt2.x = (triangle[2].x - triangle[1].x);
 vt2.y = (triangle[2].y - triangle[1].y);
-vt2.z = 1;
-vt2.w = 1;
+vt2.z = (triangle[2].z - triangle[1].z);
+vt2.w = (triangle[2].w - triangle[1].w);
 
 vt3.x = (triangle[0].x - triangle[2].x);
 vt3.y = (triangle[0].y - triangle[2].y);
-vt3.z = 1;
-vt3.w = 1;
+vt3.z = (triangle[0].z - triangle[2].z);
+vt3.w = (triangle[0].w - triangle[2].w);
 
 //are (first vecx, -third vex, first vec y, -third vecy)
 double area = Determinant(vt1.x, -vt3.x, vt1.y, -vt3.y);
@@ -142,18 +143,16 @@ double area = Determinant(vt1.x, -vt3.x, vt1.y, -vt3.y);
             if((detSign1 >= 0) && (detSign2 >= 0) && (detSign3 >= 0))
             {
                 Attributes interpAtt;
-                interpAtt.collector[0] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[0], attrs[1].collector[0], attrs[2].collector[0]);
-                interpAtt.collector[1] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[1], attrs[1].collector[1], attrs[2].collector[1]);
-                interpAtt.collector[2] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[2], attrs[2].collector[1], attrs[2].collector[2]);
+                int size = (sizeof(interpAtt.collector)/sizeof(*interpAtt.collector));
+                double lerpz = (1/Interp(area, detSign1, detSign2, detSign3, triangle[0].w, triangle[1].w, triangle[2].w));
 
-                interpAtt.collector[0] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[0], attrs[1].collector[0], attrs[2].collector[0]);
-                interpAtt.collector[1] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[1], attrs[1].collector[1], attrs[2].collector[1]);
-                
+                for (int i = 0; i < size; i++)
+                {
+                    interpAtt.collector[i] = Interp(area, detSign1, detSign2, detSign3, attrs[0].collector[i], attrs[1].collector[i], attrs[2].collector[i]) * lerpz;
+                }
                 frag->FragShader(target[y][x],interpAtt, *uniforms);
                 
             }
-            //inter.u = interp(area, d1 ,d2, d3, att.u att.u att.u)
-            //inter.v = interp(area, d1 ,d2, d3, att.u att.u att.u)
         }
     }
 }
@@ -270,7 +269,8 @@ int main()
            //    frame[y][x] = img[y][x];
           // }
        //} 
-         TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
+       //  TestDrawFragments(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }

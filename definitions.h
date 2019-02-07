@@ -223,12 +223,7 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-       // double r, g, b,u,v;
-       //I tryed using an array to make it more dynamic but its hard for me to think
-       // farther ahead of what we will do since I feel like I am barely catching up
-       // I don't know if an array is more efficient either because I don't think
-       // array access are cheap but I thats what I did.
-        double collector[4];
+        double collector[16];
         void* ptrImg;
         PIXEL color;
         // Obligatory empty constructor
@@ -260,12 +255,10 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    PIXEL color;
     BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
 
     int x = vertAttr.collector[0] * (ptr->width() - 1);
     int y = vertAttr.collector[1] * (ptr->height() - 1);
-    // color = (*ptr)[y][x];
 
     fragment = (*ptr)[y][x];
 }
