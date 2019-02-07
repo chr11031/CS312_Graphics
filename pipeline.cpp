@@ -113,22 +113,22 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     Vertex vect01 = {
         triangle[1].x - triangle[0].x,
         triangle[1].y - triangle[0].y,
-        1,
-        1
+        triangle[1].z - triangle[0].z,
+        triangle[1].w - triangle[0].w
     };
     
     Vertex vect02 = {
         triangle[2].x - triangle[1].x,
         triangle[2].y - triangle[1].y,
-        1,
-        1
+        triangle[2].z - triangle[1].z,
+        triangle[2].w - triangle[1].w
     };
 
     Vertex vect03 = {
         triangle[0].x - triangle[2].x,
         triangle[0].y - triangle[2].y,
-        1,
-        1
+        triangle[0].z - triangle[2].z,
+        triangle[0].w - triangle[2].w
     };
 
     //calculate the area using two vectors
@@ -146,12 +146,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if ((det1 >= 0) && (det2 >= 0) && (det3 >= 0))
             {
                 Attributes interpolatedAttribs;
-                //calculate percentages for colors or coordinates
+                //calculate percentages for colors or coordinates with associated depths using the reciprocal of the interpolated w
+                double lerpedZ = (1/interpolate(area, det1, det2, det3, triangle[0].w, triangle[1].w, triangle[2].w));
+                //loop through the attibs and interpolate.
                 for(int i = 0; i <= attrs->size; i++)
                 {
-                    interpolatedAttribs.cc[i] = interpolate(area, det1, det2, det3, attrs[0].cc[i], attrs[1].cc[i], attrs[2].cc[i]);
+                    interpolatedAttribs.cc[i] = interpolate(area, det1, det2, det3, attrs[0].cc[i], attrs[1].cc[i], attrs[2].cc[i]) * lerpedZ;
                 }
-
                 //call shader
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
@@ -262,17 +263,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawTriangle(frame);
-        // for (int i = 1; i <= 224; i++)
-        // {
-        //     for (int j = 1; j <= 224; j++)
-        //     {
-        //         frame[j][i] = img[j][i];
-        //     }
-        // }
-
-        
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
+ 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
