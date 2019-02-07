@@ -368,7 +368,7 @@ double reciprocal(const double value)
 	return 1 / value;
 }
 
-//lerp function
+ //lerp function
 double lerp(double v0, double v1, double t) 
 {
   return v0 + ( (v1 - v0) * t);
@@ -385,16 +385,15 @@ void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, c
     bool evenXSquare = (xSquare % 2) == 0;
     bool evenYSquare = (ySquare % 2) == 0;
 
-    // I switch the colors to be able to mirror how the work of the others would look like. 
-    // One even, one odd - white square
+    // Both even or both odd - red square
     if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
     {
-        fragment = 0xffffffff;
+        fragment = 0xffff0000;
     }
-    // Both even or both odd - red square
+    //One even, one odd - white square
     else
     {
-        fragment = 0xffff0000;
+        fragment = 0xffffffff;
         
     }
 }
