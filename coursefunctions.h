@@ -335,20 +335,6 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         imageAttributesB[2].u = coordinates[0][0];
         imageAttributesB[2].v = coordinates[0][1];
 
-        /*imageAttributesA[0].u = 0;
-        imageAttributesA[0].v = 0;
-        imageAttributesA[1].u = 1;
-        imageAttributesA[1].v = 0;
-        imageAttributesA[2].u = 1;
-        imageAttributesA[2].v = 1;
-
-        imageAttributesB[0].u = 1;
-        imageAttributesB[0].v = 1;
-        imageAttributesB[1].u = 0;
-        imageAttributesB[1].v = 1;
-        imageAttributesB[2].u = 0;
-        imageAttributesB[2].v = 0;*/
-
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
@@ -357,14 +343,10 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         FragmentShader fragImg;
         fragImg.FragShader = &ImageFragShader;
-        //fragImg.FragShader = &DefaultFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
-
-        // test code
-        //DrawPrimitive(TRIANGLE, target, {})
 }
 
 /************************************************
