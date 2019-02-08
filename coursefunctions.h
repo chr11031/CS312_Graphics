@@ -1,7 +1,10 @@
 #include "definitions.h"
+#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
+
+using namespace std;
 
 /***************************************************
  * Team Activity for week #1.
@@ -321,6 +324,48 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
 
+
+/***********************************************
+ * Demonstrate Fragment Shader, linear VBO 
+ * interpolation for Project 03. 
+ **********************************************/
+void TestDrawStatic(Buffer2D<PIXEL> & target)
+{
+        /**************************************************
+        * 1. Interpolated color triangle
+        *************************************************/
+        Vertex colorTriangle[3];
+        Attributes colorAttributes[3];
+
+        colorTriangle[0] = {250, 112, 1, 1};
+        colorTriangle[1] = {450, 452, 1, 1};
+        colorTriangle[2] = {50, 452, 1, 1};
+        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; 
+        // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+       
+        // Red
+        colorAttributes[0].r = 1.0;
+        colorAttributes[0].g = 0.0;
+        colorAttributes[0].b = 0.0;
+        // Green
+        colorAttributes[1].r = 0.0;
+        colorAttributes[1].g = 1.0;
+        colorAttributes[1].b = 0.0;
+        // Blue
+        colorAttributes[2].r = 0.0;
+        colorAttributes[2].g = 0.0;
+        colorAttributes[2].b = 1.0;
+              
+        FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = StaticFragShader;
+         
+        Attributes colorUniforms;
+        // Nothing gets setup this time
+        // Your code for the uniform goes here, if any (don't pass NULL here)		
+               
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
+}
+
 /************************************************
  * Demonstrate Perspective correct interpolation 
  * for Project 04. 
@@ -351,16 +396,31 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        // Texture coordinate 'imageAttributesA' 
+        imageAttributesA[0].u = coordinates[0][0];
+        imageAttributesA[0].v = coordinates[0][1];
+        imageAttributesA[1].u = coordinates[1][0];
+        imageAttributesA[1].v = coordinates[1][1];
+        imageAttributesA[2].u = coordinates[2][0];
+        imageAttributesA[2].v = coordinates[2][1];
+        //Texture coordinates 'imageAttributesB'
+        imageAttributesB[0].u = coordinates[2][0];
+        imageAttributesB[0].v = coordinates[2][1];
+        imageAttributesB[1].u = coordinates[3][0];
+        imageAttributesB[1].v = coordinates[3][1];
+        imageAttributesB[2].u = coordinates[0][0];
+        imageAttributesB[2].v = coordinates[0][1];
 
         BufferImage myImage("checker.bmp");
+        //BufferImage pizzaImage("pizza.bmp");
+        
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = &ImageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
@@ -492,7 +552,5 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
-
-
 
 #endif
