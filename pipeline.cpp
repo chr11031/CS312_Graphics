@@ -158,7 +158,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 interAttr.argb[3] = interp(totalArea, det1, det2, det3, attrs[0].argb[3], attrs[1].argb[3], attrs[2].argb[3]);
 
                 interAttr.argb[0] *= correctedZ;
-                interAttr.argb[1] *= correctedZ;
+                interAttr.argb[1] *= correctedZ; 
 
 
                 // Call the fragment shader function previously set

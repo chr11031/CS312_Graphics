@@ -375,7 +375,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         
-        imageAttributesA[0].argb[0] = coordinates[0][0];
+        imageAttributesA[0].argb[0] = coordinates[0][0]; 
         imageAttributesA[0].argb[1] = coordinates[0][1];
         imageAttributesA[1].argb[0] = coordinates[1][0];
         imageAttributesA[1].argb[1] = coordinates[1][1];
