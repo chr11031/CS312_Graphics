@@ -82,36 +82,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // Your code goes here
 
     //the min and max, x and y coordinates for the triangles, which would create a rectangle 
-    // int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    // int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    // int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    // int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-
-    // //the x and y coordinates for each triangle
-    // Vertex a = {(float)triangle[0].x, (float)triangle[0].y};
-    // Vertex b = {(float)triangle[1].x, (float)triangle[1].y};
-    // Vertex c = {(float)triangle[2].x, (float)triangle[2].y};
-
-    // //deciding which points of the square are in the triangle
-    // for (int y = minY; y <= maxY; y++)
-    // {
-    //     for (int x = minX; x <= maxX; x++)
-    //     {
-    //         //the point to fill in or not
-    //         Vertex v = {(float)x, (float)y};
-
-    //         //calculating the barycentric coordinates
-    //         float baryA = (((b.y - c.y)*(v.x - c.x))+((c.x - b.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
-    //         float baryB = (((c.y - a.y)*(v.x - c.x))+((a.x - c.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
-    //         float baryC = 1.0f - baryA - baryB;
-
-    //         //filling in the triangles with color
-    //         if (baryA >= 0.0f && baryB >= 0.0f && baryC >= 0.0f)
-    //         {
-    //             DrawPoint(target, &v, attrs, NULL, NULL);
-    //         }
-    //     }
-    // }
 
     int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
@@ -258,7 +228,7 @@ int main()
         //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
         // Your code goes here
         //TestDrawPixel(frame);
