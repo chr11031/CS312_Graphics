@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "math.h"
 #include <map>
+#include <string>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -217,6 +218,13 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -229,17 +237,20 @@ class Attributes
         PIXEL color;
 
         // Utalizing a map for flexability
-        std::map<char, double> myMap;
-        void* ptrImg;
+        std::map<std::string, attrib> myMap;
+        //void* ptrImg;
 
         // Obligatory empty constructor
         Attributes()
         {
-            myMap.insert(std::pair<char, double>('u', 0.0));
-            myMap.insert(std::pair<char, double>('v', 0.0));
-            myMap.insert(std::pair<char, double>('r', 0.0));
-            myMap.insert(std::pair<char, double>('g', 0.0));
-            myMap.insert(std::pair<char, double>('b', 0.0));
+            attrib empty, iEmpty;
+            empty.d = 0.0;
+            myMap.insert(std::pair<std::string, attrib>("u", empty));
+            myMap.insert(std::pair<std::string, attrib>("v", empty));
+            myMap.insert(std::pair<std::string, attrib>("r", empty));
+            myMap.insert(std::pair<std::string, attrib>("g", empty));
+            myMap.insert(std::pair<std::string, attrib>("b", empty));
+            myMap.insert(std::pair<std::string, attrib>("img", iEmpty));
         }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -251,38 +262,43 @@ class Attributes
         // Getters
         // Colors
         double getRed() const {
-            return myMap.at('r');
+            return myMap.at("r").d;
         }
 
         double getGreen() const {
-            return myMap.at('g');
+            return myMap.at("g").d;
         }
 
         double getBlue() const {
-            return myMap.at('b');
+            return myMap.at("b").d;
         }
 
         // Bitmap coor
         double getBU() const {
-            return myMap.at('u');
+            return myMap.at("u").d;
         }
 
         double getBV() const {
-            return myMap.at('v');
+            return myMap.at("v").d;
+        }
+
+        // Img stuff
+        void* getImg() const {
+            return myMap.at("img").ptr;
         }
 
         // Setters
         // Colors
         void setRed(double value) {
-            myMap['r'] = value;
+            myMap["r"].d = value;
         }
 
         void setGreen(double value) {
-            myMap['g'] = value;
+            myMap["g"].d = value;
         }
 
         void setBlue(double value) {
-            myMap['b'] = value;
+            myMap["b"].d = value;
         }
 
         void setColor(double r, double g, double b) {
@@ -293,25 +309,29 @@ class Attributes
 
         // Bitmap coor
         void setBU(double u) {
-            myMap['u'] = u;
+            myMap["u"].d = u;
         }
 
         void setBV(double v) {
-            myMap['v'] = v;
+            myMap["v"].d = v;
         }
 
         void setCoor(double u, double v) {
             setBU(u);
             setBV(v);
         }
-
-};	
+        
+        // Img stuff
+        void setImg(void* img) {
+            myMap["img"].ptr = img;
+        }
+};
 
 // Image Fragment Shader 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Creats a buffer for the image
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    BufferImage* bf = (BufferImage*)uniforms.getImg();
 
     int x = vertAttr.getBU() * (bf->width()-1);
     int y = vertAttr.getBV() * (bf->height()-1);
@@ -338,6 +358,29 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.getBU() * 8;
+    int ySquare = attributes.getBV() * 8;
+
+    // Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
 }
 
 /****************************************************** *
@@ -444,7 +487,7 @@ inline double determinant(const double & V1x, const double & V2x, const double &
  * *****************************************************/
 double interp(double area, double *det, double attrs1, double attrs2, double attrs3)
 {
-    return ((det[0] / area) * attrs1) + ((det[1] / area) * attrs2) + ((det[2] / area) * attrs3);
+    return ((det[0] / area) * attrs3) + ((det[1] / area) * attrs1) + ((det[2] / area) * attrs2);
 }
        
 

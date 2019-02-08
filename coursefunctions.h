@@ -345,10 +345,10 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].setCoor(coordinates[2][0], coordinates[2][1]);
 
         static BufferImage myImage("142008.bmp");
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
+        imageUniforms.myMap["img"].ptr = &myImage;
+        //imageUniforms.setImg(&myImage);
 
         FragmentShader myImageFragShader;
         myImageFragShader.FragShader = ImageFragShader;
@@ -386,16 +386,27 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        // Setting the texture coordinates for image A, the first tiangle
+        imageAttributesA[0].setCoor(coordinates[0][0], coordinates[0][1]);
+        imageAttributesA[1].setCoor(coordinates[1][0], coordinates[1][1]);
+        imageAttributesA[2].setCoor(coordinates[2][0], coordinates[2][1]);
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory
+        // Setting the texture coordinates for image B, the second tiangle
+        imageAttributesB[0].setCoor(coordinates[2][0], coordinates[2][1]);
+        imageAttributesB[1].setCoor(coordinates[3][0], coordinates[3][1]);
+        imageAttributesB[2].setCoor(coordinates[0][0], coordinates[0][1]);
 
+        // Loads the image
+        //BufferImage myImage("checker.bmp");
+
+        // Sets the image as an attribute *** Currently doesn't work because of the bit map issues with mac ***
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        //imageUniforms.setImg(&myImage);
+        //imageUniforms.myMap["img"].ptr = &myImage;
 
+        // Set the fragment shader
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = FragShaderUVwithoutImage;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

@@ -65,7 +65,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
@@ -87,9 +87,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int minY = MAX(MIN3(triangle[0].y, triangle[1].y, triangle[2].y), 0);
 
     // Get the three vertexs for the triangle
-    double firstVec[]  = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    double secondVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
-    double thirdVec[]  = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+    double firstVec[]  = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, triangle[1].z - triangle[0].z, triangle[1].w - triangle[0].w};
+    double secondVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y, triangle[2].z - triangle[1].z, triangle[2].w - triangle[1].w};
+    double thirdVec[]  = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y, triangle[0].z - triangle[2].z, triangle[0].w - triangle[2].w};
 
     // Compute area of the whole triangle by solving the determinat
     double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
@@ -111,20 +111,22 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 // Gets a pixel which is in the triangle
                 target[(int)y][(int)x] = attrs[0].color;
 
+                // Finds the correct value that will scale the attribues for perspective correctness
+                double lerpZ = (1/interp(areaTriangle, det, triangle[0].w, triangle[1].w, triangle[2].w));
+
                 // Interpolate Attributes for this pixel - In this case the R,G,B values
                 Attributes interpolatedAttribs;
-                interpolatedAttribs.setRed(interp(areaTriangle, det, attrs[0].getRed(), attrs[1].getRed(), attrs[2].getRed()));
-                interpolatedAttribs.setGreen(interp(areaTriangle, det, attrs[0].getGreen(), attrs[1].getGreen(), attrs[2].getGreen()));
-                interpolatedAttribs.setBlue(interp(areaTriangle, det, attrs[0].getBlue(), attrs[1].getBlue(), attrs[2].getBlue()));
+                interpolatedAttribs.setRed(interp(areaTriangle, det, attrs[0].getRed(), attrs[1].getRed(), attrs[2].getRed()) * lerpZ);
+                interpolatedAttribs.setGreen(interp(areaTriangle, det, attrs[0].getGreen(), attrs[1].getGreen(), attrs[2].getGreen()) * lerpZ);
+                interpolatedAttribs.setBlue(interp(areaTriangle, det, attrs[0].getBlue(), attrs[1].getBlue(), attrs[2].getBlue()) * lerpZ);
 
                 // Interpolate Attributes for this pixel - In this case the U,V Cooridnates
-                interpolatedAttribs.setBU(interp(areaTriangle, det, attrs[0].getBU(), attrs[1].getBU(), attrs[2].getBU()));
-                interpolatedAttribs.setBV(interp(areaTriangle, det, attrs[0].getBV(), attrs[1].getBV(), attrs[2].getBV()));
+                interpolatedAttribs.setBU(interp(areaTriangle, det, attrs[0].getBU(), attrs[1].getBU(), attrs[2].getBU()) * lerpZ);
+                interpolatedAttribs.setBV(interp(areaTriangle, det, attrs[0].getBV(), attrs[1].getBV(), attrs[2].getBV()) * lerpZ);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
-
         }
     }
 }
@@ -232,8 +234,8 @@ int main()
         clearScreen(frame);
 
         // Draws the triangle
-        //TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
 
 
