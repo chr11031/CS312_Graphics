@@ -231,9 +231,8 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-        // Currently only using r, g, b for colors and u, v for bitmap/texture
-        double r = 0.0, g = 0.0, b = 0.0, u = 0.0, v = 0.0;
-        
+        // Handles the rgb or uv for color/bitmap
+        double texMap[3] = {0.0};
         // Pointer to hold the address for an image.
         void* ptrImg;
 };	
@@ -253,9 +252,9 @@ void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // Output our shader color value to the PIXEL variable called fragment
     fragment = 0xff000000
-    | (((unsigned int)(vertAttr.r * 0xff)) << 16)
-    | (((unsigned int)(vertAttr.g * 0xff)) << 8)
-    |  ((unsigned int)(vertAttr.b * 0xff));
+    | (((unsigned int)(vertAttr.texMap[0] * 0xff)) << 16)
+    | (((unsigned int)(vertAttr.texMap[1] * 0xff)) << 8)
+    |  ((unsigned int)(vertAttr.texMap[2] * 0xff));
 }
 
 /**************************************************
@@ -266,8 +265,8 @@ void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bi = (BufferImage*) uniforms.ptrImg;
-    int x = vertAttr.u * (bi->width() - 1);
-    int y = vertAttr.v * (bi->height() - 1);
+    int x = vertAttr.texMap[0] * (bi->width() - 1);
+    int y = vertAttr.texMap[1] * (bi->height() - 1);
     fragment = (*bi)[y][x];
 };
 

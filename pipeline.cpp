@@ -89,9 +89,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     Vertex vertex2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
 
     /* Created variables outside loop to prevent them from being created and destoryed each loop. */
-    double dom = 0;
+    double dom = getCrossProduct(vertex1.x, vertex1.y, vertex2.x, vertex2.y);
     double s = 0;
     double t = 0;
+    double w = 0;
     Attributes attr;
     Vertex q;
     // Loop through bounding box
@@ -100,21 +101,16 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
         for (int y = minY; y <= maxY; y++)
         {
             q = {x - triangle[0].x, y - triangle[0].y};
-            dom = getCrossProduct(vertex1.x, vertex1.y, vertex2.x, vertex2.y);
             s = getCrossProduct(q.x, q.y, vertex2.x, vertex2.y) / dom;
             t = getCrossProduct(vertex1.x, vertex1.y, q.x, q.y) / dom;
 
             // Handle graphics inside triangle
             if (s >= 0 && t >= 0 && s + t <= 1)
             {
-                // The RED, GREEN, BLUE fragments
-                attr.r = getInterpolation(x, y, triangle, attrs[0].r, attrs[1].r, attrs[2].r);
-                attr.g = getInterpolation(x, y, triangle, attrs[0].g, attrs[1].g, attrs[2].g);
-                attr.b = getInterpolation(x, y, triangle, attrs[0].b, attrs[1].b, attrs[2].b);
-
-                // The TEXTURE/BITMAP fragment
-                attr.u = getInterpolation(x, y, triangle, attrs[0].u, attrs[1].u, attrs[2].u);
-                attr.v = getInterpolation(x, y, triangle, attrs[0].v, attrs[1].v, attrs[2].v);
+                w = 1 / getInterpolation(x, y, triangle, triangle[0].w, triangle[1].w, triangle[2].w);
+                // The RED, GREEN, BLUE fragments or U and V fragments
+                for (int i = 0; i < 3; i++)
+                    attr.texMap[i] = w * getInterpolation(x, y, triangle, attrs[0].texMap[i], attrs[1].texMap[i], attrs[2].texMap[i]);
 
                 // Draw fragment
                 frag->FragShader(target[y][x], attr, *uniforms);
@@ -224,7 +220,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
         
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
         //GameOfLife(frame);
 
         // Push to the GPU
