@@ -278,7 +278,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[0] = {425, 112, 1, 1};
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
+
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+        
         // Your texture coordinate code goes here for 'imageAttributes'
         imageAttributes[0].value[0] = 1;
         imageAttributes[0].value[1] = 0;
@@ -288,7 +290,6 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].value[1] = 1;
 
         BufferImage myImage("checker.bmp");
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
