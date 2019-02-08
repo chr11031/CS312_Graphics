@@ -1,5 +1,5 @@
 #include "C:/MinGW/include/SDL2/SDL.h"
-#include "definitions.h"
+#include "./definitions.h"
 #include <iostream>
 
 void TriangleColorShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -20,9 +20,17 @@ void TriangleColorShader(PIXEL & fragment, const Attributes & vertAttr, const At
 void TriangleImageShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
-    //std::cout << "X: " << vertAttr.vertexPoint.x - MinNum(MinNum(uniforms.vertexPoints[0].x, uniforms.vertexPoints[1].x), uniforms.vertexPoints[2].x); std::cout << std::endl; std::cout << "Y: " << abs(vertAttr.vertexPoint.y - MaxNum(MaxNum(uniforms.vertexPoints[0].y, uniforms.vertexPoints[1].y), uniforms.vertexPoints[2].y)); std::cout << std::endl; std::cout << std::hex << getpixel(uniforms.image->img, vertAttr.vertexPoint.x - MinNum(MinNum(uniforms.vertexPoints[0].x, uniforms.vertexPoints[1].x), uniforms.vertexPoints[2].x), abs(vertAttr.vertexPoint.y - MaxNum(MaxNum(uniforms.vertexPoints[0].y, uniforms.vertexPoints[1].y), uniforms.vertexPoints[2].y))); std::cout << std::endl << std::endl;
+   BufferImage* bf = (BufferImage*)uniforms.image;
+    int x = vertAttr.vertexPoint.x - (MIN3(uniforms.vertexPoints[0].x, uniforms.vertexPoints[1].x, uniforms.vertexPoints[2].x));
+    int y = vertAttr.vertexPoint.y - (MIN3(uniforms.vertexPoints[0].y, uniforms.vertexPoints[1].y, uniforms.vertexPoints[2].y));
+        fragment = (*bf)[y][x];
 
-    fragment = getpixel(uniforms.image->img, 
-    vertAttr.vertexPoint.x - MinNum(MinNum(uniforms.vertexPoints[0].x, uniforms.vertexPoints[1].x), uniforms.vertexPoints[2].x), 
-    abs(vertAttr.vertexPoint.y - MaxNum(MaxNum(uniforms.vertexPoints[0].y, uniforms.vertexPoints[1].y), uniforms.vertexPoints[2].y)));
+}
+
+void TriangleInterpolatedImageShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.image;
+    //std::cout << ((vertAttr.vertexPoint.y - 6.0)/(uniforms.quadHeight/(bf->height()-1)) << std::endl;//1.122 = 287/256  1.563 = 400/256
+     fragment = (*bf)[(int)( ((vertAttr.vertexPoint.y - uniforms.minY)/(uniforms.quadHeight/(bf->height()-1))) /((1-((vertAttr.vertexPoint.y-uniforms.minY)/(uniforms.maxY - uniforms.minY)))*(uniforms.quadLengthBottom/uniforms.quadLengthTop-1)+1))]
+    [(int)((vertAttr.vertexPoint.x - ((vertAttr.vertexPoint.y - uniforms.minY) / (uniforms.quadHeight/(abs(uniforms.quadLengthTop - uniforms.quadLengthBottom)/2)) + uniforms.minX) ) * bf->height()/((vertAttr.vertexPoint.y-uniforms.minY)*((uniforms.quadLengthTop - uniforms.quadLengthBottom)/uniforms.quadHeight)+uniforms.quadLengthBottom))];
 }

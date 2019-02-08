@@ -1,5 +1,5 @@
-#include "definitions.h"
-#include "coursefunctions.h"
+#include "./definitions.h"
+#include "./coursefunctions.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -100,10 +100,18 @@ vs2.x = (int)triangle[2].x - (int)triangle[0].x;
 vs2.y = (int)triangle[2].y - (int)triangle[0].y;
 
     //Finds the maximum and minimum bounding boxes for the triangle
-int maxX = MaxNum((int)triangle[0].x, MaxNum((int)triangle[1].x, (int)triangle[2].x));
-int minX = MinNum((int)triangle[0].x, MinNum((int)triangle[1].x, (int)triangle[2].x));
-int maxY = MaxNum((int)triangle[0].y, MaxNum((int)triangle[1].y, (int)triangle[2].y));
-int minY = MinNum((int)triangle[0].y, MinNum((int)triangle[1].y, (int)triangle[2].y));
+int maxX = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+int minX = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
+int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
+uniforms->quadHeight = maxY - minY;
+uniforms->vertexPoints[0] = triangle[0];
+uniforms->vertexPoints[1] = triangle[1];
+uniforms->vertexPoints[2] = triangle[2];
+uniforms->minY = minY;
+uniforms->maxY = maxY;
+uniforms->minX = minX;
+uniforms->maxX = maxX;
 
     //Check every pixel in this bounding box and fill it in if it's within the triangle
     for (int x = minX; x <= maxX; x++)
@@ -231,7 +239,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
+        //TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
