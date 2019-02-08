@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <map>
+#include <string>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -21,6 +23,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -214,6 +218,13 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -223,24 +234,156 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        PIXEL color;
+
+        // Utalizing a map for flexability
+        std::map<std::string, attrib> myMap;
+        //void* ptrImg;
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes()
+        {
+            attrib empty, iEmpty;
+            empty.d = 0.0;
+            myMap.insert(std::pair<std::string, attrib>("u", empty));
+            myMap.insert(std::pair<std::string, attrib>("v", empty));
+            myMap.insert(std::pair<std::string, attrib>("r", empty));
+            myMap.insert(std::pair<std::string, attrib>("g", empty));
+            myMap.insert(std::pair<std::string, attrib>("b", empty));
+            myMap.insert(std::pair<std::string, attrib>("img", iEmpty));
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
 
-// Example of a fragment shader
+        // Getters
+        // Colors
+        double getRed() const {
+            return myMap.at("r").d;
+        }
+
+        double getGreen() const {
+            return myMap.at("g").d;
+        }
+
+        double getBlue() const {
+            return myMap.at("b").d;
+        }
+
+        // Bitmap coor
+        double getBU() const {
+            return myMap.at("u").d;
+        }
+
+        double getBV() const {
+            return myMap.at("v").d;
+        }
+
+        // Img stuff
+        void* getImg() const {
+            return myMap.at("img").ptr;
+        }
+
+        // Setters
+        // Colors
+        void setRed(double value) {
+            myMap["r"].d = value;
+        }
+
+        void setGreen(double value) {
+            myMap["g"].d = value;
+        }
+
+        void setBlue(double value) {
+            myMap["b"].d = value;
+        }
+
+        void setColor(double r, double g, double b) {
+            setRed(r);
+            setGreen(g);
+            setBlue(b);
+        }
+
+        // Bitmap coor
+        void setBU(double u) {
+            myMap["u"].d = u;
+        }
+
+        void setBV(double v) {
+            myMap["v"].d = v;
+        }
+
+        void setCoor(double u, double v) {
+            setBU(u);
+            setBV(v);
+        }
+        
+        // Img stuff
+        void setImg(void* img) {
+            myMap["img"].ptr = img;
+        }
+};
+
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Creats a buffer for the image
+    BufferImage* bf = (BufferImage*)uniforms.getImg();
+
+    int x = vertAttr.getBU() * (bf->width()-1);
+    int y = vertAttr.getBV() * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+
+
+    color += (unsigned int)(vertAttr.getRed() *0xff) << 16;
+    color += (unsigned int)(vertAttr.getGreen() *0xff) << 8;
+    color += (unsigned int)(vertAttr.getBlue() *0xff) << 0;
+
+    fragment = color;
+}
+
+// Example of a fragment shader 
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
 }
 
-/*******************************************************
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.getBU() * 8;
+    int ySquare = attributes.getBV() * 8;
+
+    // Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
+}
+
+/****************************************************** *
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
  * function for shading pixels. See 'DefaultFragShader'
@@ -324,6 +467,28 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);       
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * X, Y components from 2 vectors.
+ ***************************************/
+inline double determinant(const double & V1x, const double & V2x, const double & V1y, const double & V2y)
+{
+  return ((V1x * V2y) - (V1y * V2x));
+}
+
+/****************************************************
+ * Interpolation
+ *  Finds the point on the triangle
+ *  Then figgures out the color value based off of the 
+ *  attributes and 
+ * *****************************************************/
+double interp(double area, double *det, double attrs1, double attrs2, double attrs3)
+{
+    return ((det[0] / area) * attrs3) + ((det[1] / area) * attrs1) + ((det[2] / area) * attrs2);
+}
        
+
 #endif
