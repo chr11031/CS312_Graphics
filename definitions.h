@@ -307,6 +307,34 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = color;
 }
 
+void FragShaderSin(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    
+}
+
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = ((double*)(attributes.data))[0] * 8;
+    int ySquare = ((double*)(attributes.data))[1] * 8;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
+}
+
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
