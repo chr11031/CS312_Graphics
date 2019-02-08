@@ -396,13 +396,8 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         imageAttributesB[1].setCoor(coordinates[3][0], coordinates[3][1]);
         imageAttributesB[2].setCoor(coordinates[0][0], coordinates[0][1]);
 
-        // Loads the image
-        //BufferImage myImage("checker.bmp");
-
         // Sets the image as an attribute *** Currently doesn't work because of the bit map issues with mac ***
         Attributes imageUniforms;
-        //imageUniforms.setImg(&myImage);
-        //imageUniforms.myMap["img"].ptr = &myImage;
 
         // Set the fragment shader
         FragmentShader fragImg;
