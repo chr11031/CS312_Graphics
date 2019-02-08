@@ -134,9 +134,15 @@ void DrawTriangle(Buffer2D<PIXEL> & target,
 
                 // iterpolate the attributes with our weights predetermined
                 Attributes interpolateAttrs; // Our new interpolated attributes
-                interpolateAttrs.vars[0] = w1 * attrs[0].vars[0] + w2 * attrs[1].vars[0] + w3 * attrs[2].vars[0];
-                interpolateAttrs.vars[1] = w1 * attrs[0].vars[1] + w2 * attrs[1].vars[1] + w3 * attrs[2].vars[1];
-                interpolateAttrs.vars[2] = w1 * attrs[0].vars[2] + w2 * attrs[1].vars[2] + w3 * attrs[2].vars[2];
+
+                // Interpolate w, witch will give us our corrected w for our point.
+                double interpolatedW = w1 * triangle[0].w + w2 * triangle[1].w + w3 * triangle[2].w;
+
+                for(int i = 0; i <= attrs[0].maxVar; i++)
+                {
+                    // Interpolate our attributes and divide by our corrected W to account for depth.
+                    interpolateAttrs.vars[i] = (w1 * attrs[0].vars[i] + w2 * attrs[1].vars[i] + w3 * attrs[2].vars[i]) / interpolatedW;
+                }
                 
                 // Send our interpolated the shader to finalize the fragment
                 frag->FragShader(target[y][x], interpolateAttrs, *uniforms);
@@ -247,7 +253,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        // Run the test
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
