@@ -60,23 +60,21 @@ double calcArea(const double & A, const double & B, const double & C, const doub
 /******************************************************
  * Interpolation Function
  ******************************************************/
-double interpolate(double area, double d1, double d2, double d3, double c1, double c2, double c3)
+double interpolate(double area, double firstDet, double secondDet, double thirdDet, double A, double B, double C)
 {
-    //First we find the percentage of the smaller triangle's area compared to the whole triangle
-    //we then multiply that percentage with the color associated with that vertex
-    double w1 = c1 * (d1 / area);
-    double w2 = c2 * (d2 / area);
-    double w3 = c3 * (d3 / area);
+    double w1 = C * (firstDet / area);
+    double w2 = A * (secondDet / area);
+    double w3 = B * (thirdDet / area);
 
-    //If the percentages added together are greater than 1, then
-    //we know the color is 100% and should be kept at 1
-    if((w1 + w2 + w3) > 1)
-    {
-        return 1;
-    }
-
-    //Return the added percentages to know how much of this color should be used
     return w1 + w2 + w3;
+}
+
+/******************************************************
+ * Affine Function
+ ******************************************************/
+double affineCalc(double y, double minY, double maxY)
+{
+    return (y - minY) / (maxY - minY);
 }
 
 /******************************************************
@@ -243,6 +241,7 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
 };
@@ -325,6 +324,20 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int y = vertAttr.v * (bf->height()-1);
 
     fragment = (*bf)[y][x];
+}
+
+//This shader draws a picture in green
+void limeFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImage;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(x * 0xff) << 8;
+    color += (unsigned int)(y * 0xff) << 8;
+
+    fragment = color;
 }
 
 /*******************************************************
