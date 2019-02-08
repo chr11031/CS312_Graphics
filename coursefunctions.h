@@ -281,15 +281,9 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
 
         // Colors for each vertex
-        colorAttributes[0].r = 1.0;
-	colorAttributes[0].g = 0.0;
-	colorAttributes[0].b = 0.0;
-	colorAttributes[1].r = 0.0;
-	colorAttributes[1].g = 1.0;
-	colorAttributes[1].b = 0.0;
-	colorAttributes[2].r = 0.0;
-	colorAttributes[2].g = 0.0;
-	colorAttributes[2].b = 1.0;
+        colorAttributes[0].attrs[0] = 1.0;
+	colorAttributes[1].attrs[1] = 1.0;
+	colorAttributes[2].attrs[2] = 1.0;
         
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
@@ -309,12 +303,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
 
         // Texture coordinates
-        imageAttributes[0].u = coordinates[0][0];
-        imageAttributes[0].v = coordinates[0][1];
-        imageAttributes[1].u = coordinates[1][0];
-        imageAttributes[1].v = coordinates[1][1];
-        imageAttributes[2].u = coordinates[2][0];
-        imageAttributes[2].v = coordinates[2][1];
+        imageAttributes[0].attrs[0] = coordinates[0][0];
+        imageAttributes[0].attrs[1] = coordinates[0][1];
+        imageAttributes[1].attrs[0] = coordinates[1][0];
+        imageAttributes[1].attrs[1] = coordinates[1][1];
+        imageAttributes[2].attrs[0] = coordinates[2][0];
+        imageAttributes[2].attrs[1] = coordinates[2][1];
         
         static BufferImage myImage("checker.bmp");
 
@@ -358,17 +352,30 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].attrs[0] = 0;
+        imageAttributesA[0].attrs[1] = 0;
+        imageAttributesA[1].attrs[0] = 1;
+        imageAttributesA[1].attrs[1] = 0;
+        imageAttributesA[2].attrs[0] = 1;
+        imageAttributesA[2].attrs[1] = 1;
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory
+        imageAttributesB[0].attrs[0] = 1;
+        imageAttributesB[0].attrs[1] = 1;
+        imageAttributesB[1].attrs[0] = 0;
+        imageAttributesB[1].attrs[1] = 1;
+        imageAttributesB[2].attrs[0] = 0;
+        imageAttributesB[2].attrs[1] = 0;
+
+        // Texture to display
+        static BufferImage myImage("checker.bmp");
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
                 
-        // Draw image triangle 
+        // Draw image triangles
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
 }

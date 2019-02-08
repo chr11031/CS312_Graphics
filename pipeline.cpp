@@ -82,16 +82,34 @@ inline int determinant(int a, int b, int c, int d)
     return (a * d - b * c);
 }
 
-// Find the value of a point based on the vertices
-double interpolate(int area, int det[3], double attr0, double attr1, double attr2)
+// Linear interpolate between three values
+double interp(int area, int det[3], double attr0, double attr1, double attr2)
 {
     // determinant * attribute / area
     double value = 0;
     value += det[0] * attr0;
     value += det[1] * attr1;
     value += det[2] * attr2;
-
     return value / area;
+}
+
+// Find the value of a point based on the vertices with perspective correction
+Attributes interpolate(int area, int det[3], Attributes* const attr, Vertex* const tri)
+{
+    // Interpolate each attribute
+    Attributes final;
+    for(int i = 0; i < 2; i++)
+    {                 // Interpolate attributes
+        final.attrs[i] = interp(area, det, attr[0].attrs[i] * tri[0].w,   
+                                           attr[1].attrs[i] * tri[1].w, 
+                                           attr[2].attrs[i] * tri[2].w) /
+                      // Interpolate depths
+                         interp(area, det, tri[0].w, 
+                                           tri[1].w, 
+                                           tri[2].w);
+    }
+
+    return final;
 }
 
 /*************************************************************
@@ -136,14 +154,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target,
                 det[1] >= 0 && // Side 2
                 det[2] >= 0)   // Side 3
             {
-                Attributes interpAttr;
 
                 // Interpolate!
-                interpAttr.r = interpolate(area, det, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpAttr.g = interpolate(area, det, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpAttr.b = interpolate(area, det, attrs[0].b, attrs[1].b, attrs[2].b);
-                interpAttr.u = interpolate(area, det, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpAttr.v = interpolate(area, det, attrs[0].v, attrs[1].v, attrs[2].v);
+                Attributes interpAttr = interpolate(area, det, attrs, tri);
 
                 // Use the shader
                 frag->FragShader(target[y][x], interpAttr, *uniforms);
@@ -253,7 +266,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
