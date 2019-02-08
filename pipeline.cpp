@@ -76,6 +76,24 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
     // Your code goes here
 }
 
+/*******************************************
+ * INTERP
+ * Serves as an interpolation algorithm.
+ *****************************************/
+double interp(double triangleArea, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
+{
+    return ((firstDet / triangleArea * attrs3) + (secndDet / triangleArea * attrs1) + (thirdDet / triangleArea * attrs2));
+}
+
+/************************************************************
+ * DETERMINANT
+ * Returns the determinant of the parameters.
+ ***********************************************************/
+double determinant(double a, double b, double c, double d)
+{
+    return ((a * d) - (b * c));
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -89,22 +107,33 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxY = max(triangle[0].y, max(triangle[1].y, triangle[2].y));
     int minY = min(triangle[0].y, min(triangle[1].y, triangle[2].y));
 
-    //Used for spanning vectors
-    Vertex vs1 =  {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    Vertex vs2 =  {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    //Used for determinant  and area calculations
+    Vertex v1 =  {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    Vertex v2 =  {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    Vertex v3 = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    double areaTriangle = determinant(v1.x,-v3.x,v1.y,-v3.y);
+
     for (int x = minX;x <= maxX;x++)
     {
         for (int y = minY;y <= maxY;y++)
         {
-            Vertex q = {x - triangle[0].x, y - triangle[0].y};
-            //Cross product calculations
-            float s = (float)((q.x * vs2.y)-(q.y * vs2.x)) / ((vs1.x * vs2.y)-(vs1.y * vs2.x));
-            float t = (float)((vs1.x * q.y)-(vs1.y * q.x)) / ((vs1.x * vs2.y)-(vs1.y * vs2.x));
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            double firstDet = determinant(v1.x, x - triangle[0].x, v1.y, y - triangle[0].y);
+            double secndDet = determinant(v2.x, x - triangle[1].x, v2.y, y - triangle[1].y);
+            double thirdDet = determinant(v3.x, x - triangle[2].x, v3.y, y - triangle[2].y);
+
+            if ((firstDet >= 0) && (secndDet >= 0) && (thirdDet >= 0))
             {
-                Vertex vert = {x, y};
-                //Draws triangle point by point
-                DrawPrimitive(POINT, target, &vert, attrs);
+                Attributes interpolatedAttrs;
+                //Calculates the correct z value using the reciprocal of the interpolated w value
+                double correctZ = (1/(interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w)));
+                // value[0] and value[1] are multiplied by correctZ to give us the correct perspective
+                interpolatedAttrs.value[0] = (correctZ * interp(areaTriangle, firstDet, secndDet, thirdDet,
+                   attrs[0].value[0],attrs[1].value[0],attrs[2].value[0]));
+                interpolatedAttrs.value[1] = (correctZ * interp(areaTriangle, firstDet, secndDet, thirdDet,
+                   attrs[0].value[1],attrs[1].value[1],attrs[2].value[1]));
+                interpolatedAttrs.value[2] = interp(areaTriangle, firstDet, secndDet, thirdDet,attrs[0].value[2],attrs[1].value[2],attrs[2].value[2]);
+                frag->FragShader(target[y][x], interpolatedAttrs, *uniforms);
             }
         }
     }
@@ -212,8 +241,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawPixel(frame);//
-        TestDrawTriangle(frame);
+        //TestDrawFragments(frame);//
+        TestDrawPerspectiveCorrect(frame);
         //GameOfLife(frame);
 
         // Push to the GPU
