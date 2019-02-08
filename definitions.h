@@ -236,67 +236,18 @@ class Attributes
 {      
     public:
         // Obligatory empty constructor
+        Attributes() {}
         PIXEL color;
-
-        // Members
-    	int numMembers = 0;
-        attrib arr[16];
-
-        Attributes() {numMembers = 0;}
-
-        // Interpolation Constructor
-        Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
-                    const Attributes & first, const Attributes & secnd, const Attributes & third)
-        {
-            while(numMembers < first.numMembers)
-            {
-                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
-                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
-                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);               
-                numMembers += 1;
-            }
-        }
-
-
-
+        
+        //Attributes for shaders 
+        //Changes to make this class more flexable
+        double newColor[16];
+        void* ptrImg;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
-        }
-
-        
-        // Const Return operator
-        const attrib & operator[](const int & i) const
-        {
-            return arr[i];
-        }
-
-        // Return operator
-        attrib & operator[](const int & i) 
-        {
-            return arr[i];
-        }
-
-        // Insert Double Into Container
-        void insertDbl(const double & d)
-        {
-            arr[numMembers].d = d;
-            numMembers += 1;
-        }
-
-        // Insert Pointer Into Container
-        void insertPtr(void * ptr)
-        {
-            arr[numMembers].ptr = ptr;
-            numMembers += 1;
-        }
-
-        void mathfunction(double & z)
-        {
-            for(int i = 0; i <= numMembers; i++)
-                 arr[numMembers].d = z * arr[numMembers].d;
         }
 };
 
@@ -306,11 +257,16 @@ class Attributes
  * ******************************************/
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* bf = (BufferImage*)uniforms[0].ptr;
-    int x = vertAttr[0].d * (bf->width()-1);
-    int y = vertAttr[1].d * (bf->height()-1);
+    //Pointer for the buffer image
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
 
-    fragment = (*bf)[y][x];
+    //With our two vertex attributes 
+    int x = vertAttr.newColor[3] * (ptr->width()-1);
+    int y = vertAttr.newColor[4] * (ptr->height()-1);
+
+    //Create the point
+    fragment = (*ptr)[y][x];
+
 }
 
 /********************************************
@@ -319,11 +275,11 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
  * ********************************************/
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // Output our shader color value, in this case red
+    //
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr[0].d *0xff) << 16;
-    color += (unsigned int)(vertAttr[1].d *0xff) << 8;
-    color += (unsigned int)(vertAttr[2].d *0xff) << 0;
+    color += (unsigned int)(vertAttr.newColor[1] * 0xff) << 16;
+    color += (unsigned int)(vertAttr.newColor[2] * 0xff) << 8;
+    color += (unsigned int)(vertAttr.newColor[0] * 0xff) << 0;
 
     fragment = color;
 }

@@ -107,7 +107,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 double determinant(const double & v1x, const double & v2x, const double & v1y, const double & v2y)
 {
     double determin;
-    determin = ((v1x * v2y) - (v2x * v1y)) / 2;
+    determin = ((v1x * v2y) - (v1y * v2x));// /2;
     return determin; 
 }
 
@@ -120,7 +120,7 @@ double interp(double areaTriangle, double firstDet, double secndDet, double thir
 {
     //Finding where the point is in the traingle and how much color is in each part
     double interpolated = 0.0;
-    interpolated = (firstDet/areaTriangle * attrs1) + (secndDet/areaTriangle * attrs2) + (thirdDet/areaTriangle * attrs3);
+    interpolated = (firstDet/areaTriangle * attrs3) + (secndDet/areaTriangle * attrs1) + (thirdDet/areaTriangle * attrs2);
 
     return interpolated;
 }
@@ -164,11 +164,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
               double zt = 1/interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
-              Attributes interpolatedAttribs(areaTriangle, firstDet, secndDet, thirdDet, attrs[0], attrs[1], attrs[2]);
-              //calling to the fragment shader of either the color or picture triangle. 
-
-              interpolatedAttribs.mathfunction(zt);
-
+              Attributes interpolatedAttribs;
+              int size = (sizeof(interpolatedAttribs.newColor)/sizeof(*interpolatedAttribs.newColor));
+              for (int i = 0; i <= size; i++)
+              {
+                  interpolatedAttribs.newColor[i] = zt *interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[i], attrs[1].newColor[i], attrs[2].newColor[i]);
+              }
               frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
 
           }
