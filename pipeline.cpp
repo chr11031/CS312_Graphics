@@ -112,11 +112,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     // Compute area of the whole triangle
     double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
 
-    // Also compute the reciprocals of the Z values of each vertex, storing them in w
-    triangle[0].w = 1.0 / triangle[0].z;
-    triangle[1].w = 1.0 / triangle[1].z;
-    triangle[2].w = 1.0 / triangle[2].z;
-
     // Loop through every pixel in the grid
     for(int y = minY; y < maxY; y++)
     {
@@ -140,17 +135,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
                 // Interpolate by reciprocals of Z values and reciprocate again
                 double interpZ = 1.0 / interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
-
                 
-                interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                interpolatedAttribs.r = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
-                interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
-                
-
-               //interpolatedAttribs.r = lerp()
+                interpolatedAttribs.u = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -261,8 +252,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawPerspectiveCorrect(frame);
-        TestDrawStatic(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

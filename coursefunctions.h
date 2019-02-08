@@ -321,7 +321,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        /*imageAttributesA[0].u = coordinates[0][0];
+        imageAttributesA[0].u = coordinates[0][0];
         imageAttributesA[0].v = coordinates[0][1];
         imageAttributesA[1].u = coordinates[1][0];
         imageAttributesA[1].v = coordinates[1][1];
@@ -333,9 +333,9 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         imageAttributesB[1].u = coordinates[3][0];
         imageAttributesB[1].v = coordinates[3][1];
         imageAttributesB[2].u = coordinates[0][0];
-        imageAttributesB[2].v = coordinates[0][1];*/
+        imageAttributesB[2].v = coordinates[0][1];
 
-        imageAttributesA[0].u = 0;
+        /*imageAttributesA[0].u = 0;
         imageAttributesA[0].v = 0;
         imageAttributesA[1].u = 1;
         imageAttributesA[1].v = 0;
@@ -347,7 +347,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         imageAttributesB[1].u = 0;
         imageAttributesB[1].v = 1;
         imageAttributesB[2].u = 0;
-        imageAttributesB[2].v = 0;
+        imageAttributesB[2].v = 0;*/
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
