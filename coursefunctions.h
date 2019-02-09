@@ -225,9 +225,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
 /***********************************************
  * Linear Interpolate of the values for the FragShader
  * *********************************************/
-double interp(double area, double det[], Attributes* const attrs, int index)
+double interp(double area, double det[], double one, double two, double three)
 {
-        return (det[2] * attrs[1].value[index] + det[0] * attrs[2].value[index] + det[1] * attrs[0].value[index]) / area;
+        return ((det[2] * two + det[0] * three + det[1] * one) / area);
 }
 
 /***********************************************
@@ -259,7 +259,8 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 
         // set up the FragShader for color attributes
         FragmentShader myColorFragShader;
-	myColorFragShader.FragShader = ColorFragShader;
+	//myColorFragShader.FragShader = ColorFragShader;
+        myColorFragShader.FragShader = FragShaderUVwithoutImage;
 
         Attributes colorUniforms;
 	// Nothing gets setup this time
@@ -309,11 +310,35 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         // Artificially projected, viewport transformed
         double divA = 6;
         double divB = 40;
+
+        // There could be a Vertex "cube" instead of repeating vertices across multiple quads
+        // I'm sacrificing performance for readability here a little bit
         Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
                          {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
 
+        Vertex backWall[] = {{(-1200 / divB) + (S_WIDTH/2), (1500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                          {(1200  / divB) + (S_WIDTH/2), (1500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                          {(1200  / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                          {(-1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+
+        Vertex leftWall[] = {{(-1200 / divA) + (S_WIDTH/2), (1500  / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(-1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+
+        Vertex rightWall[] = {{(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(1200 / divA) + (S_WIDTH/2), (1500  / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+
+        Vertex top[] = {{(1200 / divA) + (S_WIDTH/2), (1500  / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(-1200 / divA) + (S_WIDTH/2), (1500  / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(-1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(1200  / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+
+        // Floor vertices and attributes
         Vertex verticesImgA[3];
         Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
@@ -326,21 +351,165 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
 
+        // Back Walls vertices and attributes
+        Vertex vertsBackA[3];
+        Attributes backWallAttrsA[3];
+        vertsBackA[0] = backWall[0];
+        vertsBackA[1] = backWall[1];
+        vertsBackA[2] = backWall[2];
+
+        Vertex vertsBackB[3];        
+        Attributes backWallAttrsB[3];
+        vertsBackB[0] = backWall[2];
+        vertsBackB[1] = backWall[3];
+        vertsBackB[2] = backWall[0];
+
+        // Left Wall vertices and attributes
+        Vertex vertsLeftA[3];
+        Attributes leftWallAttrsA[3];
+        vertsLeftA[0] = leftWall[0];
+        vertsLeftA[1] = leftWall[1];
+        vertsLeftA[2] = leftWall[2];
+
+        Vertex vertsLeftB[3];        
+        Attributes leftWallAttrsB[3];
+        vertsLeftB[0] = leftWall[2];
+        vertsLeftB[1] = leftWall[3];
+        vertsLeftB[2] = leftWall[0];
+
+        // Right Wall vertices and attributes
+        Vertex vertsRightA[3];        
+        Attributes rightWallAttrsA[3];
+        vertsRightA[0] = rightWall[0];
+        vertsRightA[1] = rightWall[1];
+        vertsRightA[2] = rightWall[2];
+
+        Vertex vertsRightB[3];        
+        Attributes rightWallAttrsB[3];
+        vertsRightB[0] = rightWall[2];
+        vertsRightB[1] = rightWall[3];
+        vertsRightB[2] = rightWall[0];
+
+        // Ceiling vertices and attributes
+        Vertex vertsTopA[3];        
+        Attributes topWallAttrsA[3];
+        vertsTopA[0] = top[0];
+        vertsTopA[1] = top[1];
+        vertsTopA[2] = top[2];
+
+        Vertex vertsTopB[3];        
+        Attributes topWallAttrsB[3];
+        vertsTopB[0] = top[2];
+        vertsTopB[1] = top[3];
+        vertsTopB[2] = top[0];
+
+        // This could be one array of coordinates instead of repeating
+        // I'm sacrificing performance for readability a little bit here
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        double coordinatesBack[4][2] = { {0/divB,0/divB}, {1/divB,0/divB}, {1/divB,1/divB}, {0/divB,1/divB} };
+        double coordinatesLeft[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        double coordinatesRight[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        double coordinatesTop[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory
+        // Floor Attributes
+        imageAttributesA[0].value.push_back(coordinates[0][0]);
+        imageAttributesA[0].value.push_back(coordinates[0][1]);
+        imageAttributesA[1].value.push_back(coordinates[1][0]);
+        imageAttributesA[1].value.push_back(coordinates[1][1]);
+        imageAttributesA[2].value.push_back(coordinates[2][0]);
+        imageAttributesA[2].value.push_back(coordinates[2][1]);
 
+        imageAttributesB[0].value.push_back(coordinates[2][0]);
+        imageAttributesB[0].value.push_back(coordinates[2][1]);
+        imageAttributesB[1].value.push_back(coordinates[3][0]);
+        imageAttributesB[1].value.push_back(coordinates[3][1]);
+        imageAttributesB[2].value.push_back(coordinates[0][0]);
+        imageAttributesB[2].value.push_back(coordinates[0][1]);
+
+        // Back Wall Attributes
+        backWallAttrsA[0].value.push_back(coordinatesBack[0][0]);
+        backWallAttrsA[0].value.push_back(coordinatesBack[0][1]);
+        backWallAttrsA[1].value.push_back(coordinatesBack[1][0]);
+        backWallAttrsA[1].value.push_back(coordinatesBack[1][1]);
+        backWallAttrsA[2].value.push_back(coordinatesBack[2][0]);
+        backWallAttrsA[2].value.push_back(coordinatesBack[2][1]);
+
+        backWallAttrsB[0].value.push_back(coordinatesBack[2][0]);
+        backWallAttrsB[0].value.push_back(coordinatesBack[2][1]);
+        backWallAttrsB[1].value.push_back(coordinatesBack[3][0]);
+        backWallAttrsB[1].value.push_back(coordinatesBack[3][1]);
+        backWallAttrsB[2].value.push_back(coordinatesBack[0][0]);
+        backWallAttrsB[2].value.push_back(coordinatesBack[0][1]);
+
+        // Left Wall Attributes
+        leftWallAttrsA[0].value.push_back(coordinatesLeft[0][0]);
+        leftWallAttrsA[0].value.push_back(coordinatesLeft[0][1]);
+        leftWallAttrsA[1].value.push_back(coordinatesLeft[1][0]);
+        leftWallAttrsA[1].value.push_back(coordinatesLeft[1][1]);
+        leftWallAttrsA[2].value.push_back(coordinatesLeft[2][0]);
+        leftWallAttrsA[2].value.push_back(coordinatesLeft[2][1]);
+
+        leftWallAttrsB[0].value.push_back(coordinatesLeft[2][0]);
+        leftWallAttrsB[0].value.push_back(coordinatesLeft[2][1]);
+        leftWallAttrsB[1].value.push_back(coordinatesLeft[3][0]);
+        leftWallAttrsB[1].value.push_back(coordinatesLeft[3][1]);
+        leftWallAttrsB[2].value.push_back(coordinatesLeft[0][0]);
+        leftWallAttrsB[2].value.push_back(coordinatesLeft[0][1]);
+
+        // Right Wall Attributes
+        rightWallAttrsA[0].value.push_back(coordinatesRight[0][0]);
+        rightWallAttrsA[0].value.push_back(coordinatesRight[0][1]);
+        rightWallAttrsA[1].value.push_back(coordinatesRight[1][0]);
+        rightWallAttrsA[1].value.push_back(coordinatesRight[1][1]);
+        rightWallAttrsA[2].value.push_back(coordinatesRight[2][0]);
+        rightWallAttrsA[2].value.push_back(coordinatesRight[2][1]);
+
+        rightWallAttrsB[0].value.push_back(coordinatesRight[2][0]);
+        rightWallAttrsB[0].value.push_back(coordinatesRight[2][1]);
+        rightWallAttrsB[1].value.push_back(coordinatesRight[3][0]);
+        rightWallAttrsB[1].value.push_back(coordinatesRight[3][1]);
+        rightWallAttrsB[2].value.push_back(coordinatesRight[0][0]);
+        rightWallAttrsB[2].value.push_back(coordinatesRight[0][1]);
+
+        // Ceiling Attributes
+        topWallAttrsA[0].value.push_back(coordinatesTop[0][0]);
+        topWallAttrsA[0].value.push_back(coordinatesTop[0][1]);
+        topWallAttrsA[1].value.push_back(coordinatesTop[1][0]);
+        topWallAttrsA[1].value.push_back(coordinatesTop[1][1]);
+        topWallAttrsA[2].value.push_back(coordinatesTop[2][0]);
+        topWallAttrsA[2].value.push_back(coordinatesTop[2][1]);
+
+        topWallAttrsB[0].value.push_back(coordinatesTop[2][0]);
+        topWallAttrsB[0].value.push_back(coordinatesTop[2][1]);
+        topWallAttrsB[1].value.push_back(coordinatesTop[3][0]);
+        topWallAttrsB[1].value.push_back(coordinatesTop[3][1]);
+        topWallAttrsB[2].value.push_back(coordinatesTop[0][0]);
+        topWallAttrsB[2].value.push_back(coordinatesTop[0][1]);        
+
+        // Assign and store used image
+        static BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.ptrImgs.push_back(&myImage);
 
+        // Set image fragment shader
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
+
+        // Get the procedural grid
+        FragmentShader otherFragImg;
+        otherFragImg.FragShader = FragShaderUVwithoutImage;
                 
-        // Draw image triangle 
+        // Draw image triangles 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, vertsBackA,   backWallAttrsA,   &imageUniforms, &otherFragImg);
+        DrawPrimitive(TRIANGLE, target, vertsBackB,   backWallAttrsB,   &imageUniforms, &otherFragImg);
+        DrawPrimitive(TRIANGLE, target, vertsLeftA,   leftWallAttrsA,   &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, vertsLeftB,   leftWallAttrsB,   &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, vertsRightA,  rightWallAttrsA,  &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, vertsRightB,  rightWallAttrsB,  &imageUniforms, &fragImg);        
+        DrawPrimitive(TRIANGLE, target, vertsTopA,    topWallAttrsA,    &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, vertsTopB,    topWallAttrsB,    &imageUniforms, &fragImg);        
 }
 
 /************************************************

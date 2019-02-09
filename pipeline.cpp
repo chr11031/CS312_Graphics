@@ -89,9 +89,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y); // bottom-most value
 
     // Compute first, second, third X-Y pairs
-    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
-    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, triangle[1].w - triangle[0].w};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y, triangle[2].w - triangle[1].w};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y, triangle[0].w - triangle[2].w};
 
     // Compute area of the whole triangle
     double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
@@ -115,7 +115,11 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 // iterate through our attributes and assign the interpolated value
                 for (int i = 0; i < attrs->value.size(); i++) 
                 {
-                    interpolatedAttribs.value.push_back(interp(areaTriangle, det, attrs, i));
+                    // interpolate attributes as normal
+                    double intrp = interp(areaTriangle, det, attrs[0].value[i], attrs[1].value[i], attrs[2].value[i]);
+                    // corrected Z value
+                    double depth = 1/interp(areaTriangle, det, triangle[0].w, triangle[1].w, triangle[2].w);
+                    interpolatedAttribs.value.push_back(intrp * depth);
                 }
 
                 // send the interpolated values to the FragShader
@@ -227,8 +231,9 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        // TestDrawTriangle(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
