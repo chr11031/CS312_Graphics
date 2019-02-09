@@ -213,8 +213,14 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            //SDL_LockSurface(img);
             setupInternal();
         }
+};
+union attri
+{
+    double d;
+    void* ptr;
 };
 
 /***************************************************
@@ -227,9 +233,9 @@ class Attributes
 {   
     public:
         PIXEL color;
-        void* ptrImg;
+        //void* ptrImg;
 
-        vector<double> colorAttr;
+        vector<attri> colorAttr;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -239,6 +245,29 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
             
+        }
+        /*Attributes(const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third)
+        {
+            while(numMembers < first.numMembers)
+            {
+                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
+                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
+                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);               
+                numMembers += 1;
+            }
+        }*/
+        void addDouble (const double & d)
+        {
+            attri newD;
+            newD.d = d;
+            colorAttr.push_back(newD);
+        }
+        void addPtr (void * ptr)
+        {
+            attri newPtr;
+            newPtr.ptr = ptr;
+            colorAttr.push_back(newPtr);
         }
 };	
 
@@ -253,18 +282,17 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
-    color += (unsigned int) (vertAttr.colorAttr[0] *0xff) << 16;
-    color += (unsigned int) (vertAttr.colorAttr[1] *0xff) << 8;
-    color += (unsigned int) (vertAttr.colorAttr[2] *0xff) << 0;
+    color += (unsigned int) (vertAttr.colorAttr[0].d *0xff) << 16;
+    color += (unsigned int) (vertAttr.colorAttr[1].d *0xff) << 8;
+    color += (unsigned int) (vertAttr.colorAttr[2].d *0xff) << 0;
     fragment = color;
 }
 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    PIXEL color;
-    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.colorAttr[0] * (ptr->width()-1);
-    int y = vertAttr.colorAttr[1] * (ptr->height()-1);
+    BufferImage* ptr = (BufferImage*)uniforms.colorAttr[0].ptr;
+    int x = vertAttr.colorAttr[0].d * vertAttr.colorAttr[2].d * (ptr->width()-1);
+    int y = vertAttr.colorAttr[1].d * vertAttr.colorAttr[2].d * (ptr->height()-1);
     fragment = (*ptr)[y][x];
 }
 
