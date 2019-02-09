@@ -236,7 +236,7 @@ class Attributes
 
         /// My Code
         PIXEL color;
-
+        
         void * ptrImg;  // points to the .bmp
 
         std::vector<double> values; // vector to allow for as many as the user would like

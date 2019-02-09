@@ -382,6 +382,11 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
 /************************************************
  * Demonstrate Perspective correct interpolation 
  * for Project 04. 
+ * 
+ * If I had more time, I would refine this
+ * function to use a cube of vertices instead of
+ * a quad. This isn't as efficient but it is what
+ * I came up with so far
  ***********************************************/
 void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 {
@@ -391,10 +396,11 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         // Artificially projected, viewport transformed
         double divA = 6;
         double divB = 40;
-        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
-                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+                                                                                        // this last value is w, which is 1/z
+        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },  // {56, 6, 6, 0.1666}
+                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },  // {456, 6, 6, 0.1666}
+                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },  // {286, 293.5, 40, 0.025}
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }}; // {226, 293.5, 40, 0.025}
 
         Vertex verticesImgA[3];
         Attributes imageAttributesA[3];
@@ -408,21 +414,158 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
 
-        double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} }; // {0,0}{0.1666, 0}{0.025, 0.025}{0, 0.025}
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        imageAttributesA[0].add(coordinates[0][0]);
+        imageAttributesA[0].add(coordinates[0][1]);
+        imageAttributesA[1].add(coordinates[1][0]);
+        imageAttributesA[1].add(coordinates[1][1]);
+        imageAttributesA[2].add(coordinates[2][0]);
+        imageAttributesA[2].add(coordinates[2][1]);
 
-        BufferImage myImage("checker.bmp");
+        imageAttributesB[0].add(coordinates[2][0]);
+        imageAttributesB[0].add(coordinates[2][1]);
+        imageAttributesB[1].add(coordinates[3][0]);
+        imageAttributesB[1].add(coordinates[3][1]);
+        imageAttributesB[2].add(coordinates[0][0]);
+        imageAttributesB[2].add(coordinates[0][1]);
+
+        /**************************************************
+        * 2. Second image quad for back wall
+        **************************************************/
+        double divC = 40;
+        Vertex wall[] = {{(-1200 / divC) + (S_WIDTH/2), (1500 / divC) + (S_HEIGHT/2), divC, 1.0/divC },
+                         {(1200  / divC) + (S_WIDTH/2), (1500 / divC) + (S_HEIGHT/2), divC, 1.0/divC },
+                         {(1200  / divC) + (S_WIDTH/2), (4500  / divC) + (S_HEIGHT/2), divC, 1.0/divC },  
+                         {(-1200 / divC) + (S_WIDTH/2), (4500  / divC) + (S_HEIGHT/2), divC, 1.0/divC }};
+
+        Vertex verticesImgC[3];
+        Attributes imageAttributesC[3];
+        verticesImgC[0] = wall[0];
+        verticesImgC[1] = wall[1];
+        verticesImgC[2] = wall[2];
+
+        Vertex verticesImgD[3];
+        Attributes imageAttributesD[3];
+        verticesImgD[0] = wall[2];
+        verticesImgD[1] = wall[3];
+        verticesImgD[2] = wall[0];
+
+        double wallCoordinates[4][2] = { {0/divC,0/divC}, {1/divC,0/divC}, {1/divC,1/divC}, {0/divC,1/divC} };
+
+        imageAttributesC[0].add(wallCoordinates[0][0]);
+        imageAttributesC[0].add(wallCoordinates[0][1]);
+        imageAttributesC[1].add(wallCoordinates[1][0]);
+        imageAttributesC[1].add(wallCoordinates[1][1]);
+        imageAttributesC[2].add(wallCoordinates[2][0]);
+        imageAttributesC[2].add(wallCoordinates[2][1]);
+        
+        imageAttributesD[0].add(wallCoordinates[2][0]);
+        imageAttributesD[0].add(wallCoordinates[2][1]);
+        imageAttributesD[1].add(wallCoordinates[3][0]);
+        imageAttributesD[1].add(wallCoordinates[3][1]);
+        imageAttributesD[2].add(wallCoordinates[0][0]);
+        imageAttributesD[2].add(wallCoordinates[0][1]);
+
+        /**************************************************
+        * 3. Third image quad for left wall
+        **************************************************/
+        Vertex left[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(-1200 / divB) + (S_WIDTH/2), (1500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(-1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },  
+                         {(-1200 / divA) + (S_WIDTH/2), (1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA }};
+
+        Vertex verticesImgE[3];
+        Attributes imageAttributesE[3];
+        verticesImgE[0] = left[0];
+        verticesImgE[1] = left[1];
+        verticesImgE[2] = left[2];
+
+        Vertex verticesImgF[3];
+        Attributes imageAttributesF[3];
+        verticesImgF[0] = left[2];
+        verticesImgF[1] = left[3];
+        verticesImgF[2] = left[0];
+
+        double leftCoordinates[4][2] = { {0/divA,0/divA}, {1/divB,0/divB}, {1/divB,1/divB}, {0/divA,1/divA} };
+
+        imageAttributesE[0].add(leftCoordinates[0][0]);
+        imageAttributesE[0].add(leftCoordinates[0][1]);
+        imageAttributesE[1].add(leftCoordinates[1][0]);
+        imageAttributesE[1].add(leftCoordinates[1][1]);
+        imageAttributesE[2].add(leftCoordinates[2][0]);
+        imageAttributesE[2].add(leftCoordinates[2][1]);
+
+        imageAttributesF[0].add(leftCoordinates[2][0]);
+        imageAttributesF[0].add(leftCoordinates[2][1]);
+        imageAttributesF[1].add(leftCoordinates[3][0]);
+        imageAttributesF[1].add(leftCoordinates[3][1]);
+        imageAttributesF[2].add(leftCoordinates[0][0]);
+        imageAttributesF[2].add(leftCoordinates[0][1]);      
+
+        /**************************************************
+        * 3. Fourth image quad for right wall
+        **************************************************/
+        Vertex right[] = {{(1200 / divB) + (S_WIDTH/2), (1500 / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(1200 / divA) + (S_WIDTH/2), (1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },  
+                         {(1200 / divB) + (S_WIDTH/2), (4500 / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+
+        Vertex verticesImgG[3];
+        Attributes imageAttributesG[3];
+        verticesImgG[0] = right[0];
+        verticesImgG[1] = right[1];
+        verticesImgG[2] = right[2];
+
+        Vertex verticesImgH[3];
+        Attributes imageAttributesH[3];
+        verticesImgH[0] = right[2];
+        verticesImgH[1] = right[3];
+        verticesImgH[2] = right[0];
+
+        double rightCoordinates[4][2] = { {0/divB,0/divB}, {1/divA,0/divA}, {1/divA,1/divA}, {0/divB,1/divB} };
+
+        imageAttributesG[0].add(rightCoordinates[0][0]);
+        imageAttributesG[0].add(rightCoordinates[0][1]);
+        imageAttributesG[1].add(rightCoordinates[1][0]);
+        imageAttributesG[1].add(rightCoordinates[1][1]);
+        imageAttributesG[2].add(rightCoordinates[2][0]);
+        imageAttributesG[2].add(rightCoordinates[2][1]);
+
+        imageAttributesH[0].add(rightCoordinates[2][0]);
+        imageAttributesH[0].add(rightCoordinates[2][1]);
+        imageAttributesH[1].add(rightCoordinates[3][0]);
+        imageAttributesH[1].add(rightCoordinates[3][1]);
+        imageAttributesH[2].add(rightCoordinates[0][0]);
+        imageAttributesH[2].add(rightCoordinates[0][1]); 
+
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
+        static BufferImage baboon("baboon.bmp");
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.setShader(FragShaderUVwithoutImage);
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
+        // temporarily draw a .bmp
+        imageUniforms.ptrImg = &baboon;
+        fragImg.setShader(ImageFragShader);
+        DrawPrimitive(TRIANGLE, target, verticesImgC, imageAttributesC, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, verticesImgD, imageAttributesD, &imageUniforms, &fragImg);
+        imageUniforms.ptrImg = &myImage;
+        fragImg.setShader(FragShaderUVwithoutImage);
+        DrawPrimitive(TRIANGLE, target, verticesImgE, imageAttributesE, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, verticesImgF, imageAttributesF, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, verticesImgG, imageAttributesG, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, verticesImgH, imageAttributesH, &imageUniforms, &fragImg);
 }
 
 /************************************************
@@ -563,14 +706,21 @@ float Determinant(float A, float B, float C, float D)
  * INTERP interpolates values between points based
  * on the percentage each determinant area is of the whole
  ***********************************************/
-Attributes Interpolate(const double totalArea, const double firsD, const double seconD, const double thirD, const Attributes * attrs)
+Attributes Interpolate(const double totalArea, const double firsD, const double seconD, const double thirD, const Attributes * attrs, const Vertex* triangle)
 {
         Attributes interpolated;
         // each determinant of the triangle is a percentage of the total area, so multiply that times the color
         // at the opposite end of the triangle from that vertex, which tells you how much color to apply
         for (int i = 0; i < attrs[0].values.size(); i++)
         {
-                interpolated.values.push_back((firsD * attrs[2].values[i] + seconD * attrs[0].values[i] + thirD * attrs[1].values[i]) / totalArea);
+                // interpolation for the image
+                double interp = ((firsD * attrs[2].values[i] + seconD * attrs[0].values[i] + thirD * attrs[1].values[i]) / totalArea);
+
+                // interpolation for the depth
+                double depth = ((firsD * triangle[2].w + seconD * triangle[0].w + thirD * triangle[1].w) / totalArea);
+
+                // finally reciprocate and combine the interpolation of the two
+                interpolated.values.push_back(interp * 1/depth);
         }
 
         return interpolated;
