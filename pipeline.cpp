@@ -126,18 +126,18 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T
 
             // Point is inside triangle
             if(firstDet >= 0 && secondDet >= 0 && thirdDet >= 0)
-            {   //Draw (Doesn't look like we need this, but keeping it in case)
-                //target[(int)y][(int)x] = attrs[0].color;
+            {
+                double recip = 1/interp(areaTriangle, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
                 // Interpolate attributes
                 Attributes<T> interpolatedAttribs;
                 //RGB (or alpha ;)
-                interpolatedAttribs.setR(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
-                interpolatedAttribs.setG(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
-                interpolatedAttribs.setB(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
-                //Image units
-                interpolatedAttribs.setU(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
-                interpolatedAttribs.setV(interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
+                interpolatedAttribs.setR(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
+                interpolatedAttribs.setG(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
+                interpolatedAttribs.setB(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
+                //Image units *
+                interpolatedAttribs.setU(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
+                interpolatedAttribs.setV(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
 
                 // Shader call back
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -254,9 +254,10 @@ int main()
          * Trophy Box.
          * ********************************
         //TestDrawPixel(frame);
-        //TestDrawTriangle(frame);         */
+        //TestDrawTriangle(frame);
+        //TestDrawFragments<double>(frame);         */
 
-        TestDrawFragments<double>(frame);
+        TestDrawPerspectiveCorrect<double>(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
