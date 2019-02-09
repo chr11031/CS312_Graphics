@@ -88,6 +88,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
     int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
+    
+
     // //find vertex to be used later to find determinate in crossproduct
     // Vertex v1 = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y),1, 1};
     // Vertex v2 = {(triangle[2].x - triangle[0].x), (triangle[2].y - triangle[0].y),1, 1};
@@ -98,7 +100,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
     double area = crossProduct(v1[X_KEY], -v3[X_KEY], v1[Y_KEY], -v3[Y_KEY]);
 
-
+    
 
     for (int y = minY; y <= maxY; y++)
     {
@@ -109,19 +111,27 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             double d2 = crossProduct(v2[X_KEY], x - triangle[1].x, v2[Y_KEY], y - triangle[1].y);
             double d3 = crossProduct(v3[X_KEY], x - triangle[2].x, v3[Y_KEY], y - triangle[2].y);
             
+           
+
             //check to see if you're inside the triangle
             if (d1 >= 0 && d2 >= 0 && d3 >= 0)
             {
                 target[(int)y][(int)x] = attrs[0].color;
 
-                //through linear interpolation the color attributes are filled within the triangle.
-                Attributes interpAttr;
-                interpAttr.setR(interp(area, d1, d2, d3, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
-                interpAttr.setG(interp(area, d1, d2, d3, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
-                interpAttr.setB(interp(area, d1, d2, d3, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
 
-                interpAttr.setU(interp(area, d1, d2, d3, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
-                interpAttr.setV(interp(area, d1, d2, d3, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
+                //through linear interpolation the color attributes are filled within the triangle
+                Attributes interpAttr;
+
+                double z = 1/ interp(area, d1, d2, d3, triangle[0].w, triangle[1].w, triangle[2].w);
+
+                interpAttr.setR(z * interp(area, d1, d2, d3, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
+                interpAttr.setG(z * interp(area, d1, d2, d3, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
+                interpAttr.setB(z * interp(area, d1, d2, d3, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
+
+               
+
+                interpAttr.setU(z * interp(area, d1, d2, d3, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
+                interpAttr.setV(z * interp(area, d1, d2, d3, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
 
                 //calls fragshader callback
                 frag->FragShader(target[y][x], interpAttr, *uniforms);
@@ -247,24 +257,11 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-    // for(int y = 0; y < myPic.height(); y++)
-    // {
-    //     for(int x = 0; x < myPic.width(); x++)
-    //     {
-    //         Vertex v;
-    //         v.x = x;
-    //         v.y = y;
-    //         Attributes at;
-    //         at.color = myPic[y][x];
-    //         Attributes uniforms;
+        TestDrawPerspectiveCorrect(frame);
+        
+        //TestDrawGreen(frame);
 
-    //         FragmentShader frag(DefaultFragShader);
-
-    //         DrawPoint(frame, &v, &at, &uniforms, &frag);
-    //     }
-    // }
-
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
 
         //TestDrawPixel(frame);
 
