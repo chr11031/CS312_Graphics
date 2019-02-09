@@ -362,11 +362,9 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         Attributes imageUniforms;
         imageUniforms.ptrImg = &myImage;
-        // Your code for the uniform goes here
 
         FragmentShader fragImg;
         fragImg.FragShader = ImageFragShader;
-        // Your code for the image fragment shader goes here
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

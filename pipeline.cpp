@@ -122,13 +122,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 //through linear interpolation the color attributes are filled within the triangle
                 Attributes interpAttr;
 
+
+                //get the "correct" z value
                 double z = 1/ interp(area, d1, d2, d3, triangle[0].w, triangle[1].w, triangle[2].w);
 
+                //multiply the attributes by the correct z to get proper position
                 interpAttr.setR(z * interp(area, d1, d2, d3, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
                 interpAttr.setG(z * interp(area, d1, d2, d3, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
                 interpAttr.setB(z * interp(area, d1, d2, d3, attrs[0].getB(), attrs[1].getB(), attrs[2].getB()));
-
-               
 
                 interpAttr.setU(z * interp(area, d1, d2, d3, attrs[0].getU(), attrs[1].getU(), attrs[2].getU()));
                 interpAttr.setV(z * interp(area, d1, d2, d3, attrs[0].getV(), attrs[1].getV(), attrs[2].getV()));
