@@ -83,6 +83,20 @@ float crossProduct(double v1X, double v1Y, double v2X, double v2Y)
     return v1X * v2Y - v1Y * v2X;
 }
 
+/****************************************
+ * INTERP_Z
+ ***************************************/
+
+double interpZ(const double & area, const double & det1, const double & det2, const double & det3, const Vertex vertices[3])
+{
+    double one = det1 / area;
+    double two = det2 / area;
+    double three = 1 - one - two;
+
+    double fractionalZ = vertices[0].w * two + vertices[1].w * three + vertices[2].w * one;
+    return 1 / fractionalZ;
+}
+
 /*************************************************************
  * DRAW_TRIANGLE
  * Renders a triangle to the target buffer. Essential 
@@ -116,10 +130,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
         if (firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
         { 
+            double z = 0.0;
             Attributes interpolatedAttribs;
             interpolatedAttribs.numValues = attrs[0].numValues;
+            z = interpZ(areaTriangle, firstDet, secndDet, thirdDet, triangle);
             interpolatedAttribs.interpolateValues(firstDet, secndDet, thirdDet, areaTriangle, attrs);
-
+            interpolatedAttribs.correctPerspective(z);
             frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
         }
         }
@@ -228,7 +244,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

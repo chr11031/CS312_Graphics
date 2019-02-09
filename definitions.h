@@ -228,7 +228,7 @@ class Attributes
         
          PIXEL color;
         int numValues;
-        double attrValues[3];
+        double attrValues[16];
         void* ptrImg;
 
         /* Old way
@@ -255,6 +255,14 @@ class Attributes
              for (int i = 0; i < numValues; i++)
             {
                 attrValues[i] = vertAttrs[0].attrValues[i] * w2 + vertAttrs[1].attrValues[i] * w3 + vertAttrs[2].attrValues[i] * w1;
+            }
+        }
+
+        void correctPerspective(double correctedZ)
+        {
+            for (int i = 0; i < numValues; i++)
+            {
+                attrValues[i] *= correctedZ;
             }
         }
        
