@@ -3,10 +3,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
-
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
-
 /******************************************************
  * DEFINES:
  * Macros for universal variables/hook-ups.
@@ -21,10 +19,10 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
-
+#define X_KEY 0
+#define Y_KEY 1
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
-
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -34,7 +32,6 @@ enum PRIMITIVES
     LINE,
     POINT
 };
-
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -45,7 +42,6 @@ struct Vertex
     double z;
     double w;
 };
-
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -59,7 +55,6 @@ class Buffer2D
         T** grid;
         int w;
         int h;
-
         // Private intialization setup
         void setupInternal()
         {
@@ -70,11 +65,9 @@ class Buffer2D
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
         }
-
         // Empty Constructor
         Buffer2D()
         {}
-
     public:
         // Free dynamic memory
         ~Buffer2D()
@@ -86,7 +79,6 @@ class Buffer2D
             }
             free(grid);
         }
-
         // Size-Specified constructor, no data
         Buffer2D(const int & wid, const int & hgt)
         {
@@ -95,7 +87,6 @@ class Buffer2D
             setupInternal();
             zeroOut();
         }
-
         // Assignment constructor
         Buffer2D& operator=(const Buffer2D & ib)
         {
@@ -110,7 +101,6 @@ class Buffer2D
                 }
             }
         }
-
         // Set each member to zero 
         void zeroOut()
         {
@@ -122,19 +112,15 @@ class Buffer2D
                 }
             }
         }
-
         // Width, height
         const int & width()  { return w; }
         const int & height() { return h; }
-
         // The frequented operator for grabbing pixels
         inline T* & operator[] (int i)
         {
             return grid[i];
         }
 };
-
-
 /****************************************************
  * BUFFER_IMAGE:
  * PIXEL (Uint32) specific Buffer2D class with .BMP 
@@ -145,7 +131,6 @@ class BufferImage : public Buffer2D<PIXEL>
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
         bool ourSurfaceInstance = false;    // Do we need to de-allocate?
-
         // Private intialization setup
         void setupInternal()
         {
@@ -153,7 +138,6 @@ class BufferImage : public Buffer2D<PIXEL>
             h = img->h;
             w = img->w;
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
-
             PIXEL* row = (PIXEL*)img->pixels;
             row += (w*h);
             for(int i = 0; i < h; i++)
@@ -162,21 +146,18 @@ class BufferImage : public Buffer2D<PIXEL>
                 row -= w;                    
             }
         }
-
     public:
         // Free dynamic memory
         ~BufferImage()
         {
             // De-Allocate pointers for column references
             free(grid);
-
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
             {
                 SDL_FreeSurface(img);
             }
         }
-
         // Assignment constructor
         BufferImage& operator=(const BufferImage & ib)
         {
@@ -190,7 +171,6 @@ class BufferImage : public Buffer2D<PIXEL>
                 grid[i] = ib.grid[i];
             }
         }
-
         // Constructor based on instantiated SDL_Surface
         BufferImage(SDL_Surface* src) 
         { 
@@ -200,7 +180,6 @@ class BufferImage : public Buffer2D<PIXEL>
             ourSurfaceInstance = false;
             setupInternal();
         }
-
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
@@ -213,34 +192,89 @@ class BufferImage : public Buffer2D<PIXEL>
             setupInternal();
         }
 };
-
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+//template <class T>
 class Attributes
 {      
+    private: 
+        // double r;
+        // double g;
+        // double b;
+        // double u;
+        // double v;  
+
     public:
+        void* ptrImg;
+
         // Obligatory empty constructor
+        //Attributes() : r(0), g(0), b(0), u(0), v(0){}
         Attributes() {}
+        double allAttributes[5];
+
+        // double getR() const {return this->r;}0
+        // double getG() const {return this->g;}1
+        // double getB() const {return this->b;}2
+        // double getU() const {return this->u;}3
+        // double getV() const {return this->v;}4
+
+        // void setR(double r){ this->r = r;}
+        // void setG(double g){ this->g = g;}
+        // void setB(double b){ this->b = b;}
+        // void setU(double u){ this->u = u;}
+        // void setV(double v){ this->v = v;}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        PIXEL color;
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};	
+        PIXEL color;
+};  
+// Image Fragment Shader 
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.allAttributes[3] * (bf->width()-1);
+    int y = vertAttr.allAttributes[4] * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+void ImageFragShaderGreen(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.allAttributes[3] * (bf->width()-1);
+    int y = vertAttr.allAttributes[4] * (bf->height()-1);
+
+    
+
+    fragment = (*bf)[y][x];
+}
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+
+    color += (unsigned int)(vertAttr.allAttributes[0] *0xff) << 16;
+    color += (unsigned int)(vertAttr.allAttributes[1] *0xff) << 8;
+    color += (unsigned int)(vertAttr.allAttributes[2] *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+    
 }
-
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
@@ -253,26 +287,22 @@ class FragmentShader
  
         // Get, Set implicit
         void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
-
         // Assumes simple monotone RED shader
         FragmentShader()
         {
             FragShader = DefaultFragShader;
         }
-
         // Initialize with a fragment callback
         FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(FragSdr);
         }
-
         // Set the shader to a callback function
         void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             FragShader = FragSdr;
         }
 };
-
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -280,7 +310,6 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
-
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -293,26 +322,22 @@ class VertexShader
     public:
         // Get, Set implicit
         void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
-
         // Assumes simple monotone RED shader
         VertexShader()
         {
             VertShader = DefaultVertShader;
         }
-
         // Initialize with a fragment callback
         VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(VertSdr);
         }
-
         // Set the shader to a callback function
         void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             VertShader = VertSdr;
         }
 };
-
 // Stub for Primitive Drawing function
 /****************************************
  * DRAW_PRIMITIVE
@@ -325,6 +350,29 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);   
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}
+
+/****************************************
+ * INTERP
+ * Trying to perdict each the color at a certain point
+ * You get the determinate of the each area and divide it by the area, then multiply it
+ * by the color attribute. Then you add all of those together to find the interpolation.
+ * **************************************/
+double interp(double & areaTriangle, double & firstDet, double & secondDet, double & thirdDet, double a1, double a2, double a3)
+{
+    double w1 = (firstDet/areaTriangle) * a3;
+    double w2 = (secondDet/areaTriangle) * a1;
+    double w3 = (thirdDet/areaTriangle) * a2;
+    return (w1 + w2 + w3);
+}   
        
 #endif
