@@ -109,14 +109,17 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // If any of the determinants are negative, then the fragment is outside the triangle 
             if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
+                // Get the depth of the fragment through interpolation
+                double depth = 1 / lerp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
+
                 // Interpolate Attributes for this pixel - In this case the R,G,B values
                 Attributes interpolatedAttribs;
-                interpolatedAttribs.r = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttribs.g = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttribs.b = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                interpolatedAttribs.r = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
-                interpolatedAttribs.u = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                interpolatedAttribs.u = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -227,8 +230,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
-        //TestDrawTriangle(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
