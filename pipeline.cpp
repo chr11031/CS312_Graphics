@@ -259,8 +259,9 @@ int main()
         // Your code goes here
 		//TestDrawPixel(frame);
         //GameOfLife(frame);
+        TestDrawPerspectiveCorrect(frame);
         TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

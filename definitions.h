@@ -242,8 +242,24 @@ class Attributes
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
+     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
     // Output our shader color value, in this case red
-    fragment = 0xffff0000;
+    fragment = (*bf)[y][x]; //& color
+}
+
+void GreenShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
+
+
+    PIXEL color = 0xff00ff00;
+
+    fragment = ((*bf)[y][x]) & color; //& color
+
 }
 
 /*******************************************************
@@ -298,25 +314,42 @@ class VertexShader
     public:
         // Get, Set implicit
         void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
-
         // Assumes simple monotone RED shader
         VertexShader()
         {
             VertShader = DefaultVertShader;
         }
-
         // Initialize with a fragment callback
         VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(VertSdr);
         }
-
         // Set the shader to a callback function
         void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             VertShader = VertSdr;
         }
 };
+/****************************************
+ * CROSS_PRODUCT
+ * returns the determinant 
+ ***************************************/
+double crossProduct(double v1x, double v1y, double v2x, double v2y)
+{
+    
+    return (v1x*v2y - v1y*v2x);
+}
+/****************************************
+ * INTERP
+ * Linear interpolation between three points
+ ***************************************/
+double interp(double area, double d1, double d2, double d3, double att1, double att2, double att3)
+{
+
+
+    //mix in the attribute with the how much it makes up of the triangle. 
+    return ((d1 * att3) + (d2 * att1) + (d3 * att2)) / area;
+}
 
 // Stub for Primitive Drawing function
 /****************************************
