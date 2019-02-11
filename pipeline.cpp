@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -60,16 +61,153 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
+}
+
+/****************************************
+ * DRAW_TRIANGLE_SCANLINES
+ *
+ * Renders a triangle/convex polygon
+ * to the screen with the appropriate 
+ * fill pattern
+ ***************************************/
+void DrawTriangleScanlines(BufferImage & frame, Vertex* triangle, Attributes* attrs, Attributes* const uniforms, FragmentShader * const frag)
+{
+    // Sort from least to greatest - simple O(n^2) for small set
+    // Y-ordered primarily, X-ordered secondarily 
+    int count = 3;
+    for(int i = 0; i < count; i++)
+    {
+        for(int j = 0; j < count - 1; j++)
+        {
+            if  (triangle[j].y > triangle[j+1].y || 
+                ((triangle[j].y == triangle[j+1].y && (triangle[j].x > triangle[j+1].x))))
+            {
+                SWAP(Vertex, triangle[j], triangle[j+1]);
+                SWAP(Attributes, attrs[j], attrs[j+1]);
+            }
+        }
+    }
+
+    // Determinant information
+    Vertex firstLeft = triangle[0];
+    Vertex lastRight = triangle[count-1]; 
+    int diffX = (int)lastRight.x - (int)firstLeft.x;
+    int diffY = (int)lastRight.y - (int)firstLeft.y;
+
+    // Build left-right lists
+    bool flatTop = triangle[0].y == triangle[1].y;
+    bool flatBottom = triangle[count-1].y == triangle[count-2].y;
+    int lastIteration = count - 1;
+    int numLeft = 0;
+    int numRight = 0;
+    Vertex left[8];
+    Vertex right[8];
+    Attributes lAttr[8]; 
+    Attributes rAttr[8];
+    for(int i = 0; i < count; i++)
+    {
+        int det = determinant((int)triangle[i].x - (int)firstLeft.x, diffX, 
+			      (int)triangle[i].y - (int)firstLeft.y, diffY);
+        if(det > 0)
+        {
+            rAttr[numRight] = attrs[i];
+            right[numRight++] = triangle[i];
+        }
+        else if (det < 0)
+        {
+            lAttr[numLeft] = attrs[i];
+            left[numLeft++] = triangle[i];
+        }
+        else
+        {
+            if(!(i == 0 && flatTop))
+            {
+                rAttr[numRight] = attrs[i];
+                right[numRight++] = triangle[i];
+            }
+            if(!(i == lastIteration && flatBottom))
+            {
+                lAttr[numLeft] = attrs[i];
+                left[numLeft++] = triangle[i];
+            }
+        }
+    }
+
+    // Adjust counts for bounds checks
+    --numLeft;
+    --numRight;
+ 
+    // Draw so that we are careful about adjacent polygon fitting
+    int iLeftFirst  = -1;
+    int iLeftSecond = 0;
+    int iRightFirst = -1;
+    int iRightSecond= 0;
+    int y = left[0].y;
+    int lastY = left[numLeft].y;
+    double startX = left[0].x;
+    double endX = right[0].x;
+    double numerator;
+    double divisor;
+    double stepLeft;
+    double stepRight;
+
+    Vertex scanVertices[2];
+    while(y <= lastY)
+    {
+        // Check bounds for interpolation
+        if((int)left[iLeftSecond].y == y && iLeftSecond < numLeft)
+        {
+            ++iLeftFirst;
+            ++iLeftSecond;
+            stepLeft = 0.0;
+            diffY = left[iLeftSecond].y - left[iLeftFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = left[iLeftSecond].x - left[iLeftFirst].x; 
+                divisor = diffY;
+                stepLeft = numerator / divisor;
+            }
+        }
+        if((int)right[iRightSecond].y == y && iRightSecond < numRight)
+        {
+            ++iRightSecond;
+            ++iRightFirst;
+            stepRight = 0.0;
+            diffY = right[iRightSecond].y - right[iRightFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = right[iRightSecond].x - right[iRightFirst].x; 
+                divisor = diffY;
+                stepRight = numerator / divisor;
+            }
+        }
+
+        // Scanline process
+        scanVertices[0].x = startX;
+        scanVertices[0].y = y;
+        scanVertices[1].x = endX;
+        scanVertices[1].y = y;
+
+        int numSteps = (scanVertices[1].x - scanVertices[0].x);
+        while(scanVertices[0].x <= scanVertices[1].x)
+        {
+	  frame[scanVertices[0].y][(int)scanVertices[0].x++] = 0xffff0000; // Pre-mixed but can be attributes tweaked later
+        }
+
+        startX += stepLeft;
+        endX += stepRight;
+        y++;
+    }
 }
 
 /*************************************************************
@@ -79,7 +217,41 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    // Create a bounding box
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+
+    // Compute first, second, third X-Y pairs
+    double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
+ 
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
+    {
+        for(int x = minX; x < maxX; x++)
+        {
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
+
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs(areaTriangle, firstDet, secndDet, thirdDet, attrs[0], attrs[1], attrs[2]);
+
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
+        }
+    }
 }
 
 /**************************************************************
@@ -184,7 +356,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-	TestDrawPixel(frame);
+        TestDrawFragments(frame);
+        //TestDrawTriangle(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

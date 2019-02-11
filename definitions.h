@@ -21,6 +21,9 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define MEMBERS_PER_ATTRIB
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -214,6 +217,13 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -223,15 +233,56 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-  
+        // Members
+    	int numMembers = 0;
+        attrib arr[16];
+
         // Obligatory empty constructor
-        Attributes() {}
-        PIXEL color;
+        Attributes() {numMembers = 0;}
+
+        // Interpolation Constructor
+        Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third)
+        {
+            while(numMembers < first.numMembers)
+            {
+                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
+                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
+                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);               
+                numMembers += 1;
+            }
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
+        }
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
         }
 };	
 
@@ -327,5 +378,16 @@ void DrawPrimitive(PRIMITIVES prim,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);             
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}
+
        
 #endif
