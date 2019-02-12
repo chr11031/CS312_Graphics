@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "myFunctions.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -40,22 +41,12 @@ void GameOfLife(Buffer2D<PIXEL> & target)
 
         //Parse for inputs
         SDL_Event e;
-        while(SDL_PollEvent(&e)) 
+        while(SDL_PollEvent(&e))
         {
-                int mouseX;
-                int mouseY;
-                if(e.type == SDL_MOUSEBUTTONDOWN)
-                {
-                        holdDown = true;
-                }
-                if(e.type == SDL_MOUSEBUTTONUP)
-                {
-                        holdDown = false;
-                }
-                if(e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN) 
-                {
-                        isSetup = !isSetup;
-                }
+                int mouseX; int mouseY;
+                if(e.type == SDL_MOUSEBUTTONDOWN) holdDown = true;
+                if(e.type == SDL_MOUSEBUTTONUP) holdDown = false;
+                if(e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN) isSetup = !isSetup;
                 if(holdDown && isSetup)
                 {
                         // Clicking the mouse changes a pixel's color
@@ -63,19 +54,10 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                         SDL_GetMouseState(&mouseX, &mouseY);
                         int gridX = mouseX / scaleFactor;
                         int gridY = mouseY / scaleFactor;
-                        if(grid[gridY][gridX] == 1)
-                        {
-                                // Dead
-                                grid[gridY][gridX] = 0;
-                        }
-                        else
-                        {
-                                // Alive
-                                grid[gridY][gridX] = 1;
-                        }
+                        if(grid[gridY][gridX] == 1) grid[gridY][gridX] = 0; //Dead
+                        else grid[gridY][gridX] = 1; //Alive
                 }
         }
-
 
         // Advance the simulation after pressing 'g'
         if(!isSetup)
@@ -84,17 +66,10 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 //TODO draw to screen
                 bool isAlive = false;
 
-                for(int x = 0; x < gridH; x++){
-                        for(int y = 0; y < gridW; y++){
-                                isAlive = grid[x][y];
-                        }
-                }
-
-
+                for(int x = 0; x < gridH; x++) for(int y = 0; y < gridW; y++) isAlive = grid[x][y];
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
-
 
         // Upscale/blit to screen
         for(int y = 0; y < h; y++)
@@ -103,16 +78,8 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         int yScal = y/scaleFactor;
                         int xScal = x/scaleFactor;
-                        if(grid[yScal][xScal] == 0)
-                        {
-                                // Dead Color
-                                target[y][x] = 0xff000000;
-                        }
-                        else
-                        {
-                                // Alive color
-                                target[y][x] = 0xffff0000;
-                        }
+                        if(grid[yScal][xScal] == 0) target[y][x] = 0xff000000; //Dead Color
+                        else target[y][x] = 0xffff0000; //Alive Color
                 }
         }
 }
@@ -132,10 +99,8 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
 
-
         // Your code goes here 
         // Feel free to copy from other test functions to get started!
-
 
         // Blit four panels to target
         int yStartSrc = 0;
@@ -162,9 +127,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        // Your Code goes here for 'pointAttributes'
-        pointAttributes.color = color;
-
+        pointAttributes.addDouble(color);
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
 
@@ -176,66 +139,81 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         /**************************************************
         * 6 Flat color triangles below
         *************************************************/
-       
-        PIXEL red = 0xffff0000;
-        PIXEL lime = 0xff00ff00;
-        PIXEL blue = 0xff0000ff;
+        PIXEL rgb[] = {0xffff0000, 0xff00ff00, 0xff0000ff};
 
         Vertex verts[3];
         Attributes attr[3];
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
-        attr[0].color = red;
-        attr[1].color = red;
-        attr[2].color = red;
-
+        for(int i=0;i<3;i++) 
+        {
+                attr[i].addDouble(1);
+                attr[i].addDouble(0);
+                attr[i].addDouble(0);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {300, 402, 1, 1};
         verts[1] = {250, 452, 1, 1};
         verts[2] = {250, 362, 1, 1};
-        attr[0].color = lime;
-        attr[1].color = lime;
-        attr[2].color = lime;
-
+        for(int i=0;i<3;i++)
+        {
+                attr[i].clear();
+                attr[i].addDouble(0);
+                attr[i].addDouble(1);
+                attr[i].addDouble(0);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {450, 362, 1, 1};
         verts[1] = {450, 452, 1, 1};
         verts[2] = {350, 402, 1, 1};
-        attr[0].color = blue;
-        attr[1].color = blue;
-        attr[2].color = blue;
-
+        for(int i=0;i<3;i++)
+        {
+                attr[i].clear();
+                attr[i].addDouble(0);
+                attr[i].addDouble(0);
+                attr[i].addDouble(1);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {110, 262, 1, 1};
         verts[1] = {60, 162, 1, 1};
         verts[2] = {150, 162, 1, 1};
-        attr[0].color = red;
-        attr[1].color = red;
-        attr[2].color = red;
-
+        for(int i=0;i<3;i++)
+        {
+                attr[i].clear();
+                attr[i].addDouble(1);
+                attr[i].addDouble(0);
+                attr[i].addDouble(0);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
         verts[0] = {210, 252, 1, 1};
         verts[1] = {260, 172, 1, 1};
         verts[2] = {310, 202, 1, 1};
-        attr[0].color = lime;
-        attr[1].color = lime;
-        attr[2].color = lime;
-
+        for(int i=0;i<3;i++)
+        {
+                attr[i].clear();
+                attr[i].addDouble(0);
+                attr[i].addDouble(1);
+                attr[i].addDouble(0);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
         verts[0] = {370, 202, 1, 1};
         verts[1] = {430, 162, 1, 1};
         verts[2] = {470, 252, 1, 1};
-        attr[0].color = attr[1].color = attr[2].color = blue;
-
+        for(int i=0;i<3;i++)
+        {
+                attr[i].clear();
+                attr[i].addDouble(0);
+                attr[i].addDouble(0);
+                attr[i].addDouble(1);
+        }
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
-
 
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 

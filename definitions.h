@@ -217,11 +217,6 @@ class BufferImage : public Buffer2D<PIXEL>
             setupInternal();
         }
 };
-union attri
-{
-    double d;
-    void* ptr;
-};
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
@@ -229,13 +224,16 @@ union attri
  * primitive as a whole OR per-vertex. Will be 
  * designed/implemented by the programmer. 
  **************************************************/
+union doublePointer
+{
+    double d;
+    void* ptr;
+};
 class Attributes
 {   
     public:
-        PIXEL color;
-        //void* ptrImg;
-
-        vector<attri> colorAttr;
+        //PIXEL color;
+        vector<doublePointer> colorAttr;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -246,54 +244,43 @@ class Attributes
             // Your code goes here when clipping is implemented
             
         }
-        /*Attributes(const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
-                    const Attributes & first, const Attributes & secnd, const Attributes & third)
+        Attributes(Attributes* const attrs, const double & area0, const double & area1, const double & area2)
         {
-            while(numMembers < first.numMembers)
+            for(int i = 0; i < attrs[0].colorAttr.size(); i++)
             {
-                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
-                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
-                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);               
-                numMembers += 1;
+                //determine attribute by adding each portion of vertex given by the corresponding area
+                addDouble((attrs[0][i].d * area0) + (attrs[1][i].d * area1) + (attrs[2][i].d * area2));
             }
-        }*/
+        }
         void addDouble (const double & d)
         {
-            attri newD;
+            doublePointer newD;
             newD.d = d;
             colorAttr.push_back(newD);
         }
         void addPtr (void * ptr)
         {
-            attri newPtr;
+            doublePointer newPtr;
             newPtr.ptr = ptr;
             colorAttr.push_back(newPtr);
         }
-};	
+        void clear() {colorAttr.clear();}
+        // Const Return operator
+        const doublePointer & operator[](const int & i) const {return colorAttr[i];}
+        // Return operator
+        doublePointer & operator[](const int & i) {return colorAttr[i];}
+};
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // Output our shader color value, in this case red
-    fragment = 0xffff0000;
-}
-
-/* creating a full color from rgb parts*/
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
     PIXEL color = 0xff000000;
-    color += (unsigned int) (vertAttr.colorAttr[0].d *0xff) << 16;
-    color += (unsigned int) (vertAttr.colorAttr[1].d *0xff) << 8;
-    color += (unsigned int) (vertAttr.colorAttr[2].d *0xff) << 0;
+    color += (unsigned int) (vertAttr[0].d *0xff) << 16;
+    color += (unsigned int) (vertAttr[1].d *0xff) << 8;
+    color += (unsigned int) (vertAttr[2].d *0xff) << 0;
     fragment = color;
-}
-
-void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    BufferImage* ptr = (BufferImage*)uniforms.colorAttr[0].ptr;
-    int x = vertAttr.colorAttr[0].d * vertAttr.colorAttr[2].d * (ptr->width()-1);
-    int y = vertAttr.colorAttr[1].d * vertAttr.colorAttr[2].d * (ptr->height()-1);
-    fragment = (*ptr)[y][x];
+    // Output our shader color value, in this case red
+    //fragment = 0xffff0000;
 }
 
 /*******************************************************
@@ -380,6 +367,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
-       
+                   Buffer2D<double>* zBuf = NULL);
+
+
 #endif
