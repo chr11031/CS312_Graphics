@@ -251,15 +251,15 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].attr[0] = 1.0;
-	colorAttributes[0].attr[1] = 0.0;
-	colorAttributes[0].attr[2] = 0.0;
-	colorAttributes[1].attr[0] = 0.0;
-	colorAttributes[1].attr[1] = 1.0;
-	colorAttributes[1].attr[2] = 0.0;
-	colorAttributes[2].attr[0] = 0.0;
-	colorAttributes[2].attr[1] = 0.0;
-	colorAttributes[2].attr[2] = 1.0;
+        colorAttributes[0].attrs[0] = 1.0;
+	colorAttributes[0].attrs[1] = 0.0;
+	colorAttributes[0].attrs[2] = 0.0;
+	colorAttributes[1].attrs[0] = 0.0;
+	colorAttributes[1].attrs[1] = 1.0;
+	colorAttributes[1].attrs[2] = 0.0;
+	colorAttributes[2].attrs[0] = 0.0;
+	colorAttributes[2].attrs[1] = 0.0;
+	colorAttributes[2].attrs[2] = 1.0;
         
 
         FragmentShader myColorFragShader;
@@ -282,12 +282,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         
         //  texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].attr[0] = coordinates[0][0];
-	imageAttributes[0].attr[1] = coordinates[0][1];
-	imageAttributes[1].attr[0] = coordinates[1][0];
-	imageAttributes[1].attr[1] = coordinates[1][1];
-	imageAttributes[2].attr[0] = coordinates[2][0];
-	imageAttributes[2].attr[1] = coordinates[2][1];
+        imageAttributes[0].attrs[0] = coordinates[0][0];
+	imageAttributes[0].attrs[1] = coordinates[0][1];
+	imageAttributes[1].attrs[0] = coordinates[1][0];
+	imageAttributes[1].attrs[1] = coordinates[1][1];
+	imageAttributes[2].attrs[0] = coordinates[2][0];
+	imageAttributes[2].attrs[1] = coordinates[2][1];
 
         //BufferImage myImage("image.bmp");
         // an image in this directory(powers of 2 dimensions)
@@ -338,16 +338,35 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        //Attributes for imageAttributesA
+	imageAttributesA[0].attrs[3] = coordinates[0][0];
+	imageAttributesA[0].attrs[4] = coordinates[0][1];
+	imageAttributesA[1].attrs[3] = coordinates[1][0];
+        imageAttributesA[1].attrs[4] = coordinates[1][1];
+        imageAttributesA[2].attrs[3] = coordinates[2][0];
+        imageAttributesA[2].attrs[4] = coordinates[2][1];
+	
+	//Attributes for imageAttributesB
+	imageAttributesB[0].attrs[3] = coordinates[2][0];
+        imageAttributesB[0].attrs[4] = coordinates[2][1];
+        imageAttributesB[1].attrs[3] = coordinates[3][0];
+        imageAttributesB[1].attrs[4] = coordinates[3][1];
+        imageAttributesB[2].attrs[3] = coordinates[0][0];
+        imageAttributesB[2].attrs[4] = coordinates[0][1];
+	
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
@@ -385,7 +404,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)

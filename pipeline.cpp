@@ -99,6 +99,21 @@ void DrawLine(Buffer2D<PIXEL> &target, Vertex *const triangle, Attributes *const
 }
 
 /*******************************************************
+ * determinant
+ * Multiplies the two vertex points
+ * Performs cross product
+ * return float
+ * ******************************************************/
+double determinant(const double & v1x, const double & v2x, const double & v1y, const double & v2y)
+{
+    double determin;
+    determin = (v1x * v2y) - (v2x * v1y);
+    determin = ((v1x * v2y) - (v1y * v2x));
+
+    return determin; 
+}
+
+/*******************************************************
 * crossProduct
 * Calculate the float by a cross product formula of the vertex
 * Returns crossPro
@@ -112,20 +127,14 @@ float crossProduct(Vertex one, Vertex two)
 
 /*************************************************************
 * INTERPOLATE
-* This function will x and y xoordinates the required pixel and weight to the
-* of the triangle 
+* This function calculate interpolate by 3 times the area and then half the determinate
 ************************************************************/
-double interoplate(double y, double x, Vertex* const triangle, double attr1, double attr2, double attr3)
+double interoplate(double areaTriangle, double x, double y, double z, double attr1, double attr2, double attr3)
 {
-	 // calculating how much color goies in the first point of the triangle
-	double i = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y)) / ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
-    // calculating how much color goies in the second point of the triangle
-    double j = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y)) / ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
-    // calculating how much color goies in the third point of the triangle which is 100% - i and j
-    double k = 1 - i - j;
-
-    //get the three attributes and return the color interpolated attributes
-    return ((k * attr1) + (i * attr2) + (j* attr3));
+    double interpolat = 0.0;
+	interpolat = (x/areaTriangle * attr3) + (y/areaTriangle * attr1) + (z/areaTriangle * attr2);
+	
+    return interpolat;
 }
 	
 /*************************************************************
@@ -135,49 +144,41 @@ double interoplate(double y, double x, Vertex* const triangle, double attr1, dou
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> &target, Vertex *const triangle, Attributes *const attrs, Attributes *const uniforms, FragmentShader *const frag)
 {
-    // Your code goes here
+     //finding the max and min of both are x and y axis 
+     //finding the outer border of the triangle. 
     int maxX = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
     int minX = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
     int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
     int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
 
-    //Vertex lines points of verOne
-    Vertex verOne;
-    verOne.x = ((int)triangle[1].x - (int)triangle[0].x);
-    verOne.y = ((int)triangle[1].y - (int)triangle[0].y);
+    //Finding the vertices of the triangles
+    double verOne[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double verTwo[] = {triangle[2].x -  triangle[1].x, triangle[2].y - triangle[1].y};
+    double verThree[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    //Vertex lines points of verTwo
-    Vertex verTwo;
-    verTwo.x = (int)triangle[2].x - (int)triangle[0].x;
-    verTwo.y = (int)triangle[2].y - (int)triangle[0].y;
+    //Finding the area of the triangle
+    double areaTriangle = determinant(verOne[X_Key], -verThree[X_Key], verOne[Y_Key], -verThree[Y_Key]);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
         {
-            Vertex vertQ;
-            vertQ.x = (x - (int)triangle[0].x);
-            vertQ.y = (y - (int)triangle[0].y);
-
-            //Making sure if we lie inside the trangle by finding the cross product
-            float s = (float)crossProduct(vertQ, verTwo) / crossProduct(verOne, verTwo);
-            float t = (float)crossProduct(verOne, vertQ) / crossProduct(verOne, verTwo);
+          //Taking the determinant of the differnt vertexes 
+          double DetOne = determinant(verOne[X_Key], x - triangle[0].x, verOne[Y_Key], y - triangle[0].y);
+          double DetTwo = determinant(verTwo[X_Key], x - triangle[1].x, verTwo[Y_Key], y - triangle[1].y);
+          double DetThree = determinant(verThree[X_Key], x - triangle[2].x, verThree[Y_Key], y - triangle[2].y);
 
             //true only when in triangle
-            if ((s >= 0) && (t >= 0) && (s + t <= 1))
+            if (DetOne >= 0 && DetTwo >= 0 && DetThree >= 0)
             {
                 Attributes interpolatedAttribs;
+                double zt = 1/interoplate(areaTriangle, DetOne, DetTwo, DetThree, triangle[0].w, triangle[1].w, triangle[2].w);
+                int size = (sizeof(interpolatedAttribs.attrs)/sizeof(*interpolatedAttribs.attrs));
+	              for (int i = 0; i <= size; i++)
+	              {
+	                  interpolatedAttribs.attrs[i] = zt *interoplate(areaTriangle, DetOne, DetTwo, DetThree, attrs[0].attrs[i], attrs[1].attrs[i], attrs[2].attrs[i]);
+	              }
 
-                // Interpolate Attributes for this pixel - In this case the R,G,B values as attr 0,1,2 respeectively
-	            interpolatedAttribs.attr[0] = interoplate(y, x, triangle, attrs[0].attr[0],attrs[1].attr[0],attrs[2].attr[0]);
-	            interpolatedAttribs.attr[1] = interoplate(y, x, triangle, attrs[0].attr[1],attrs[1].attr[1],attrs[2].attr[1]);
-	            interpolatedAttribs.attr[2] = interoplate(y, x, triangle, attrs[0].attr[2],attrs[1].attr[2],attrs[2].attr[2]);
-
-                //Interpolate Attributes for this pixel - in this case U and V coordinate as attr 3, 4 respectively
-	            interpolatedAttribs.attr[3] = interoplate(y, x, triangle, attrs[0].attr[0],attrs[1].attr[0], attrs[2].attr[0]);
-	            interpolatedAttribs.attr[4] = interoplate(y, x, triangle, attrs[0].attr[1],attrs[1].attr[1], attrs[2].attr[1]);
-                    
-                //calling the shader callback
                 frag->FragShader(target[y][x],interpolatedAttribs, *uniforms);
             }
         }
@@ -286,9 +287,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        //TestDrawPixel(frame);
-        //TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
