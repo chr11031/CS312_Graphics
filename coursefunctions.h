@@ -1,7 +1,6 @@
 #include "C:/MinGW/include/SDL2/SDL.h"
-#include "definitions.h"
-#include "shaders.h"
-#include <iostream>
+#include "./definitions.h"
+#include "./shaders.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -264,9 +263,6 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         // Your code for the color fragment shader goes here
 
         Attributes colorUniforms;
-        colorUniforms.vertexPoints[0] = colorTriangle[0];
-        colorUniforms.vertexPoints[1] = colorTriangle[1];
-        colorUniforms.vertexPoints[2] = colorTriangle[2];
         colorUniforms.colors[0] = colors[0];
         colorUniforms.colors[1] = colors[1];
         colorUniforms.colors[2] = colors[2];
@@ -285,15 +281,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
 
-        BufferImage myImage("venator.bmp");
+        static BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         //std::cout << std::hex << getpixel(myImage.img, 0, 0) << std::endl;
         Attributes imageUniforms;
         imageUniforms.image = &myImage;
-        imageUniforms.vertexPoints[0] = imageTriangle[0];
-        imageUniforms.vertexPoints[1] = imageTriangle[1];
-        imageUniforms.vertexPoints[2] = imageTriangle[2];
         // Your code for the uniform goes here
 
         FragmentShader myImageFragShader(TriangleImageShader);
@@ -314,10 +307,10 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         // Artificially projected, viewport transformed
         double divA = 6;
         double divB = 40;
-        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
-                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
-                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA }, //56, 6   Bottom Left 400 x 287
+                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA }, //456, 6  Bottom Right
+                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }, //286, 293 Top Right
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};//226, 293 Top Left
 
         Vertex verticesImgA[3];
         Attributes imageAttributesA[3];
@@ -325,7 +318,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
-        Vertex verticesImgB[3];        
+        Vertex verticesImgB[3];
         Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
@@ -334,16 +327,18 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.image = &myImage;
+        imageUniforms.quadLengthTop = abs(quad[2].x - quad[3].x);
+        imageUniforms.quadLengthBottom = abs(quad[0].x - quad[1].x);
 
-        FragmentShader fragImg;
+        FragmentShader fragImg(TriangleInterpolatedImageShader);
         // Your code for the image fragment shader goes here
                 
-        // Draw image triangle 
+        // Draw image triangle
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
 }
@@ -473,7 +468,4 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
-
-
-
 #endif
