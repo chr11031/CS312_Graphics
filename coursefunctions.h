@@ -385,7 +385,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
-                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }}; // W = 1 / Z
 
         Vertex verticesImgA[3];
         Attributes imageAttributesA[3];
@@ -399,26 +399,42 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
 
-        double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        // There was an error with the triangle barely not fitting, so I tweaked the bottom coordinates slightly
+        double coordinates[4][2] = { {0/divA,0.01/divA}, {1/divA,0.01/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
 
+        // Assign the UV attributes for each triangle 
+        // U is attribute 0 and V is attribute 1
+        imageAttributesA[0].attr[0] = coordinates[0][0];
+        imageAttributesA[0].attr[1] = coordinates[0][1];
+        imageAttributesA[1].attr[0] = coordinates[1][0];
+        imageAttributesA[1].attr[1] = coordinates[1][1]; 
+        imageAttributesA[2].attr[0] = coordinates[2][0];
+        imageAttributesA[2].attr[1] = coordinates[2][1];
+        
+        imageAttributesB[0].attr[0] = coordinates[2][0];
+        imageAttributesB[0].attr[1] = coordinates[2][1];
+        imageAttributesB[1].attr[0] = coordinates[3][0];
+        imageAttributesB[1].attr[1] = coordinates[3][1];
+        imageAttributesB[2].attr[0] = coordinates[0][0];
+        imageAttributesB[2].attr[1] = coordinates[0][1];
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
-
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
-                
+        fragImg.FragShader = ImageFragShader;
+
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
 }
 
 /************************************************
- * Demonstrate simple transformations for  
- * Project 05 in the vertex shader callback. 
+ * Demonstrate simple transformations for
+ * Project 05 in the vertex shader callback.
  ***********************************************/
 void TestVertexShader(Buffer2D<PIXEL> & target)
 {

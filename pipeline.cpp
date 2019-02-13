@@ -93,12 +93,12 @@ float crossProduct(Vertex* const vertex1, Vertex* const vertex2)
  ************************************************************/
 double interoplate(double y, double x, Vertex* const triangle, double attr1, double attr2, double attr3)
 {
+    double triangleArea = ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
     // % of weight that attribute 1 will be diluted
-    double w1 = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y)) /
-          ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    double w1 = ((triangle[1].y - triangle[2].y) * (x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (y - triangle[2].y)) / triangleArea;
+          
     // % of weight that attribute 2 will be diluted
-    double w2 = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y)) /
-          ((triangle[1].y - triangle[2].y) * (triangle[0].x - triangle[2].x) + (triangle[2].x - triangle[1].x) * (triangle[0].y - triangle[2].y));
+    double w2 = ((triangle[2].y - triangle[0].y) * (x - triangle[2].x) + (triangle[0].x - triangle[2].x) * (y - triangle[2].y)) / triangleArea;
     // % of weight that attribute 3 will be diluted
     // since the weights are percentages, the third weight will be the 100% - the other 
     // two calculated percents
@@ -109,7 +109,6 @@ double interoplate(double y, double x, Vertex* const triangle, double attr1, dou
     // three attributes
     return ((w1 * attr1) + (w2 * attr2) + (w3 * attr3));
 }
-
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -145,25 +144,17 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 Attributes interpolatedAttribs;
 
-                // Interpolate the first triangle's color attributes
-                // attr[0] = red
-                // attr[1] = green
-                // attr[2] = blue
-                interpolatedAttribs.attr[0] = interoplate(y, x, triangle, attrs[0].attr[0],
+                // for perspective correction it is necessary to 
+                // 1) interpolate the w value, and invert it
+                // this will compute the correct value for z
+                double z = 1 / interoplate(y, x, triangle, triangle[0].w, triangle[1].w, triangle[2].w );
+                // interpolate values, taking into account the proper depth z
+                interpolatedAttribs.attr[0] = z * interoplate(y, x, triangle, attrs[0].attr[0],
                                                           attrs[1].attr[0],attrs[2].attr[0]);
-                interpolatedAttribs.attr[1] = interoplate(y, x, triangle, attrs[0].attr[1],
+                interpolatedAttribs.attr[1] = z * interoplate(y, x, triangle, attrs[0].attr[1],
                                                           attrs[1].attr[1],attrs[2].attr[1]);
-                interpolatedAttribs.attr[2] = interoplate(y, x, triangle, attrs[0].attr[2],
-                                                          attrs[1].attr[2],attrs[2].attr[2]);
 
-                // Interpolate the second triangle's UV attributes
-                // attr[3] = U coordinate
-                // attr[4] = V coordinate
-                interpolatedAttribs.attr[3] = interoplate(y, x, triangle, attrs[0].attr[0], 
-                                                          attrs[1].attr[0], attrs[2].attr[0]);
-                interpolatedAttribs.attr[4] = interoplate(y, x, triangle, attrs[0].attr[1], 
-                                                          attrs[1].attr[1], attrs[2].attr[1]);
-
+                // call the fragShader
                 frag->FragShader(target[y][x],interpolatedAttribs, *uniforms);
             } 
         }
@@ -274,7 +265,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

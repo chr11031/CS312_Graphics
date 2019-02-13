@@ -79,6 +79,7 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
+            return;
             // De-Allocate pointers for column references
             for(int r = 0; r < h; r++)
             {
@@ -210,6 +211,8 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            // if having problems loading image uncomment this line
+            //SDL_LockSurface(img);
             setupInternal();
         }
 };
