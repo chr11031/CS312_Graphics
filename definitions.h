@@ -214,37 +214,75 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+union attrib
+{
+    double d;
+    void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
- * primitive as a whole OR per-vertex. Will be 
- * designed/implemented by the programmer. 
+ * primitive as a whole OR per-vertex. Refactoring
+ * done by Brother Christensen:
+ * https://github.com/dwc3993/CS312_Graphics/blob/dchristensen_pipeline/definitions.h
  **************************************************/
 class Attributes
 {      
     public:
+        // Members
+    	int numMembers = 0;
+        attrib arr[16];
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() {numMembers = 0;}
 
-        // Initialize with colors
-        Attributes(double red, double green, double blue) : r(red), g(green), b(blue) {}
-
-        // Member variables
-        PIXEL color; // DEPRECATED - use r,g,b instead
-        double r;
-        double g;
-        double b;
-        // UV texture coordinates
-        double u;
-        double v;
-        void* ptrImg;
+        // Interpolation Constructor
+        Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third, const double interpZ)
+        {
+            while(numMembers < first.numMembers)
+            {
+                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
+                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
+                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);
+                arr[numMembers].d *= interpZ;
+                numMembers += 1;
+            }
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+}; 
 
 /***************************************************
  * LERP = Find the value between two doubles that
@@ -261,34 +299,6 @@ inline double lerp(double a, double b, double amount) {
  **************************************************/
 inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
     return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
-}
-
-/***************************************************
- * Fragment shaders used in week 03 project
- **************************************************/
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    fragment = 0xff000000
-        | (((unsigned int)(vertAttr.r * 0xff)) << 16)
-        | (((unsigned int)(vertAttr.g * 0xff)) << 8)
-        |  ((unsigned int)(vertAttr.b * 0xff));
-}
-
-void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
-
-    int width = ptr->width();
-    int height = ptr->height();
-    int x = vertAttr.u * (width - 1);
-    int y = vertAttr.v * (height - 1);
-    fragment = (*ptr)[y][x];
-}
-
-// This makes the grid look like static
-void StaticShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    fragment = 0xff000000
-        | (((unsigned int)(rand() * 0xff)) << 16)
-        | (((unsigned int)(rand() * 0xff)) << 8)
-        |  ((unsigned int)(rand() * 0xff));
 }
 
 // Example of a fragment shader
