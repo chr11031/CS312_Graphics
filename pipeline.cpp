@@ -259,16 +259,19 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex *const triangle,
             {
                 target[(int)y][(int)x] = attrs[0].var['c'];
 
+                // Create a reciprocal value trueZ so we can do perspective correction properly
+                double trueZ = 1 / interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
+
                 // Interpolate Attributes for this pixel - In this case the R,G,B values
                 Attributes interpolatedAttribs;
-                // TODO: These are long but they will be shortened later
-                interpolatedAttribs.var['r'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
-                interpolatedAttribs.var['g'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
-                interpolatedAttribs.var['b'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
+                // TODO: These are long but they can be shortened later
+                interpolatedAttribs.var['r'] = trueZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['r'], attrs[1].var['r'], attrs[2].var['r']);
+                interpolatedAttribs.var['g'] = trueZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['g'], attrs[1].var['g'], attrs[2].var['g']);
+                interpolatedAttribs.var['b'] = trueZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['b'], attrs[1].var['b'], attrs[2].var['b']);
                 
                 //Interpolate the UV attributes for this pixel
-                interpolatedAttribs.var['u'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
-                interpolatedAttribs.var['v'] = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
+                interpolatedAttribs.var['u'] = trueZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['u'], attrs[1].var['u'], attrs[2].var['u']);
+                interpolatedAttribs.var['v'] = trueZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].var['v'], attrs[1].var['v'], attrs[2].var['v']);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -380,15 +383,18 @@ int main()
         clearScreen(frame);
 
         /********** Your code goes here **********/
-        /* Uncomment to run the Game Of Life code *
+        /* Uncomment to run the Project 01 - Game Of Life code *
         GameOfLife(frame);
         TestDrawPixel(frame);
 
-        /* Uncomment to run the Project 2 - Triangle Rasterization code *
+        /* Uncomment to run the Project 02 - Triangle Rasterization code *
         TestDrawTriangle(frame);
 
-        /* Uncommant to run the Project 3 - Linear Interpolation code */
+        /* Uncomment to run the Project 03 - Linear Interpolation code *
         TestDrawFragments(frame);
+
+        /* Uncomment to run the Project 04 - Perspective Correction code */
+        TestDrawPerspectiveCorrect(frame);
 
         /********** End of my code area **********/
         // Push to the GPU
