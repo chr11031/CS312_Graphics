@@ -210,6 +210,7 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
 };
@@ -225,20 +226,13 @@ class Attributes
     public:
 
         // Image
-        double u;
-        double v; 
         void* ptrImg;
 
-        // Color
-        double r;
-        double g;
-        double b;
-
-        // Other attributes
-        double other[16];
+        // Array of attributes
+        double attrs[16];
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : attrs() {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -261,17 +255,40 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // 0xaarrggbb
     fragment = 0xFF00;
-    fragment = (unsigned int)(fragment + vertAttr.r * 255) << 8;
-    fragment = (unsigned int)(fragment + vertAttr.g * 255) << 8;
-    fragment = (unsigned int)(fragment + vertAttr.b * 255);
+    fragment = (unsigned int)(fragment + vertAttr.attrs[0] * 255) << 8;
+    fragment = (unsigned int)(fragment + vertAttr.attrs[1] * 255) << 8;
+    fragment = (unsigned int)(fragment + vertAttr.attrs[2] * 255);
+}
+
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.attrs[0] * 8;
+    int ySquare = attributes.attrs[1] * 8;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
 }
 
 // Color a pixel based on a bitmap image
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* buffer = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (buffer -> width()  - 1);
-    int y = vertAttr.v * (buffer -> height() - 1);
+    int x = vertAttr.attrs[0] * (buffer -> width());
+    int y = vertAttr.attrs[1] * (buffer -> height());
     fragment = (*buffer)[y][x];
 }
 
