@@ -80,7 +80,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * INTERP
  * Serves as an interpolation algorithm.
  *****************************************/
-double interp(double triangleArea, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3) 
+double interp(double triangleArea, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
 {
     return ((firstDet / triangleArea * attrs3) + (secndDet / triangleArea * attrs1) + (thirdDet / triangleArea * attrs2));
 }
@@ -126,10 +126,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if ((firstDet >= 0) && (secndDet >= 0) && (thirdDet >= 0))
             {
                 Attributes interpolatedAttrs;
-                interpolatedAttrs.value[0] = interp(areaTriangle, firstDet, secndDet, thirdDet,attrs[0].value[0],attrs[1].value[0],attrs[2].value[0]);
-                interpolatedAttrs.value[1] = interp(areaTriangle, firstDet, secndDet, thirdDet,attrs[0].value[1],attrs[1].value[1],attrs[2].value[1]);
+                //Calculates the correct z value using the reciprocal of the interpolated w value
+                double correctZ = (1/(interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w)));
+                // value[0] and value[1] are multiplied by correctZ to give us the correct perspective
+                interpolatedAttrs.value[0] = (correctZ * interp(areaTriangle, firstDet, secndDet, thirdDet,
+                   attrs[0].value[0],attrs[1].value[0],attrs[2].value[0]));
+                interpolatedAttrs.value[1] = (correctZ * interp(areaTriangle, firstDet, secndDet, thirdDet,
+                   attrs[0].value[1],attrs[1].value[1],attrs[2].value[1]));
                 interpolatedAttrs.value[2] = interp(areaTriangle, firstDet, secndDet, thirdDet,attrs[0].value[2],attrs[1].value[2],attrs[2].value[2]);
-
                 frag->FragShader(target[y][x], interpolatedAttrs, *uniforms);
             }
         }
@@ -238,8 +242,9 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);//
-        //TestDrawTriangle(frame);
+        //TestDrawFragments(frame);//
+        TestDrawPerspectiveCorrect(frame);
+        //GameOfLife(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
