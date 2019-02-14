@@ -107,7 +107,7 @@ double interp(double area, double det1, double det2, double det3, double attr1, 
     double weight3 = 1 - weight1 - weight2;
     
     // Apply the weights and return the final value
-    return ((weight1 * attr1) + (weight2 * attr2) + (weight3 * attr3));
+    return ((weight2 * attr1) + (weight3 * attr2) + (weight1 * attr3));
 }
 
 /*************************************************************
@@ -134,7 +134,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
    // Check every point in the bounding box
    for (int y = yMin; y < yMax; y++)
    {
-        for (int x = xMin; x <= xMax; x++)
+        for (int x = xMin; x < xMax; x++)
         {
             // Calculate the determinant of each of the inner triangles
             double det1 = determinant(vec1[0], x - triangle[0].x, vec1[1], y - triangle[0].y);
@@ -146,12 +146,20 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             { 
 
                 Attributes interAttr;
+                double correctedZ;
+
+                // Find the corrected Depth
+                correctedZ = 1.0 / interp(totalArea, det1, det2, det3, triangle[0].w, triangle[1].w, triangle[2].w);
 
                 // Interpolate each value
                 interAttr.argb[0] = interp(totalArea, det1, det2, det3, attrs[0].argb[0], attrs[1].argb[0], attrs[2].argb[0]);
                 interAttr.argb[1] = interp(totalArea, det1, det2, det3, attrs[0].argb[1], attrs[1].argb[1], attrs[2].argb[1]);
                 interAttr.argb[2] = interp(totalArea, det1, det2, det3, attrs[0].argb[2], attrs[1].argb[2], attrs[2].argb[2]);
                 interAttr.argb[3] = interp(totalArea, det1, det2, det3, attrs[0].argb[3], attrs[1].argb[3], attrs[2].argb[3]);
+
+                interAttr.argb[0] *= correctedZ;
+                interAttr.argb[1] *= correctedZ; 
+
 
                 // Call the fragment shader function previously set
                 frag->FragShader(target[y][x], interAttr, *uniforms);
@@ -263,7 +271,7 @@ int main()
         clearScreen(frame);
 
         // Test our Fragmentation
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
