@@ -215,8 +215,15 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
+};
+
+union attrib
+{
+    double d;
+    void* ptr;
 };
 
 /***************************************************
@@ -234,7 +241,7 @@ class Attributes
         
         //Attributes for shaders 
         //Changes to make this class more flexable
-        double newColor[5];
+        double newColor[16];
         void* ptrImg;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -254,8 +261,8 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
 
     //With our two vertex attributes 
-    int x = vertAttr.newColor[4] * (ptr->width()-1);
-    int y = vertAttr.newColor[3] * (ptr->height()-1);
+    int x = vertAttr.newColor[3] * (ptr->width()-1);
+    int y = vertAttr.newColor[4] * (ptr->height()-1);
 
     //Create the point
     fragment = (*ptr)[y][x];
@@ -268,7 +275,7 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
  * ********************************************/
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-
+    //
     PIXEL color = 0xff000000;
     color += (unsigned int)(vertAttr.newColor[1] * 0xff) << 16;
     color += (unsigned int)(vertAttr.newColor[2] * 0xff) << 8;
