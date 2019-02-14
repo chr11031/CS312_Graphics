@@ -156,14 +156,16 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
          {
             target[(int)y][(int)x] = attrs[0].color;
 
+            double zInterp = 1.0 / interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
+
             // Interpolate Attributes for this pixel - In this case the R,G,B values
             Attributes interpolatedAttribs;
-            interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-            interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-            interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+            interpolatedAttribs.r = zInterp * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+            interpolatedAttribs.g = zInterp * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+            interpolatedAttribs.b = zInterp * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
-            interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-            interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+            interpolatedAttribs.u = zInterp * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+            interpolatedAttribs.v = zInterp * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
 
             // Call shader callback
             frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -275,7 +277,9 @@ int main()
         //clearScreen(frame);
 
         //TestDrawTriangle(frame);
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
+        //TestDrawStatic(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

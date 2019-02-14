@@ -243,6 +243,18 @@ class Attributes
         void* ptrImg;
 };
 
+// Static Fragment Shader 
+void StaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(rand() *0xff) << 16;
+    color += (unsigned int)(rand() *0xff) << 8;
+    color += (unsigned int)(rand() *0xff) << 0;
+
+    fragment = color;
+}
+
 // Image Fragment Shader 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -250,7 +262,7 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int x = vertAttr.u * (bf->width()-1);
     int y = vertAttr.v * (bf->height()-1);
 
-     fragment = (*bf)[y][x];
+    fragment = (*bf)[y][x];
 }
 
 // My Fragment Shader for color interpolation
