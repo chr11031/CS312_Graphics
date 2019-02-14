@@ -4,6 +4,8 @@
 #include "stdio.h"
 #include "math.h"
 
+#include "time.cpp"
+
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
@@ -210,8 +212,16 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
+};
+
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
 };
 
 /***************************************************
@@ -223,17 +233,105 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        // Obligatory empty constructor
-        Attributes() {}
 
-        PIXEL color;
+        // Members
+    	int numMembers = 0;
+        attrib arr[16];
+
+        // Obligatory empty constructor
+        Attributes() {numMembers = 0;}
+
+        Attributes(Vertex * colorTriangle, Vertex point)
+        {
+
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+
 };	
+
+/*****************************************
+ * Color Fragment Shader
+ * Feed in the RGB color values and 
+ * bit shift to fill the appropriate color channel
+ * ***************************************/
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output the interpolated attribute color 
+    PIXEL color = 0xff000000;
+
+    // add the colors and bit shift to fill the correct color channel for that color
+    color += (unsigned int)(vertAttr[0].d *0xff) << 16;
+    color += (unsigned int)(vertAttr[1].d *0xff) << 8;
+    color += (unsigned int)(vertAttr[2].d *0xff) << 0;
+    // Color the fragment
+    fragment = color;
+
+
+};
+
+void MovingShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    // if(start % 1000 > 500){
+    //     BufferImage* bf = (BufferImage*)uniforms[0].ptr;
+
+    //     int x = vertAttr[0].d * (bf->width()-1);
+    //     int y = vertAttr[1].d * (bf->height()-1);
+
+    //     fragment = (*bf)[y][x];        
+    // }
+
+};
+
+/*****************************************
+ * Shade the pizel from the uv coordinates of 
+ * an image. Each Pixel will be filled with the 
+ * color of that pixel from the associated uv coordinate.
+ * ***************************************/
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms[0].ptr;
+
+    int x = vertAttr[0].d * (bf->width()-1);
+    int y = vertAttr[1].d * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+    
+    
+
+
+};
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
