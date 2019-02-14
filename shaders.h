@@ -35,4 +35,60 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = (*ptr)[y][x];
 }
 
+/****************************************************
+ * FRAGSHADERUVWITHOUTIMAGE:
+ * The fragment shader that draws a red and white
+ * checkerboard
+ ***************************************************/
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // these static ints and key listeners change the number of rows and columns
+    // on the triangle
+    static int row = 8;
+    static int column = 8;
+    SDL_Event e;
+    while(SDL_PollEvent(&e))
+    {
+        // add a row
+        if(e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN) 
+        {
+            row++;
+        }
+        // subtract a row
+        if(e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN) 
+        {
+            row--;
+        }
+        // add a column
+        if(e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN) 
+        {
+            column++;
+        }
+        // subtract a column
+        if(e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN) 
+        {
+            column--;
+        }   
+    }
+
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.values[0] * row;
+    int ySquare = attributes.values[1] * column;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
+}
+
 #endif // SHADERS_H

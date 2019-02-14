@@ -41,7 +41,7 @@ void processUserInputs(bool & running)
     SDL_Event e;
     int mouseX;
     int mouseY;
-    while(SDL_PollEvent(&e)) 
+    while(SDL_PollEvent(&e))
     {
         if(e.type == SDL_QUIT) 
         {
@@ -111,9 +111,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // if each of the determinants are positive relative to each vertex we made, then it is within the triangle
             if (firstD >= 0 && secD >= 0 && thirD >= 0)
             {
+                // interpolate w first, before we pass it into the interpolate function
+                // the corect z is 1/w
+
                 Attributes intAttrs;
                 // find the interpolated value based on the percentage each area is of the whole triangle
-                intAttrs = Interpolate(totArea, firstD, secD, thirD, attrs);
+                intAttrs = Interpolate(totArea, firstD, secD, thirD, attrs, triangle);
+                // also interpolate with the w value, then take the reciprocal
 
                 // call the fragment shader with the interpolated attributes
                 frag->FragShader(target[y][x], intAttrs, *uniforms);
@@ -225,9 +229,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        //GameOfLife(frame);
-        //TestDrawTriangle(frame)
-        TestDrawFragments(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
