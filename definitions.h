@@ -270,7 +270,10 @@ void ImageFragShader (PIXEL & fragment, const Attributes & vertAttr, const Attri
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
     int x = vertAttr.getU() * (bf->width()-1);
     int y = vertAttr.getV() * (bf->height()-1);
-    fragment = (*bf)[y][x];
+
+    //PIXEL color = 0xff00ff00;
+
+    fragment = (*bf)[y][x]; //& color
 
 }
 
@@ -288,6 +291,32 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+void GreenShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.getU() * (bf->width()-1);
+    int y = vertAttr.getV() * (bf->height()-1);
+
+    // int a = 0;
+    // a += vertAttr.getR();
+    // a += vertAttr.getB();
+    // a += vertAttr.getG();
+
+    // a /= 3;
+
+    // PIXEL color1 = 0xff000000;
+
+    // color1 += a << 8;
+
+
+    
+
+    PIXEL color = 0xff00ff00;
+
+    fragment = ((*bf)[y][x]) & color; //& color
+
 }
 
 /*******************************************************
@@ -380,7 +409,7 @@ double interp(double area, double d1, double d2, double d3, double att1, double 
     
 
     //mix in the attribute with the how much it makes up of the triangle. 
-    return ((d1 * att1) + (d2 * att2) + (d3 * att3)) / area;
+    return ((d1 * att3) + (d2 * att1) + (d3 * att2)) / area;
 }
 
 
