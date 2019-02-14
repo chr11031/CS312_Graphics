@@ -211,6 +211,7 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
 };
