@@ -104,10 +104,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
     float totalArea = triangleArea(vs1, vs2);
 
+    int yTop = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int yBottom = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int yRange = yTop - yBottom;
+
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
-        {
+        {   
             // create the vectors to be compared with the three side vectors.
             double q1[2] = {x - triangle[0].x, y - triangle[0].y};
             double q2[2] = {x - triangle[1].x, y - triangle[1].y};
@@ -125,20 +129,19 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 //The point is inside the triangle.
                 target[y][x] = attrs[0].color;
 
+                double zt = 1/lerp(totalArea, areaT1, areaT2, areaT3, triangle[0].w, triangle[1].w, triangle[2].w);
+
                 // interpolate colors here into new attributes object
                 Attributes lerpedAttrs;
-                lerpedAttrs.rgb[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
-                lerpedAttrs.rgb[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
-                lerpedAttrs.rgb[2] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
+                lerpedAttrs.rgb[0] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[0], attrs[1].rgb[0], attrs[2].rgb[0]);
+                lerpedAttrs.rgb[1] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[1], attrs[1].rgb[1], attrs[2].rgb[1]);
+                lerpedAttrs.rgb[2] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].rgb[2], attrs[1].rgb[2], attrs[2].rgb[2]);
 
-                lerpedAttrs.uv[0] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
-                lerpedAttrs.uv[1] = lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
+                lerpedAttrs.uv[0] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
+                lerpedAttrs.uv[1] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
 
-                // check github code on class repo.;
+
                 frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
-
-                // draw the point.
-                // DrawPoint(target, pVertex, attrs, uniforms, frag);
             }
         }
     }
@@ -249,8 +252,8 @@ int main()
         // TestDrawPixel(frame);
         //GameOfLife(frame);
         // TestDrawTriangle(frame);
-        TestDrawFragments(frame);
-        // TestDrawPerspectiveCorrect(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         //TestDrawPixel(frame);
         // GameOfLife(frame);
