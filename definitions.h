@@ -247,11 +247,19 @@ class Attributes
 };
 
 /***************************************************
+ * LERP = Find the value between two doubles that
+ * is some specific amount in between
+ **************************************************/
+inline double lerp(double a, double b, double amount) {
+    return a + (b - a) * amount;
+}
+
+/***************************************************
  * INTERP - Function used to interpolate values,
  * taking advantage of the determinant's relationship
  * to the area of the triangle
  **************************************************/
-double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
+inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
     return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
 }
 
@@ -273,6 +281,14 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int x = vertAttr.u * (width - 1);
     int y = vertAttr.v * (height - 1);
     fragment = (*ptr)[y][x];
+}
+
+// This makes the grid look like static
+void StaticShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
+    fragment = 0xff000000
+        | (((unsigned int)(rand() * 0xff)) << 16)
+        | (((unsigned int)(rand() * 0xff)) << 8)
+        |  ((unsigned int)(rand() * 0xff));
 }
 
 // Example of a fragment shader

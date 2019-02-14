@@ -127,17 +127,23 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 target[(int)y][(int)x] = attrs[0].color;
 
+                // Interpolate by reciprocals of Z values and reciprocate again
+                // This calculates the correct interpolation of the texture (or
+                // other attributes) across a depth.
+                double interpZ = 1.0 / interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
+
                 // Interpolate Attributes for this pixel - In this case the R,G,B values
                 // The interp function works the way that it does because the amount each
                 // vertex's attributes should contribute to the pixel is inversely proportional
                 // to the area (determinant) at that point.
-                Attributes interpolatedAttribs;
-                interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                Attributes interpolatedAttribs;                
+                
+                interpolatedAttribs.r = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
-                interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                interpolatedAttribs.u = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -248,7 +254,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
