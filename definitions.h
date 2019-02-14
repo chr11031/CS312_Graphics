@@ -254,6 +254,12 @@ class Attributes
                                 vertAttrs[2].attrValues[i] * w1;
             }
         }
+
+        void correctPerspective(double z)
+        {
+            for (int i = 0; i < numValues; i++)
+                attrValues[i] *= z;
+        }
 };	
 
 // Example of a fragment shader

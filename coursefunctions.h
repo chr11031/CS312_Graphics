@@ -393,17 +393,40 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        // ImageAttributes A
+        imageAttributesA[0].attrValues[0] = coordinates[0][0]; // first point u
+        imageAttributesA[0].attrValues[1] = coordinates[0][1]; // first point v
+        imageAttributesA[1].attrValues[0] = coordinates[1][0]; // second point u
+        imageAttributesA[1].attrValues[1] = coordinates[1][1]; // second point v
+        imageAttributesA[2].attrValues[0] = coordinates[2][0]; // third point u
+        imageAttributesA[2].attrValues[1] = coordinates[2][1]; // third point v
+
+        // ImageAttributes B
+        imageAttributesB[0].attrValues[0] = coordinates[2][0];
+        imageAttributesB[0].attrValues[1] = coordinates[2][1];
+        imageAttributesB[1].attrValues[0] = coordinates[3][0];
+        imageAttributesB[1].attrValues[1] = coordinates[3][1];
+        imageAttributesB[2].attrValues[0] = coordinates[0][0];
+        imageAttributesB[2].attrValues[1] = coordinates[0][1];
+
+        // Set numValues to 2 (UV coordinates)
+        imageAttributesA[0].numValues = 2;
+        imageAttributesA[1].numValues = 2;
+        imageAttributesA[2].numValues = 2;
+        imageAttributesB[0].numValues = 2;
+        imageAttributesB[1].numValues = 2;
+        imageAttributesB[2].numValues = 2;
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.pointerImg = &myImage;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
-                
+        fragImg.FragShader = imageFragShader;
+
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
