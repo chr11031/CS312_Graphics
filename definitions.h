@@ -272,6 +272,52 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = (*bf)[y][x];
 }
 
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    static int row = 8;
+    static int col = 8;
+
+    SDL_Event e;
+    while(SDL_PollEvent(&e)) 
+    {
+            if(e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN) 
+            {
+                    row++;
+            }
+            if(e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN) 
+            {
+                    col--;
+            }
+            if(e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN) 
+            {
+                    row--;
+            }
+            if(e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN) 
+            {
+                    col++;
+            }
+    }
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.value[0] * row;
+    int ySquare = attributes.value[1] * col;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xff00ff00;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xff000000;
+    }
+}
+
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
