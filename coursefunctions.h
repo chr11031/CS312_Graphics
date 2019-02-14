@@ -299,6 +299,30 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = (*ptr)[y][x];
 }
 
+// Supplied by Brother Christiansen
+// Frag Shader for UV without image (due to SDL2 bug?)
+void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.values[0] * 8;
+    int ySquare = attributes.values[1] * 8;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
+}
+
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 
  * interpolation for Project 03. 
@@ -395,13 +419,28 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        imageAttributesA[0].values[0] = coordinates[0][0];
+        imageAttributesA[0].values[1] = coordinates[0][1];
+        imageAttributesA[1].values[0] = coordinates[1][0];
+        imageAttributesA[1].values[1] = coordinates[1][1];
+        imageAttributesA[2].values[0] = coordinates[2][0];
+        imageAttributesA[2].values[1] = coordinates[2][1];
+        imageAttributesB[0].values[0] = coordinates[2][0];
+        imageAttributesB[0].values[1] = coordinates[2][1];
+        imageAttributesB[1].values[0] = coordinates[3][0];
+        imageAttributesB[1].values[1] = coordinates[3][1];
+        imageAttributesB[2].values[0] = coordinates[0][0];
+        imageAttributesB[2].values[1] = coordinates[0][1];
+
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
-        FragmentShader fragImg;
+        // FragmentShader fragImg(ImageFragShader);
+        FragmentShader fragImg(FragShaderUVwithoutImage);
         // Your code for the image fragment shader goes here
                 
         // Draw image triangle 
