@@ -80,7 +80,11 @@ class Buffer2D
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            //free(grid);
+            for(int r = 0; r < h; r++)
+            {
+                free(grid[r]);
+            }
+            free(grid);
         }
 
         // Size-Specified constructor, no data
@@ -151,11 +155,11 @@ class BufferImage : public Buffer2D<PIXEL>
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
 
             PIXEL* row = (PIXEL*)img->pixels;
-            row = &row[w*h];
+            row += (w*h);
             for(int i = 0; i < h; i++)
             {
                 grid[i] = row;
-                row -= (img->pitch/sizeof(PIXEL));                    
+                row -= w;                    
             }
         }
 
@@ -202,16 +206,16 @@ class BufferImage : public Buffer2D<PIXEL>
         {
             ourSurfaceInstance = true;
             SDL_Surface* tmp = SDL_LoadBMP(path);      
+            SDL_LockSurface(tmp);
             SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-
-            PIXEL pix = ((PIXEL*)tmp->pixels)[0];
-
             img = SDL_ConvertSurface(tmp, format, 0);
-            //SDL_FreeSurface(tmp);
-            //SDL_FreeFormat(format);
+            SDL_FreeSurface(tmp);
+            SDL_FreeFormat(format);
+            SDL_LockSurface(img); // Bug fix - didn't work :(
             setupInternal();
         }
 };
+
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
@@ -233,6 +237,9 @@ class Attributes
 
         // Here we declare an array of vars to be interpolated however we like. 16 is more than enough.
         float vars[16];
+
+        // Here we are declaring a variable to optomize how many times we need to interopolate our items later
+        int maxVar = 0;
 
         // Here we have a void pointer to be used how we wish. Most likely to be used for a buffer image.
         void* ptr;
@@ -260,11 +267,37 @@ void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = 0xff000000 | ((int)vertAttr.vars[0] << 16) | ((int)vertAttr.vars[1] << 8) | (int)vertAttr.vars[2];
 }
 
+void checkerShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    static BufferImage*  myImage = NULL;
+    if(myImage == NULL)
+        myImage = new BufferImage("./checker.bmp");
+    (*myImage)[0] = (*myImage)[1];
+
+    BufferImage* bf = (BufferImage*)uniforms.ptr;
+    int x = vertAttr.vars[0] * (bf->width()-1);
+    int y = vertAttr.vars[1] * (bf->height()-1);
+
+    if(x < 0 || x > 255)
+    x = 0;
+    if(y < 0 || y > 255)
+    y = 0;
+
+    if (*(myImage)[y][x] == 0xffff0000)
+        fragment = (*bf)[y][x];
+}
+
 void imgFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptr;
     int x = vertAttr.vars[0] * (bf->width()-1);
     int y = vertAttr.vars[1] * (bf->height()-1);
+
+    if(x < 0 || x > 255)
+    x = 0;
+    if(y < 0 || y > 255)
+    y = 0;
 
     fragment = (*bf)[y][x];
 }
