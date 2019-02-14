@@ -108,6 +108,9 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 Attributes intAttrs;
 
+                // Interpolate w and take the reciprocal of the interpolated w
+                double correctedZ = 1/(interp(areaTriangle, d1, d2, d3, triangle[0].w, triangle[1].w, triangle[2].w));
+
                 // Interpolate for each color weight. See definitions.h for the function.
                 intAttrs.r = interp(areaTriangle, d1, d2, d3, attrs[0].r, attrs[1].r, attrs[2].r);
                 intAttrs.g = interp(areaTriangle, d1, d2, d3, attrs[0].g, attrs[1].g, attrs[2].g);
@@ -115,6 +118,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
                 intAttrs.u = interp(areaTriangle, d1, d2, d3, attrs[0].u, attrs[1].u, attrs[2].u);
                 intAttrs.v = interp(areaTriangle, d1, d2, d3, attrs[0].v, attrs[1].v, attrs[2].v);
+
+                // Multiply by corrected z
+                intAttrs.u *= correctedZ;
+                intAttrs.v *= correctedZ;
 
                 // Color the pixel we are indexing.
                 frag->FragShader(target[y][x], intAttrs, *uniforms);
@@ -226,7 +233,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        // TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
