@@ -246,8 +246,16 @@ class Attributes
             }
         }
 
+        void correctPerspective(double correctedZ)
+        {
+            for (int i = 0; i < valuesToInterpolate; i++)
+            {
+                attrValues[i] *= correctedZ;
+            }
+        }
+
         PIXEL color;
-        double attrValues[5];
+        double attrValues[15];
         int valuesToInterpolate;
         void* ptrImage;
 };  
