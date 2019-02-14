@@ -82,10 +82,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 {
     //First we will find all the minimum and maximum X and Y points
     //to create the bounding box
-    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
+    double minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    double minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
 
     //A little setup for future calculations and ensure that we are
     //doing things in counter-clockwise order
@@ -113,14 +113,18 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 Attributes interpAttrs;
 
-                //Interpolation for Gradiant Triangle
-                interpAttrs.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpAttrs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpAttrs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+                //affine calculation
+                //double affineX = affineCalc(x, minX, maxX);
+                //double affineY = affineCalc(
 
-                //Interpolation for Image
+                //Interpolation
                 interpAttrs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
                 interpAttrs.v = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                double w = interpolate(area, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
+
+                //multiply by the corrected Z or 1/Z
+                interpAttrs.u *= 1/w;
+                interpAttrs.v *= 1/w;
 
                 //Call shader callback
                 frag->FragShader(target[y][x], interpAttrs, *uniforms);
@@ -232,7 +236,7 @@ int main()
         clearScreen(frame);
 
         // Test Draw Functions
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
