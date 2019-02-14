@@ -284,7 +284,7 @@ void ImageFragShader(PIXEL & fragment, const Attributes<T> & vertAttr, const Att
     int x = vertAttr.getU() * (bf->width()-1);
     int y = vertAttr.getV() * (bf->height()-1);
 
-    fragment = (*bf)[y][x];
+    fragment = (*bf)[y][x] * 0x0000ff00;
 }
 
 template <class T>
@@ -418,9 +418,9 @@ T interp(const T & area,
              const T & attrs2)
 {
     // Individual percentages as template types
-    T componentR = (det1 / area) * attrs0;
-    T componentG = (det2 / area) * attrs1;
-    T componentB = (det3 / area) * attrs2;
+    T componentR = (det1 / area) * attrs2;
+    T componentG = (det2 / area) * attrs0;
+    T componentB = (det3 / area) * attrs1;
 
     return (componentR + componentG + componentB);
 };
