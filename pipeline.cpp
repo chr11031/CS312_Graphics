@@ -63,7 +63,6 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
@@ -78,7 +77,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 }
 
 /*********************************************************************
- * CROSS_PRODUCT and MIN and MAX
+ * CROSS_PRODUCT and INTER
  * helper functions to calculate the cross product of two vertecies,
  * helper function for calculating the interpolation of attributes over all points
  ********************************************************************/
@@ -92,8 +91,9 @@ Attributes inter(Attributes* const attrs, double area0, double area1, double are
     Attributes interAtt;
     for(int i = 0; i < attrs[0].colorAttr.size(); i++)
     {
-        interAtt.colorAttr.push_back((attrs[0].colorAttr[i] * area0) + (attrs[1].colorAttr[i] * area1) 
-            + (attrs[2].colorAttr[i] * area2));
+        //determine attribute by adding each portion of vertex given by the corresponding area
+        interAtt.addDouble((attrs[0].colorAttr[i].d * area0) + (attrs[1].colorAttr[i].d * area1) 
+            + (attrs[2].colorAttr[i].d * area2));
     }
     return interAtt;
 }
@@ -131,19 +131,21 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     {
         for (int y = minY; y <= maxY; y ++)
         {
-            //determinates
+            //area of each segment
             double temp0[] = {triangle[2].x - x, triangle[2].y - y};
-            double area0 = crossProduct(temp0, edge0);
+            double area0 = crossProduct(temp0, edge0)/area;
             double temp1[] = {triangle[0].x - x, triangle[0].y - y};
-            double area1 = crossProduct(temp1, edge1);
+            double area1 = crossProduct(temp1, edge1)/area;
             double temp2[] = {triangle[1].x - x, triangle[1].y - y};
-            double area2 = crossProduct(temp2, edge2);
+            double area2 = crossProduct(temp2, edge2)/area;
 
             if ( (area0 >= 0) && (area1 >= 0) && (area2 >= 0) )
             {
                 //Converting areas into percentages of the whole area
                 //Interpolate attributes
-                Attributes interAttr = inter(attrs, area0/area, area1/area, area2/area);
+                Attributes interAttr = inter(attrs, area0, area1, area2);
+                double Z = 1/((triangle[0].w*area0) + (triangle[1].w*area1) + (triangle[2].w*area2));
+                interAttr.addDouble(Z);
 
                 //frag callback -> coloring the fragment(in this case pixel)
                 frag -> FragShader(target[y][x], interAttr, *uniforms);
@@ -255,7 +257,8 @@ int main()
         clearScreen(frame);
 
         // TODO Your code goes here
-            TestDrawFragments(frame);
+            TestDrawPerspectiveCorrect(frame);
+            //TestDrawFragments(frame);
             //TestDrawTriangle(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

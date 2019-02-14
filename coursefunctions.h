@@ -251,26 +251,24 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[0] = {250, 112, 1, 1};
         colorTriangle[1] = {450, 452, 1, 1};
         colorTriangle[2] = {50, 452, 1, 1};
-        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+        //PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff} Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
 
-        colorAttributes[0].colorAttr.push_back(1.0);
-        colorAttributes[0].colorAttr.push_back(0.0);
-        colorAttributes[0].colorAttr.push_back(0.0);
+        colorAttributes[0].addDouble(1.0);
+        colorAttributes[0].addDouble(0.0);
+        colorAttributes[0].addDouble(0.0);
         colorAttributes[0].colorAttr.shrink_to_fit();
-        colorAttributes[1].colorAttr.push_back(0.0);
-        colorAttributes[1].colorAttr.push_back(1.0);
-        colorAttributes[1].colorAttr.push_back(0.0);
+        colorAttributes[1].addDouble(0.0);
+        colorAttributes[1].addDouble(1.0);
+        colorAttributes[1].addDouble(0.0);
         colorAttributes[1].colorAttr.shrink_to_fit();
-        colorAttributes[2].colorAttr.push_back(0.0);
-        colorAttributes[2].colorAttr.push_back(0.0);
-        colorAttributes[2].colorAttr.push_back(1.0);
+        colorAttributes[2].addDouble(0.0);
+        colorAttributes[2].addDouble(0.0);
+        colorAttributes[2].addDouble(1.0);
         colorAttributes[2].colorAttr.shrink_to_fit();
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
-
         Attributes colorUniforms;
-
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
 
         /****************************************************
@@ -282,25 +280,23 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
-        imageAttributes[0].colorAttr.push_back(1);
-        imageAttributes[0].colorAttr.push_back(0);
+        imageAttributes[0].addDouble(coordinates[0][0]);
+        imageAttributes[0].addDouble(coordinates[0][1]);
         imageAttributes[0].colorAttr.shrink_to_fit();
-        imageAttributes[1].colorAttr.push_back(1);
-        imageAttributes[1].colorAttr.push_back(1);
-        imageAttributes[0].colorAttr.shrink_to_fit();
-        imageAttributes[2].colorAttr.push_back(0);
-        imageAttributes[2].colorAttr.push_back(1);
-        imageAttributes[0].colorAttr.shrink_to_fit();
+        imageAttributes[1].addDouble(coordinates[1][0]);
+        imageAttributes[1].addDouble(coordinates[1][1]);
+        imageAttributes[1].colorAttr.shrink_to_fit();
+        imageAttributes[2].addDouble(coordinates[2][0]);
+        imageAttributes[2].addDouble(coordinates[2][1]);
+        imageAttributes[2].colorAttr.shrink_to_fit();
 
         BufferImage myImage("foothills.bmp"); //TODO find an image of 24bit
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
-
+        imageUniforms.addPtr(&myImage);
         FragmentShader myImageFragShader;
         myImageFragShader.FragShader = ImageFragShader;
-
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
 
@@ -315,7 +311,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         **************************************************/
         // Artificially projected, viewport transformed
         double divA = 6;
-        double divB = 40;
+        double divB = 40;//              X            ,                Y             ,  Z  ,    W = Z'
         Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
                          {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
@@ -334,16 +330,28 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].addDouble(coordinates[0][0]);
+        imageAttributesA[0].addDouble(coordinates[0][1]);
+        imageAttributesA[1].addDouble(coordinates[1][0]);
+        imageAttributesA[1].addDouble(coordinates[1][1]);
+        imageAttributesA[2].addDouble(coordinates[2][0]);
+        imageAttributesA[2].addDouble(coordinates[2][1]);
+        
+        imageAttributesB[0].addDouble(coordinates[2][0]);
+        imageAttributesB[0].addDouble(coordinates[2][1]);
+        imageAttributesB[1].addDouble(coordinates[3][0]);
+        imageAttributesB[1].addDouble(coordinates[3][1]);
+        imageAttributesB[2].addDouble(coordinates[0][0]);
+        imageAttributesB[2].addDouble(coordinates[0][1]);
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("checker.bmp"); //"great-white-shark.bmp"
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.addPtr(&myImage);
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
