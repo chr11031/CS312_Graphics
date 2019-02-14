@@ -51,6 +51,33 @@ struct Vertex
     double w;
 };
 
+/***************************************************
+ * ATTRIBUTES (shadows OpenGL VAO, VBO)
+ * The attributes associated with a rendered 
+ * primitive as a whole OR per-vertex. Will be 
+ * designed/implemented by the programmer. 
+ **************************************************/
+class Attributes
+{      
+    public:
+        //public member variabels
+        PIXEL color;
+        double r, g, b, u, v;
+
+        vector<double> vAttr;
+
+        void* ptrImg;
+
+        // Obligatory empty constructor
+        Attributes() {}
+
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        {
+            // Your code goes here when clipping is implemented
+        }
+};	
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -219,36 +246,6 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
-/***************************************************
- * ATTRIBUTES (shadows OpenGL VAO, VBO)
- * The attributes associated with a rendered 
- * primitive as a whole OR per-vertex. Will be 
- * designed/implemented by the programmer. 
- **************************************************/
-class Attributes
-{      
-    public:
-        //public member variabels
-        PIXEL color;
-        double r, g, b, u, v;
-
-        vector<double> vAttr;
-        // This is what I would use to make the attributes
-        // more flexible, however, I ran out of time and
-        // wasn't able to fully implement it
-
-        void* ptrImg;
-
-        // Obligatory empty constructor
-        Attributes() {}
-
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
-        {
-            // Your code goes here when clipping is implemented
-        }
-};	
-
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
@@ -266,6 +263,12 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     color += (unsigned int)(vertAttr.b *0xff) << 0;
 
     fragment = color;
+}
+
+void CustomVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn;
+    attrOut = vertAttr;
 }
 
 // Example of a fragment shader
@@ -382,7 +385,7 @@ inline double determinant(const double & A, const double & B, const double & C, 
  ***************************************/
 double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2)
 {
-    return (firstDet * attr0 + secndDet * attr1 + thirdDet * attr2) / areaTriangle;
+    return (firstDet * attr2 + secndDet * attr0 + thirdDet * attr1) / areaTriangle;
 }
 
 // Stub for Primitive Drawing function
