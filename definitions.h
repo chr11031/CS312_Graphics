@@ -212,10 +212,15 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            SDL_LockSurface(img);
             setupInternal();
         }
 };
-
+union attrib
+{	    
+    double d;
+	void* ptr;
+};
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -226,14 +231,11 @@ class Attributes
 {      
     public:
 
-        double u;
-        double v;
+        
         void* ptrImg; //pointer image buffer
-        double attr[16]; //array of attributes, to make it dynamic
+        double attrs[16]; //array of attributes, to make it dynamic
 
-        double r;
-        double g;
-        double b;
+
 
         // Obligatory empty constructor
         Attributes() {}
@@ -258,12 +260,12 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 	BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
 	
 	//assign x and y two vertex attributes attr
-	int x = vertAttr.attr[0] * (ptr->width()-1);
-	int y = vertAttr.attr[1] * (ptr->height()-1);
+    int x = vertAttr.attrs[3] * (ptr->width()-1);
+	int y = vertAttr.attrs[4] * (ptr->height()-1);
 	
 	//Create a fragment after assigning coordinated to the triangle
 	fragment = (*ptr)[y][x];
-	
+    
 	}
 	
 /********************************************
@@ -277,9 +279,9 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 	// shift left 16 for red, left 8 for green, and left 0 for blue
 	// assign attribute 0,1 and 2 respectively
 	PIXEL color = 0xff000000;
-	color += (unsigned int)(vertAttr.attr[1] * 0xff) << 16;
-	color += (unsigned int)(vertAttr.attr[2] * 0xff) << 8;
-	color += (unsigned int)(vertAttr.attr[0] * 0xff) << 0;
+	color += (unsigned int)(vertAttr.attrs[1] * 0xff) << 16;
+	color += (unsigned int)(vertAttr.attrs[2] * 0xff) << 8;
+	color += (unsigned int)(vertAttr.attrs[0] * 0xff) << 0;
 	
     //assign fragment to color
 	fragment = color;
