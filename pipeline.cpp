@@ -130,11 +130,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 //for if just sent empty pixels.
                 target[y][x] = attrs[0].color;
+
+                double z = 1 / interpolate(area, deta, detb, detc, triangle[0].w, triangle[1].w, triangle[2].w);
+
                 Attributes newattribs;
                 newattribs.numValues= attrs[0].numValues;
-                //interpolates attributes (may clean up later)
+                
                 for (int i = 0; i < newattribs.numValues; i++)
-                    newattribs.values[i] = interpolate(area, deta, detb, detc, attrs[0].values[i], attrs[1].values[i], attrs[2].values[i]);
+                    newattribs.values[i] = z * interpolate(area, deta, detb, detc, attrs[0].values[i], attrs[1].values[i], attrs[2].values[i]);
 
                 //sends the new attributes to the fragment shader
                 frag->FragShader(target[y][x], newattribs, *uniforms);
@@ -245,7 +248,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
