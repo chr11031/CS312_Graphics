@@ -95,9 +95,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     Vertex v2 = { triangle[1].x, triangle[1].y };
     Vertex v3 = { triangle[2].x, triangle[2].y };
 
-    // needed for interpolation
-    float totalArea = determinate(subtractVert(v2, v1), subtractVert(v3, v1));
-
     // interpolated values are used once so the same container can be used
     // for every pixel
     double * interpBin = new double[attrs[0].dLen];
@@ -122,7 +119,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // then the point is in the triangle
             if (det[0] >= 0 && det[1] >= 0 && det[2]>= 0)
             {
-                interp(attrs, interpBin, det, totalArea);
+                interp(triangle, attrs, interpBin, det);
                 frag->FragShader(target[(int)p.y][(int)p.x], interpAttr, *uniforms);
             }
         }
@@ -234,7 +231,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
