@@ -1,7 +1,5 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <cmath>
-#include <iostream>
 
 /***********************************************
  * CLEAR_SCREEN
@@ -63,7 +61,6 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-	//target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -74,30 +71,6 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 {
     // Your code goes here
 }
-/**************************************************************
- * DETERMINANT
- * Calculates the determinant with the four parameters.
- *************************************************************/
-double determinant(double ax, double bx, double ay, double by) 
-{
-    // Find the area of the triangle
-    return ((ax * by) - (bx * ay));
-}
-
-/**************************************************************
- * INTERP
- * Interpolates the attributes.
- *************************************************************/
-double interp(double area, double det1, double det2, double det3, double attr1, double attr2, double attr3) 
-{
-    // Calculate the weights of each point (percentage)
-    double weight1 = det1 / area;
-    double weight2 = det2 / area;
-    double weight3 = 1 - weight1 - weight2;
-
-    // Apply the weights and return the final value
-    return ((weight1 * attr1) + (weight2 * attr2) + (weight3 * attr3));
-}
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -107,51 +80,6 @@ double interp(double area, double det1, double det2, double det3, double attr1, 
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-    //the min and max, x and y coordinates for the triangles, which would create a rectangle 
-    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-
-    //the x and y coordinates for each triangle
-    Vertex a = {(float)triangle[0].x, (float)triangle[0].y};
-    Vertex b = {(float)triangle[1].x, (float)triangle[1].y};
-    Vertex c = {(float)triangle[2].x, (float)triangle[2].y};
-
-    //deciding which points of the square are in the triangle
-    for (int y = minY; y <= maxY; y++)
-    {
-        for (int x = minX; x <= maxX; x++)
-        {
-            //the point to fill in or not
-            //Vertex v = {(float)x, (float)y};
-            double det1 = determinant(vec1[0], x - triangle[0].x, vec1[1], y - triangle[0].y);
-            double det2 = determinant(vec2[0], x - triangle[1].x, vec2[1], y - triangle[1].y);
-            double det3 = determinant(vec3[0], x - triangle[2].x, vec3[1], y - triangle[2].y);
-
-            //calculating the barycentric coordinates
-            float baryA = (((b.y - c.y)*(v.x - c.x))+((c.x - b.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
-            float baryB = (((c.y - a.y)*(v.x - c.x))+((a.x - c.x)*(v.y - c.y))) / (((b.y - c.y)*(a.x - c.x))+((c.x - b.x)*(a.y - c.y)));
-            float baryC = 1.0f - baryA - baryB;
-
-            //filling in the triangles with color
-            if (baryA >= 0.0f && baryB >= 0.0f && baryC >= 0.0f)
-            {
-                Attributes interAttr;
-
-                // Interpolate each value
-                interAttr.argb[0] = interp(totalArea, det1, det2, det3, attrs[0].argb[0], attrs[1].argb[0], attrs[2].argb[0]);
-                interAttr.argb[1] = interp(totalArea, det1, det2, det3, attrs[0].argb[1], attrs[1].argb[1], attrs[2].argb[1]);
-                interAttr.argb[2] = interp(totalArea, det1, det2, det3, attrs[0].argb[2], attrs[1].argb[2], attrs[2].argb[2]);
-                interAttr.argb[3] = interp(totalArea, det1, det2, det3, attrs[0].argb[3], attrs[1].argb[3], attrs[2].argb[3]);
-
-                // Call the fragment shader function previously set
-                frag->FragShader(target[y][x], interAttr, *uniforms);
-            }
-        }
-    }
-
-
 }
 
 /**************************************************************
@@ -251,17 +179,12 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        //processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
         clearScreen(frame);
 
         // Your code goes here
-		//TestDrawPixel(frame);
-        //GameOfLife(frame);
-        TestDrawPerspectiveCorrect(frame);
-        TestDrawTriangle(frame);
-        //TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
