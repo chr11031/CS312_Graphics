@@ -2,6 +2,7 @@
 #include "SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include <math.h>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -43,6 +44,14 @@ struct Vertex
     double y;
     double z;
     double w;
+};
+
+/****************************************************
+ * Matrix for changing vertices. 
+ ****************************************************/
+struct Matrix
+{
+    double x[4][4];
 };
 
 /******************************************************
@@ -228,6 +237,9 @@ class Attributes
         Vertex *vert;
         double rgb[3];
         double uv[2];
+        float rotation;
+        float scale[3];
+        float translation[3];
 
         // Obligatory empty constructor
         Attributes() {}
@@ -339,6 +351,17 @@ class FragmentShader
         }
 };
 
+Vertex matrixMultiply(Matrix m, Vertex v)
+{
+    Vertex newVert;
+    newVert.x = m.x[0][0] * v.x + m.x[0][1] * v.y + m.x[0][2] * v.z + m.x[0][3] * v.w;
+    newVert.y = m.x[1][0] * v.x + m.x[1][1] * v.y + m.x[1][2] * v.z + m.x[1][3] * v.w;
+    newVert.z = m.x[2][0] * v.x + m.x[2][1] * v.y + m.x[2][2] * v.z + m.x[2][3] * v.w;
+    newVert.w = m.x[3][0] * v.x + m.x[3][1] * v.y + m.x[3][2] * v.z + m.x[3][3] * v.w;
+
+    return newVert;
+}
+
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -346,6 +369,33 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
+
+// Example of a vertex shader
+void vertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Nothing happens with this vertex, attribute
+    Matrix newMatrix;
+    newMatrix.x[0][0] = cos(uniforms.rotation) * uniforms.scale[0];
+    newMatrix.x[0][1] = -sin(uniforms.rotation);
+    newMatrix.x[0][2] = 1; // change this here thing
+    newMatrix.x[0][3] = uniforms.translation[0];
+    newMatrix.x[1][0] = sin(uniforms.rotation) * uniforms.scale[1];
+    newMatrix.x[1][1] = cos(uniforms.rotation);
+    newMatrix.x[1][2] = 1; // change this here thing
+    newMatrix.x[1][3] = uniforms.translation[1];
+    newMatrix.x[2][0] = 1;
+    newMatrix.x[2][1] = 1;
+    newMatrix.x[2][2] = 1; // change this here thing
+    newMatrix.x[2][3] = uniforms.translation[2];
+    newMatrix.x[3][0] = 0;
+    newMatrix.x[3][1] = 0;
+    newMatrix.x[3][2] = 0;
+    newMatrix.x[3][3] = 1;
+
+    vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
 
 /**********************************************************
  * VERTEX_SHADER
