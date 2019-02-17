@@ -153,6 +153,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                                                           attrs[1].attr[0],attrs[2].attr[0]);
                 interpolatedAttribs.attr[1] = z * interoplate(y, x, triangle, attrs[0].attr[1],
                                                           attrs[1].attr[1],attrs[2].attr[1]);
+                interpolatedAttribs.attr[2] = z * interoplate(y, x, triangle, attrs[0].attr[2],
+                                                          attrs[1].attr[2],attrs[2].attr[2]);
+                interpolatedAttribs.attr[3] = z * interoplate(y, x, triangle, attrs[0].attr[1],
+                                                          attrs[1].attr[1],attrs[2].attr[1]);
 
                 // call the fragShader
                 frag->FragShader(target[y][x],interpolatedAttribs, *uniforms);
@@ -265,8 +269,9 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
+        //TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
         //TestDrawFragments(frame);
-        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

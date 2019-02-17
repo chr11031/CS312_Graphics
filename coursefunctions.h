@@ -449,21 +449,37 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        colorAttributes[0].attr[0] = 1;
+        colorAttributes[0].attr[1] = 0;
+        colorAttributes[0].attr[2] = 0;
+
+        colorAttributes[1].attr[0] = 0;
+        colorAttributes[1].attr[1] = 1;
+        colorAttributes[1].attr[2] = 0;
+
+        colorAttributes[2].attr[0] = 0;
+        colorAttributes[2].attr[1] = 0;
+        colorAttributes[2].attr[2] = 1;      
 
         FragmentShader myColorFragShader;
+        //myColorFragShader.FragShader = ColorFragShader;
+        myColorFragShader = ColorFragShader;
+
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
+
         VertexShader myColorVertexShader;
         // Your code for the vertex shader goes here 
+        myColorVertexShader.VertShader = DefaultVertShader;
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
