@@ -49,10 +49,138 @@ struct Vertex
 /****************************************************
  * Matrix for changing vertices. 
  ****************************************************/
-struct Matrix
+class Matrix
 {
-    double x[4][4];
+  private:
+    double * matrixPtr;
+    int rows;
+    int columns;
+    bool init;
+  public:
+    Matrix(): rows(0), columns(0), matrixPtr(NULL), init(false) {};
+
+    // constructor that sets up the matrix size
+    Matrix(int rows, int columns)
+    {
+        this->rows = rows;
+        this->columns = columns;
+        matrixPtr = new double[rows * columns];
+        for(int i = 0; i < (rows * columns); i++)
+        {
+            matrixPtr[i] = 0;
+        }
+        init = false;
+    }
+
+    ~Matrix()
+    {
+        if(matrixPtr != NULL)
+        {
+            delete [] matrixPtr;
+        }
+    }
+
+    void addRotation(double rot)
+    {
+        Matrix rotate(this->rows, this->columns);
+        
+        if (init == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->matrixPtr[i] = rotate.matrixPtr[i];
+            }
+            init = true;
+        }
+        else
+        {
+            *this = rotate * (*this);
+        }
+    }
+
+    void addScaling(double scaleX, double scaleY, double scaleZ)
+    {
+        Matrix scale(this->rows, this->columns);
+
+        if (init == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->matrixPtr[i] = scale.matrixPtr[i];
+            }
+            init = true;
+        }
+        else
+        {
+            *this = scale * (*this);
+        }
+    }
+
+    void addTranslation(double transX, double transY, double transZ)
+    {
+
+        Matrix translate(this->rows, this->columns);
+        if (init == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->matrixPtr[i] = translate.matrixPtr[i];
+            }
+            init = true;
+        }
+        else
+        {
+            *this = translate * (*this);
+        }
+    }
+
+    /*************************************************************************
+     * Multiplication operator
+     * multiplies the two matrices together.
+     ************************************************************************/
+    Matrix operator * (Matrix & rhs)
+    {
+        if (this->columns != rhs.rows)
+        {
+            // that matrices can't be multiplied so return an empty one.
+            Matrix mat;
+            return mat;
+        }
+
+        Matrix newMatrix(this->rows, rhs.columns);
+        int rSize = rhs.rows * rhs.columns;
+        int lSize = this->rows * this->columns;
+        for(int i = 0; i < this->columns; i++)
+        {
+            for(int j = 0; j < rhs.rows; j++)
+            {
+                newMatrix.matrixPtr[i * newMatrix.columns + j] += 
+                    this->matrixPtr[i * this->columns + j] * 
+                    rhs.matrixPtr[j * rhs.columns + i];
+            }
+        }
+        return newMatrix;
+    }
+    friend Vertex operator * (Matrix & rhs, Vertex & lhs);
 };
+
+Vertex operator * (Matrix & rhs, Vertex & lhs)
+{
+    if (rhs.columns != 4 || rhs.rows != 4)
+    {
+        // A vertex has 4 "rows" so the matrix must have 4 columns
+        Vertex vert;
+        return vert;
+    }
+
+    Vertex newVertex;
+    newVertex.x = rhs.matrixPtr[0] * lhs.x + rhs.matrixPtr[1] * lhs.y + rhs.matrixPtr[2] * lhs.z + rhs.matrixPtr[3] * lhs.w;
+    newVertex.y = rhs.matrixPtr[4] * lhs.x + rhs.matrixPtr[5] * lhs.y + rhs.matrixPtr[6] * lhs.z + rhs.matrixPtr[7] * lhs.w;
+    newVertex.z = rhs.matrixPtr[8] * lhs.x + rhs.matrixPtr[9] * lhs.y + rhs.matrixPtr[10] * lhs.z + rhs.matrixPtr[11] * lhs.w;
+    newVertex.w = rhs.matrixPtr[12] * lhs.x + rhs.matrixPtr[13] * lhs.y + rhs.matrixPtr[14] * lhs.z + rhs.matrixPtr[15] * lhs.w;
+
+    return newVertex;
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -351,17 +479,6 @@ class FragmentShader
         }
 };
 
-Vertex matrixMultiply(Matrix m, Vertex v)
-{
-    Vertex newVert;
-    newVert.x = m.x[0][0] * v.x + m.x[0][1] * v.y + m.x[0][2] * v.z + m.x[0][3] * v.w;
-    newVert.y = m.x[1][0] * v.x + m.x[1][1] * v.y + m.x[1][2] * v.z + m.x[1][3] * v.w;
-    newVert.z = m.x[2][0] * v.x + m.x[2][1] * v.y + m.x[2][2] * v.z + m.x[2][3] * v.w;
-    newVert.w = m.x[3][0] * v.x + m.x[3][1] * v.y + m.x[3][2] * v.z + m.x[3][3] * v.w;
-
-    return newVert;
-}
-
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -374,24 +491,6 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 void vertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Nothing happens with this vertex, attribute
-    Matrix newMatrix;
-    newMatrix.x[0][0] = cos(uniforms.rotation) * uniforms.scale[0];
-    newMatrix.x[0][1] = -sin(uniforms.rotation);
-    newMatrix.x[0][2] = 1; // change this here thing
-    newMatrix.x[0][3] = uniforms.translation[0];
-    newMatrix.x[1][0] = sin(uniforms.rotation) * uniforms.scale[1];
-    newMatrix.x[1][1] = cos(uniforms.rotation);
-    newMatrix.x[1][2] = 1; // change this here thing
-    newMatrix.x[1][3] = uniforms.translation[1];
-    newMatrix.x[2][0] = 1;
-    newMatrix.x[2][1] = 1;
-    newMatrix.x[2][2] = 1; // change this here thing
-    newMatrix.x[2][3] = uniforms.translation[2];
-    newMatrix.x[3][0] = 0;
-    newMatrix.x[3][1] = 0;
-    newMatrix.x[3][2] = 0;
-    newMatrix.x[3][3] = 1;
-
     vertOut = vertIn;
     attrOut = vertAttr;
 }

@@ -440,13 +440,13 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
-        colorUniforms.rotation = 90;
-        colorUniforms.scale[0] = 0;
-        colorUniforms.scale[1] = 0;
-        colorUniforms.scale[2] = 0;
-        colorUniforms.translation[0] = 0;
-        colorUniforms.translation[1] = 0;
-        colorUniforms.translation[2] = 0;
+        // colorUniforms.rotation = 90;
+        // colorUniforms.scale[0] = 0;
+        // colorUniforms.scale[1] = 0;
+        // colorUniforms.scale[2] = 0;
+        // colorUniforms.translation[0] = 0;
+        // colorUniforms.translation[1] = 0;
+        // colorUniforms.translation[2] = 0;
 
         
         VertexShader myColorVertexShader;
