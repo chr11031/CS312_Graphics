@@ -47,7 +47,7 @@ struct Vertex
 };
 
 /****************************************************
- * Matrix for changing vertices. 
+ * Matrix for transforming vertices. 
  ****************************************************/
 class Matrix
 {
@@ -56,6 +56,7 @@ class Matrix
     int rows;
     int columns;
     bool init;
+
   public:
     Matrix(): rows(0), columns(0), matrixPtr(NULL), init(false) {};
 
@@ -77,13 +78,25 @@ class Matrix
         if(matrixPtr != NULL)
         {
             delete [] matrixPtr;
+            matrixPtr = NULL;
         }
     }
 
-    void addRotation(double rot)
+    /*************************************************************************
+     * Add Rotation
+     * Add rotation to the current matrix.
+     ************************************************************************/
+    void addRotation(double rot/*radians*/)
     {
         Matrix rotate(this->rows, this->columns);
-        
+        // initialize the rotation matrix
+        rotate.matrixPtr[0] = cos(rot);
+        rotate.matrixPtr[1] = -sin(rot);
+        rotate.matrixPtr[1 * this->columns] = sin(rot);
+        rotate.matrixPtr[1 * this->columns + 1] = cos(rot);
+        rotate.matrixPtr[2 * this->columns + 2] = 1;
+        rotate.matrixPtr[3 * this->columns + 3] = 1;
+        // if the matrix has nothing in it, just make it equal to this one
         if (init == false)
         {
             for(int i = 0; i < (this->rows * this->columns); i++)
@@ -92,16 +105,29 @@ class Matrix
             }
             init = true;
         }
+        // if there is something in the matrix, multiply to combine.
         else
         {
             *this = rotate * (*this);
         }
     }
 
+    /*************************************************************************
+     * Add Scaling
+     * Add scaling to the current matrix.
+     ************************************************************************/
     void addScaling(double scaleX, double scaleY, double scaleZ)
     {
-        Matrix scale(this->rows, this->columns);
+        // this array is used in the for loop to make things easier. 
+        double scaleArray[4] = {scaleX, scaleY, scaleZ, 1};
 
+        Matrix scale(this->rows, this->columns);
+        // initialize the scaling matrix
+        for(int i = 0; i < this->rows; i++)
+        {
+            scale.matrixPtr[i * this->columns + i] = scaleArray[i];
+        }
+        // if the matrix has nothing in it, just make it equal to this one
         if (init == false)
         {
             for(int i = 0; i < (this->rows * this->columns); i++)
@@ -110,16 +136,29 @@ class Matrix
             }
             init = true;
         }
+        // if there is something in the matrix, multiply to combine.
         else
         {
             *this = scale * (*this);
         }
     }
 
+    /*************************************************************************
+     * Add Translation
+     * Add translation to the current matrix.
+     ************************************************************************/
     void addTranslation(double transX, double transY, double transZ)
     {
-
         Matrix translate(this->rows, this->columns);
+        // initialize translation matrix.
+        translate.matrixPtr[1 * this->columns - 1] = transX;
+        translate.matrixPtr[2 * this->columns - 1] = transY;
+        translate.matrixPtr[3 * this->columns - 1] = transZ;
+        for(int i = 0; i < this->rows; i++)
+        {
+            translate.matrixPtr[i * this->columns + i] = 1;
+        }
+        // if the matrix has nothing in it, just make it equal to this one
         if (init == false)
         {
             for(int i = 0; i < (this->rows * this->columns); i++)
@@ -128,6 +167,7 @@ class Matrix
             }
             init = true;
         }
+        // if there is something in the matrix, multiply to combine.
         else
         {
             *this = translate * (*this);
@@ -142,33 +182,66 @@ class Matrix
     {
         if (this->columns != rhs.rows)
         {
-            // that matrices can't be multiplied so return an empty one.
+            // the matrices can't be multiplied so return an empty one.
             Matrix mat;
             return mat;
         }
 
         Matrix newMatrix(this->rows, rhs.columns);
-        int rSize = rhs.rows * rhs.columns;
-        int lSize = this->rows * this->columns;
+        // int rSize = rhs.rows * rhs.columns;
+        // int lSize = this->rows * this->columns;
         for(int i = 0; i < this->columns; i++)
         {
             for(int j = 0; j < rhs.rows; j++)
             {
-                newMatrix.matrixPtr[i * newMatrix.columns + j] += 
-                    this->matrixPtr[i * this->columns + j] * 
-                    rhs.matrixPtr[j * rhs.columns + i];
+                for(int k = 0; k < newMatrix.columns; k++)
+                {
+                    newMatrix.matrixPtr[i * newMatrix.columns + j] += 
+                        this->matrixPtr[i * this->columns + k] * 
+                        rhs.matrixPtr[k * rhs.columns + j];
+                }
             }
         }
         return newMatrix;
     }
-    friend Vertex operator * (Matrix & rhs, Vertex & lhs);
+
+    /*****************************************************************
+     * Equals operator.
+     * rows, columns, and init can be copied, but the matrix has to
+     * be set to a new matrix of the right size and then the individual
+     * values can be copied over.
+     ****************************************************************/
+    // Matrix operator = (const Matrix & rhs)
+    // {
+    //     this->rows = rhs.rows;
+    //     this->columns = rhs.columns;
+    //     this->init = rhs.init;
+    //     if(this->matrixPtr != NULL)
+    //     {
+    //         delete [] matrixPtr;
+    //     }
+    //     matrixPtr = new double[this->rows * this->columns];
+    //     for(int i = 0; i < (this->rows * this->columns); i++)
+    //     {
+    //         this->matrixPtr[i] = rhs.matrixPtr[i];
+    //     }
+    //     return *this;
+    // }
+
+    // has to be a friend to access the private variables.
+    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
 };
 
-Vertex operator * (Matrix & rhs, Vertex & lhs)
+/**************************************************************
+ * A friend multiplication operator to help when multiplying 
+ * a vertex.
+ *************************************************************/
+Vertex operator * (const Matrix & rhs, const Vertex & lhs)
 {
     if (rhs.columns != 4 || rhs.rows != 4)
     {
-        // A vertex has 4 "rows" so the matrix must have 4 columns
+        // A vertex has 4 "rows" so the matrix must have 4 columns and 4 rows
+        // so the output will be correct.
         Vertex vert;
         return vert;
     }
@@ -365,9 +438,7 @@ class Attributes
         Vertex *vert;
         double rgb[3];
         double uv[2];
-        float rotation;
-        float scale[3];
-        float translation[3];
+        Matrix vertTransform;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -487,11 +558,10 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     attrOut = vertAttr;
 }
 
-// Example of a vertex shader
+// multiplies the vertex by a matrix to get the new vertices.
 void vertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // Nothing happens with this vertex, attribute
-    vertOut = vertIn;
+    vertOut = uniforms.vertTransform * vertIn;
     attrOut = vertAttr;
 }
 
