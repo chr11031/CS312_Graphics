@@ -519,7 +519,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         {
                 {.5, 0, 0, 0},
                 {0, .5, 0, 0},
-                {0, 0, .5, 0},
+                {0, 0, 1, 0},
                 {0, 0, 0, 0}
         };
         Matrix scaleMatrix(scaleData, 3, 3);
