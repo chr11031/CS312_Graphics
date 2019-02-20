@@ -32,7 +32,7 @@ void ImageFragmentShader(PIXEL & fragment, const Attributes & vertAttr, const At
     fragment = (*ptr)[y][x];
 }
 
-/*******************************************************
+/******************************************************* 
  * TRANSFORMATION_VERTEX_SHADER
  * Applies the transformations to the vertex
  ******************************************************/

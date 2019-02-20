@@ -465,7 +465,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
-         * the previous transformations concatenated.
+         * the previous transformations concatenated. 
          ************************************************/
 	TransformationMatrix* all = new TransformationMatrix();
         // Multiply in wanted order for final result

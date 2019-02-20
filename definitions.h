@@ -240,7 +240,7 @@ class TransformationMatrix
         }
 
         // Multiply a 4x4 by a 4x1
-        Vertex multiplyByVertex(const Vertex& vert) const
+        Vertex multiplyByVertex(const Vertex& vert) const 
         {
             Vertex temp;
             temp.x = multiplyRowVertex(base[0], vert);
