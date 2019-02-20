@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include <math.h>
+#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -45,6 +46,7 @@ struct Vertex
     double z;
     double w;
 };
+
 
 /****************************************************
  * Matrix for transforming vertices. 
@@ -174,11 +176,34 @@ class Matrix
         }
     }
 
-    /*************************************************************************
+    /*****************************************************************
+     * Equals operator.
+     * rows, columns, and init can be copied, but the matrix has to
+     * be set to a new matrix of the right size and then the individual
+     * values can be copied over.
+     ****************************************************************/
+    Matrix & operator = (const Matrix & rhs)
+    {
+        this->rows = rhs.rows;
+        this->columns = rhs.columns;
+        this->init = rhs.init;
+        if(this->matrixPtr != NULL)
+        {
+            delete [] matrixPtr;
+        }
+        matrixPtr = new double[this->rows * this->columns];
+        for(int i = 0; i < (this->rows * this->columns); i++)
+        {
+            this->matrixPtr[i] = rhs.matrixPtr[i];
+        }
+        return *this;
+    }
+
+        /*************************************************************************
      * Multiplication operator
-     * multiplies the two matrices together.
+     * A friend function that multiplies the two matrices together.
      ************************************************************************/
-    Matrix operator * (Matrix & rhs)
+    Matrix & operator *= (const Matrix & rhs)
     {
         if (this->columns != rhs.rows)
         {
@@ -188,49 +213,71 @@ class Matrix
         }
 
         Matrix newMatrix(this->rows, rhs.columns);
-        // int rSize = rhs.rows * rhs.columns;
-        // int lSize = this->rows * this->columns;
-        for(int i = 0; i < this->columns; i++)
+        for(int i = 0; i < this->rows; i++)
         {
-            for(int j = 0; j < rhs.rows; j++)
+            for(int j = 0; j < rhs.columns; j++)
             {
-                for(int k = 0; k < newMatrix.columns; k++)
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
                 {
-                    newMatrix.matrixPtr[i * newMatrix.columns + j] += 
-                        this->matrixPtr[i * this->columns + k] * 
+                     sum += this->matrixPtr[i * this->columns + k] * 
                         rhs.matrixPtr[k * rhs.columns + j];
                 }
+                newMatrix.matrixPtr[i * newMatrix.columns + j] = sum;
             }
         }
-        return newMatrix;
+        newMatrix.init = true;
+        *this = newMatrix;
+        return *this;
     }
 
-    /*****************************************************************
-     * Equals operator.
-     * rows, columns, and init can be copied, but the matrix has to
-     * be set to a new matrix of the right size and then the individual
-     * values can be copied over.
-     ****************************************************************/
-    // Matrix operator = (const Matrix & rhs)
-    // {
-    //     this->rows = rhs.rows;
-    //     this->columns = rhs.columns;
-    //     this->init = rhs.init;
-    //     if(this->matrixPtr != NULL)
-    //     {
-    //         delete [] matrixPtr;
-    //     }
-    //     matrixPtr = new double[this->rows * this->columns];
-    //     for(int i = 0; i < (this->rows * this->columns); i++)
-    //     {
-    //         this->matrixPtr[i] = rhs.matrixPtr[i];
-    //     }
-    //     return *this;
-    // }
-
     // has to be a friend to access the private variables.
+    friend Matrix operator * (const Matrix & lhs, const Matrix & rhs);
     friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
 };
+
+    /*************************************************************************
+     * Multiplication operator
+     * A friend function that multiplies the two matrices together.
+     ************************************************************************/
+    Matrix operator * (const Matrix & lhs, const Matrix & rhs)
+    {
+        if (lhs.columns != rhs.rows)
+        {
+            // the matrices can't be multiplied so return an empty one.
+            Matrix mat;
+            return mat;
+        }
+
+        Matrix newMatrix(lhs.rows, rhs.columns);
+        for(int i = 0; i < lhs.rows; i++)
+        {
+            for(int j = 0; j < rhs.columns; j++)
+            {
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
+                {
+                     sum += lhs.matrixPtr[i * lhs.columns + k] * 
+                        rhs.matrixPtr[k * rhs.columns + j];
+                }
+                newMatrix.matrixPtr[i * newMatrix.columns + j] = sum;
+            }
+        }
+        newMatrix.init = true;
+        // std::cout << "New Matrix:" << std::endl;
+        // for(int i = 0; i < newMatrix.rows * newMatrix.columns; i++)
+        // {
+        //     std::cout << newMatrix.matrixPtr[i] << ' ';
+        //     if((i % newMatrix.columns) - 3 == 0)
+        //     {
+        //         std::cout << std::endl;
+        //     }
+        // }
+        // std::cout << std::endl;
+
+        // returning the 0 matrix for some reason. The multiplied matrix is correct.
+        return newMatrix; 
+    }
 
 /**************************************************************
  * A friend multiplication operator to help when multiplying 

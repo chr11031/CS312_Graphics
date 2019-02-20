@@ -470,7 +470,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix rotMatrix(4, 4);
-        rotMatrix.addRotation(sqrt(2)/2);
+        rotMatrix.addRotation(M_PI/4);
         colorUniforms.vertTransform = rotMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -479,10 +479,10 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
 	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        Matrix finalMatrix = rotMatrix * transMatrix * scaleMatrix;
-        // scaleMatrix.addTranslation(100, 50, 0);
-        // scaleMatrix.addRotation(sqrt(2)/2);
-        colorUniforms.vertTransform = finalMatrix;
+        // colorUniforms.vertTransform = rotMatrix * (transMatrix * scaleMatrix);
+        colorUniforms.vertTransform = rotMatrix;
+        colorUniforms.vertTransform *= transMatrix;
+        colorUniforms.vertTransform *= scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
@@ -535,7 +535,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("yoshi.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
@@ -553,7 +553,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
-        // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
+        // NOTE: To test the Z-Buffer additional draw calls/geometry need to be called into this scene
 }
 
 
