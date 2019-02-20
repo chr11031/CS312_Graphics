@@ -25,6 +25,18 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+double multiplyRowAndCol(const double row[], const double col[], const int & length)
+{
+    double result = 0;
+
+    for (int i = 0; i < length; i++)
+    {
+        result += row[i] * col[i];
+    }
+
+    return result;
+}
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -260,6 +272,14 @@ class Attributes
             }
         }
 
+        void concatenateMatricies(const Attributes & transform) throw (const char *)
+        {
+            *this *= transform;
+        }
+
+        void operator *=(const Attributes & rhs) throw (const char *);
+
+
         // Attribute information
         PIXEL color; // Still here for depricated code
         double attrValues[15];
@@ -270,18 +290,47 @@ class Attributes
         double matrix[4][4];
         int numRows;
         int numCols;
-};  
+}; 
 
-double multiplyRowAndCol(const double row[], const double col[], const int & length)
+void Attributes::operator*=(const Attributes & rhs) throw (const char *)
 {
-    double result = 0;
+    // For all intents and purposes we have flipped the matrix order
+    // in order to make the order of operations correct while maintaining
+    // code readability for this function.
 
-    for (int i = 0; i < length; i++)
+    if (rhs.numCols != this->numRows)
+        throw "ERROR: Invalid matrix sizes for concatenate\n";
+
+    // Temp matrix to hold results so we don't mess up data during
+    // matrix multiplication
+    double tempMatrix[4][4];
+    
+    // Loop through the number of rows in the RHS
+    for (int i = 0; i < rhs.numRows; i++)
     {
-        result += row[i] * col[i];
+        // Loop through the number of cols in LHS
+        for (int j = 0; j < this->numCols; j++)
+        {
+            double colToRow[4];
+
+            //Flatten the LHS cols into a row for maths
+            for (int k = 0; k < this->numRows; k++)
+            {
+                colToRow[k] = this->matrix[k][j];
+            }
+
+            // Do maths on RHS row and LHS col and assign
+            tempMatrix[i][j] += multiplyRowAndCol(rhs.matrix[i], colToRow, rhs.numCols);
+        }
     }
 
-    return result;
+    // Make sure this matrix knows it has changed
+    this->numRows = rhs.numRows;
+
+    // Overwrite the old matrix with the new one
+    for (int i = 0; i < this->numRows ; i++)
+        for (int j = 0; j < this->numCols; j++)
+            this->matrix[i][j] = tempMatrix[i][j];
 }
 
 /******************************************************
@@ -296,10 +345,8 @@ Vertex operator * (const Vertex & lhs, const Attributes & rhs) throw (const char
     double newVerts[4] = {0, 0, 0, 0};
     double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
     
-    for (int i = 0; i < rhs.numCols; i++)
-    {
+    for (int i = 0; i < rhs.numRows; i++)
         newVerts[i] = multiplyRowAndCol(rhs.matrix[i], currentVerts, rhs.numCols);
-    }
 
     Vertex temp = {newVerts[0], newVerts[1], newVerts[2], newVerts[3]};
     return temp;
