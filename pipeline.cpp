@@ -168,6 +168,11 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+    } else {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
     }
 }
 
@@ -255,6 +260,22 @@ int main()
         clearScreen(frame);
 
         TestVertexShader(frame);
+
+        // Test matrix code
+/*        double dArray[] = {
+            1, 2, 3, 4,
+            9, 8, 7, 6,
+            1, 2, 9, 8,
+            7, 0, 8, 3
+        };
+        Matrix m1(dArray);
+        Vertex v1 = {2, 6, 3, 4};
+
+        Vertex v2 = m1 * v1;
+        std::cout << v2.x << ' '
+        << v2.y << ' '
+        << v2.z << ' '
+        << v2.w << '\n';*/
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

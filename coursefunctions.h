@@ -348,6 +348,16 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
 }
 
+void testClear(Attributes& a) {
+        for (int i = 0; i < 16; i++) {
+                a[i].d = 
+                (i == 0 || i == 5 || i == 10 || i == 15)
+                ? 1
+                : 0;
+
+        }
+}
+
 /************************************************
  * Demonstrate simple transformations for  
  * Project 05 in the vertex shader callback. 
@@ -378,22 +388,49 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         myColorFragShader.FragShader = &ColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
+        colorUniforms.insertDbl(1.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(1.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(1.0);
+        colorUniforms.insertDbl(0.0);
+
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(0.0);
+        colorUniforms.insertDbl(1.0);
         
         VertexShader myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        myColorVertexShader.VertShader = &TranslationVertShader;
+        //myColorVertexShader.VertShader = NULL;
+
+        // test draw
+        //DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms[3].d = 100;
+        colorUniforms[7].d = 50;
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        testClear(colorUniforms);
+        colorUniforms[0].d = 0.5;
+        colorUniforms[5].d = 0.5;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -401,6 +438,11 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        testClear(colorUniforms);
+        colorUniforms[0].d = COS30;
+        colorUniforms[1].d = -SIN30;
+        colorUniforms[4].d = SIN30;
+        colorUniforms[5].d = COS30;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -409,6 +451,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
 		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        testClear(colorUniforms);
+        
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }

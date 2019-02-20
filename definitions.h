@@ -25,6 +25,14 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+// Sine of 45 degrees
+#define SIN45 0.7071067811865
+// Cosine of 45 degrees (same as sine)
+#define COS45 0.7071067811865
+
+#define SIN30 0.5
+#define COS30 0.8660254
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -299,6 +307,82 @@ inline double lerp(double a, double b, double amount) {
  **************************************************/
 inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
     return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
+}
+
+/***************************************************
+ * MATRIX - Class to facilitate matrix operations
+ **************************************************/
+class Matrix {
+    public:
+    Matrix();                       // initialize with identity matrix
+    Matrix(double* values);         // initialize with 16 values
+    Matrix(const Attributes& uniforms);    // initialize with 16 values from the uniforms
+    
+    double v[4][4];
+
+    void clear(); // set back to default state (identity matrix)
+
+    Vertex operator* (const Vertex& rhs); // 4x4 matrix times 4x1
+    Matrix operator* (const Matrix& rhs); // 4x4 matrix times 4x4
+};
+
+// Default constructor: initialize 4x4 matrix of all 0s TODO: identity matrix
+Matrix::Matrix() {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = 0;
+}
+
+// Constructor that takes an array of 16 values for the matrix
+Matrix::Matrix(double* values) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = values[r*4 + c];
+}
+
+// Constructor that takes a uniforms object and gets 16 values from there
+Matrix::Matrix(const Attributes& uniforms) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = uniforms[r*4 + c].d;
+}
+
+void Matrix::clear() {
+    return;
+}
+
+// Multiplication of 4x4 by 4x1 matrix
+Vertex Matrix::operator* (const Vertex& rhs) {
+    Vertex result = {
+          v[0][0] * rhs.x
+        + v[0][1] * rhs.y
+        + v[0][2] * rhs.z
+        + v[0][3] * rhs.w,
+
+          v[1][0] * rhs.x
+        + v[1][1] * rhs.y
+        + v[1][2] * rhs.z
+        + v[1][3] * rhs.w,
+
+          v[2][0] * rhs.x
+        + v[2][1] * rhs.y
+        + v[2][2] * rhs.z
+        + v[2][3] * rhs.w,
+
+          v[3][0] * rhs.x
+        + v[3][1] * rhs.y
+        + v[3][2] * rhs.z
+        + v[3][3] * rhs.w
+    };
+    return result;
+}
+
+// Multiplication of 4x4 by 4x4 matrix
+Matrix Matrix::operator* (const Matrix& rhs) {
+    Matrix result;
+    
+
+    return result;
 }
 
 // Example of a fragment shader
