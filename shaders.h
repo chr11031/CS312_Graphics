@@ -55,4 +55,10 @@ void GrayScaleShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = 0xff000000 + (avgScale << 16) + (avgScale << 8) + avgScale;
 }
 
+void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn * uniforms.matrix;
+    attrOut = vertAttr;
+}
+
 #endif

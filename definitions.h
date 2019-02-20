@@ -226,6 +226,48 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+class Matrix
+{
+    public:
+    double data[4][4];
+    int numRows;
+    int numCols;
+
+    Matrix() : numRows(0), numCols(0) {}
+
+
+    Matrix(double newData[][4], int numRows, int numCols) : numRows(numRows), numCols(numCols)
+    {
+        for (int i = 0; i < numRows; i++)
+            for (int j = 0; j < numCols; j++)
+                data[i][j] = newData[i][j];
+
+        this->numRows = numRows;
+        this->numCols = numCols;
+    }
+
+    void setData(const double newData[0][4], int numRows, int numCols)
+    {
+        for (int i = 0; i < numRows; i++)
+            for (int j = 0; j < numCols; j++)
+                data[i][j] = newData[i][j];
+
+        this->numRows = numRows;
+        this->numCols = numCols;
+    }
+
+    void operator =(const Matrix & rhs) throw (const char*)
+    {
+        for (int i = 0; i < rhs.numRows; i++)
+            for (int j = 0; j < rhs.numCols; j++)
+                this->data[i][j] = rhs.data[i][j];
+
+        this->numRows = rhs.numRows;
+        this->numCols = rhs.numCols;
+    }
+    void operator *=(const Matrix & rhs) throw (const char *);
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -236,13 +278,8 @@ class Attributes
 {      
     public:
         // Obligatory empty constructor
-        Attributes() : valuesToInterpolate(0), ptrImage(NULL), numRows(0), numCols(0) {}
+        Attributes() : valuesToInterpolate(0), ptrImage(NULL) {}
 
-        Attributes(const int & numRows, const int & numCols) : valuesToInterpolate(0), ptrImage(NULL)
-        {
-            this->numRows = numRows;
-            this->numCols = numCols;
-        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -272,12 +309,15 @@ class Attributes
             }
         }
 
-        void concatenateMatricies(const Attributes & transform) throw (const char *)
+        void concatenateMatricies(const Matrix & transform) throw (const char *)
         {
-            *this *= transform;
+            this->matrix *= transform;
         }
 
-        void operator *=(const Attributes & rhs) throw (const char *);
+        void setMatrixData(const double data[0][4], int numRows, int numCols)
+        {
+            this->matrix.setData(data, numRows, numCols);
+        }
 
 
         // Attribute information
@@ -287,12 +327,14 @@ class Attributes
         void* ptrImage;
 
         // Matrix information for transformations
-        double matrix[4][4];
-        int numRows;
-        int numCols;
+        Matrix matrix;
 }; 
 
-void Attributes::operator*=(const Attributes & rhs) throw (const char *)
+
+/**********************************************************************
+ *  
+ **********************************************************************/
+void Matrix::operator*=(const Matrix & rhs) throw (const char *)
 {
     // For all intents and purposes we have flipped the matrix order
     // in order to make the order of operations correct while maintaining
@@ -316,11 +358,11 @@ void Attributes::operator*=(const Attributes & rhs) throw (const char *)
             //Flatten the LHS cols into a row for maths
             for (int k = 0; k < this->numRows; k++)
             {
-                colToRow[k] = this->matrix[k][j];
+                colToRow[k] = this->data[k][j];
             }
 
             // Do maths on RHS row and LHS col and assign
-            tempMatrix[i][j] += multiplyRowAndCol(rhs.matrix[i], colToRow, rhs.numCols);
+            tempMatrix[i][j] = multiplyRowAndCol(rhs.data[i], colToRow, rhs.numCols);
         }
     }
 
@@ -330,23 +372,23 @@ void Attributes::operator*=(const Attributes & rhs) throw (const char *)
     // Overwrite the old matrix with the new one
     for (int i = 0; i < this->numRows ; i++)
         for (int j = 0; j < this->numCols; j++)
-            this->matrix[i][j] = tempMatrix[i][j];
+            this->data[i][j] = tempMatrix[i][j];
 }
 
 /******************************************************
  * MATRIX MULT OVERLOADED OPERATOR
  * Multiplies the two matricies together
  *****************************************************/ 
-Vertex operator * (const Vertex & lhs, const Attributes & rhs) throw (const char *)
+Vertex operator * (const Vertex & lhs, const Matrix & rhs) throw (const char *)
 {
-    if (rhs.numCols >= 1 && rhs.numCols <= 4)
+    if (rhs.numCols < 1 || rhs.numCols > 4)
         throw "ERROR: Invalid matrices sizes, cannot do multiplication";
 
-    double newVerts[4] = {0, 0, 0, 0};
+    double newVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
     double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
     
     for (int i = 0; i < rhs.numRows; i++)
-        newVerts[i] = multiplyRowAndCol(rhs.matrix[i], currentVerts, rhs.numCols);
+        newVerts[i] = multiplyRowAndCol(rhs.data[i], currentVerts, rhs.numCols);
 
     Vertex temp = {newVerts[0], newVerts[1], newVerts[2], newVerts[3]};
     return temp;
