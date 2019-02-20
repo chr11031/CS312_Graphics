@@ -213,7 +213,207 @@ class BufferImage : public Buffer2D<PIXEL>
             setupInternal();
         }
 };
+/**************************************************
+ * Multiply matrix
+ * *************************************************/
+class Matrix
+{
+    private:
+        int row;
+        int col;
+     
+    public:
+        double matrix[4][4]= {{1,0,0,0},
+                               {0,1,0,0},
+                               {0,0,1,0},
+                               {0,0,0,1}};
+       Matrix()
+       {
+          this->row = 4;
+          this->col = 4;
+        //  this->matrix = array;
+       }
 
+       Matrix(int row, int column)
+       {
+           this->row = row;
+           this->col = column;
+        //    matrix = new double[row * column];
+       }
+       Matrix(double vertex[4][1])
+       {
+           row = 4;
+           col = 1;
+           for (int i = 0; i < 4; i++)
+           {
+               matrix[i][0] = vertex[i][0];
+           }
+       }
+       Matrix(Vertex v)
+       {
+          row = 4;
+          col = 1;
+          matrix[0][0] = v.x;
+          matrix[1][0] = v.y;
+          matrix[2][0] = v.z;
+          matrix[3][0] = v.w;
+       }
+
+       Matrix(double fourfour[4][4])
+       {
+           row = 4;
+           col = 4;
+           for (int i = 0; i < 4; i++)
+              for (int j = 0; j < 4; j++)
+                 matrix[i][j] = fourfour[i][j];
+       }
+
+       Matrix scaleMatrix(double x, double y, double z)
+       {
+           Matrix m;
+           m.matrix[0][0] = x;
+           m.matrix[1][1] = y;
+           m.matrix[2][2] = z;
+           return ((*this) * m); 
+       }
+
+       Matrix rotateZMatrix(double degrees)
+       {
+            Matrix m; 
+            double signangle = sin(degrees * M_PI/180.0);
+            double cosangle = cos(degrees * M_PI/180.0);
+
+            m.matrix[0][0] = cosangle;
+            m.matrix[1][0] = signangle;
+            m.matrix[0][1] = -signangle;
+            m.matrix[1][1] = cosangle;
+            return ((*this) * m);
+           
+       }
+
+       Matrix transMatrix(double x, double y, double z)
+       {
+           Matrix m;
+           m.matrix[0][3] = x;
+           m.matrix[1][3] = y;
+           m.matrix[2][3] = z;
+           return ((*this) * m); 
+       }
+       Matrix operator*(const Vertex &vert)
+       {
+           Matrix m;
+           double arr[4][1];
+           arr[0][0] = vert.x;
+           arr[1][0] = vert.y;
+           arr[2][0] = vert.z;
+           arr[3][0] = vert.w;
+          for(int i = 0; i < this->row; i++)
+             for(int k = 0; k < 4; k++)
+                m.matrix[i][0] += this->matrix[i][k] * arr[k][0];
+
+           return  m;
+       }
+       Matrix operator*(Matrix &rhs)
+       {
+          Matrix m;
+          for(int i = 0; i < this->row; i++)
+            for(int j = 0; j < rhs.col; j++)
+             for(int k = 0; k < rhs.row; k++)
+             {
+                m.matrix[i][j] += this->matrix[i][k] * rhs.matrix[k][j];
+             }
+          return m;
+       }
+       Matrix operator=(Matrix rhs)
+       {
+          for(int i = 0; i < this->row; i++)
+            for(int j = 0; j < rhs.col; j++)
+            {
+                this->matrix[i][j] = rhs.matrix[i][j];
+            }
+
+        }
+    //    Matrix *scaleMatrix(double scale)
+    //    { 
+    //        Matrix *m = new Matrix();           
+    //        m->matrix[0] * scale;
+    //        m->matrix[5] * scale;
+    //        m->matrix[10] * scale;
+    //        m->matrix[15] * scale;
+    //        return m;
+    //    }
+       
+    //    Matrix *transMatrix(double x, double y, double z)
+    //    {
+    //        Matrix *m = new Matrix();
+    //        m->matrix[3]  = x;
+    //        m->matrix[7]  = y;
+    //        m->matrix[11] = z;
+    //        return m;
+
+    //    }
+
+    //    Matrix *rotateZMatrix(double degrees)
+    //    {
+    //        Matrix *m = new Matrix();
+    //        double signangle = sin(degrees * M_PI/180.0);
+    //        double cosangle = cos(degrees * M_PI/180.0);
+
+    //        m->matrix[0] = cosangle;
+    //        m->matrix[1] = -signangle;
+    //        m->matrix[4] = signangle;
+    //        m->matrix[5] = cosangle;
+    //        return m;
+    //    }
+
+    //    static Matrix *rotateXMatrix(double degrees)
+    //    {
+    //        Matrix *m = new Matrix();
+    //        double signangle = sin(degrees * M_PI/180.0);
+    //        double cosangle = cos(degrees * M_PI/180.0);
+
+    //        m->matrix[5] = cosangle;
+    //        m->matrix[6] = -signangle;
+    //        m->matrix[9] = signangle;
+    //        m->matrix[10] = cosangle;
+    //        return m;
+    //    }
+    //    static Matrix *rotateYMatrix(double degrees)
+    //    {
+    //        Matrix *m = new Matrix();
+    //        double signangle = sin(degrees * M_PI/180.0);
+    //        double cosangle = cos(degrees * M_PI/180.0);
+
+    //        m->matrix[0] = cosangle;
+    //        m->matrix[2] = signangle;
+    //        m->matrix[8] = -signangle;
+    //        m->matrix[10] = cosangle;
+    //        return m;
+    //    }
+    //    Matrix *operator *(Matrix &rhs)
+    //    {
+    //        Matrix *m = new Matrix(this->row, rhs.col);
+
+    //        double * spot ;
+    //        spot = &m->matrix[0];
+    //        int location = 0;
+    //        for (int i = 0; i < this->row;i++)
+    //            for(int j = 0; j < rhs.col; j++)
+    //            {
+    //                for(int k = 0; k < this->col; k++)
+    //                     m->matrix[location] += this->matrix[i * this->col + k] * rhs.matrix[j + i * rhs.col] ;
+    //                location++;
+    //            }
+
+    //     //    for(int i = 0; i < this->row; i++)
+    //     //       for(int j = 0; j < rhs.col; j++)
+    //     //          for(int k = 0; k < this->col; k++)
+    //     //          {
+    //     //             m->vertex[i][j] += this->vertex[i][k] * rhs.vertex[k][j];
+    //     //          }
+    //        return m;
+    //    }
+};
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -225,6 +425,8 @@ class Attributes
     public:
         double collector[16];
         void* ptrImg;
+        Matrix matrix;
+
         PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
@@ -262,6 +464,39 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
     fragment = (*ptr)[y][x];
 }
+
+void FragShaderNightVision(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(attributes.collector[0] *0xbb) << 16;
+    color += (unsigned int)(attributes.collector[1] *0xff) << 8;
+    color += (unsigned int)(attributes.collector[2] *0xbb) << 0;
+
+    fragment = color;
+
+}
+// Frag Shader for UV without image (due to SDL2 bug?)
+// void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+// {
+//     // Figure out which X/Y square our UV would fall on
+//     int xSquare = attributes[0].d * 8;
+//     int ySquare = attributes[1].d * 8;
+
+// 	// Is the X square position even? The Y? 
+//     bool evenXSquare = (xSquare % 2) == 0;
+//     bool evenYSquare = (ySquare % 2) == 0;
+
+//     // Both even or both odd - red square
+//     if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+//     {
+//         fragment = 0xffff0000;
+//     }
+//     // One even, one odd - white square
+//     else
+//     {
+//         fragment = 0xffffffff;
+//     }
+// }
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
@@ -301,7 +536,18 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
+void vShader(Vertex & vertOut, Attributes & attrOut,const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+   Matrix unif = uniforms.matrix;
+   Matrix matrixOut = unif * vertIn; 
+//    matrixOut * vertIn;
+   vertOut.x = matrixOut.matrix[0][0];
+   vertOut.y = matrixOut.matrix[1][0];
+   vertOut.z = matrixOut.matrix[2][0];
+   vertOut.w = matrixOut.matrix[3][0];
+   attrOut = vertAttr;
 
+}
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -319,6 +565,7 @@ class VertexShader
         VertexShader()
         {
             VertShader = DefaultVertShader;
+            // VertSkhader = vShader;
         }
 
         // Initialize with a fragment callback
@@ -332,6 +579,17 @@ class VertexShader
         {
             VertShader = VertSdr;
         }
+//         void vShader(void(*VertSdr)(Vertex & vertOut, Attributes & attrOut,const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+//         {
+//            Matrix matrixOut = *uniforms.matrix;
+//            matrixOut * vertIn;
+//            vertOut.x = matrixOut.matrix[0][0];
+//            vertOut.y = matrixOut.matrix[1][1];
+//            vertOut.z = matrixOut.matrix[2][2];
+//            vertOut.w = matrixOut.matrix[3][3];
+//            attrOut = vertAttr;
+
+// }
 };
 
 // Stub for Primitive Drawing function
