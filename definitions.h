@@ -46,6 +46,52 @@ struct Vertex
     double w;
 };
 
+/****************************************************
+ * This is the matrix class which holds the number of
+ * rows, the number of columns, and the data in a 2D
+ * double array. It has an overloaded *= operator.
+ ****************************************************/
+class Matrix
+{
+    public:
+        int numRows;
+        int numCols;
+        double matrixData[4][4]; // row col
+
+
+        // default
+        Matrix() : numRows(0), numCols(0) {}
+
+        // non default
+        Matrix(double newData[][4], int newRows, int newCols)
+        {
+            this->numRows = newRows;
+            this->numCols = newCols;
+
+            for (int i = 0; i < numRows; i++)
+            {
+                for (int j = 0; j < numCols; j++)
+                    matrixData[i][j] = newData[i][j];
+            }
+        }
+
+        void operator *= (const Matrix & rhs);
+        void operator = (const Matrix & rhs) throw (const char *);
+
+};
+
+void Matrix::operator=(const Matrix & rhs) throw (const char *)
+{
+    this->numRows = rhs.numRows;
+    this->numCols = rhs.numCols;
+
+    for (int i = 0; i < numRows; i++)
+    {
+        for (int j = 0; j < numCols; j++)
+            matrixData[i][j] = rhs.matrixData[i][j];
+    }
+}
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -231,31 +277,28 @@ class Attributes
         PIXEL color; 
         int numValues; // number of values to interpolate (3 for rgb, 2 for UV, etc.)
         void* pointerImg; // address -> pointer without a base type
-        void* pointerImg2; // temporarily have a second pointer image
         double attrValues[5]; // according to the slides, we will likely have at most 5 attribute values
 
+        Matrix matrix;
         // For Matrix Multiplication
-        int numRows;
-        int numCols;
-        double matrix[4][4]; // row col
+        // int numRows;
+        // int numCols;
 
         // Obligatory empty constructor
-        Attributes() : numValues(0), numRows(0), numCols(0) {}
+        Attributes() : numValues(0), pointerImg(NULL) {}
 
-        // Non default const
-        Attributes(const int & numRows, const int & numCols) : numValues(0), pointerImg(NULL)
-        {
-            this->numRows = numRows;
-            this->numCols = numCols;
-        }
+        // // Non default const
+        // Attributes(const int & numRows, const int & numCols) : numValues(0), pointerImg(NULL)
+        // {
+        //     this->numRows = numRows;
+        //     this->numCols = numCols;
+        // }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-
-        void operator *= (const Attributes & rhs);
 
         void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
         {
@@ -277,11 +320,22 @@ class Attributes
                 attrValues[i] *= z;
         }
 
-        void concatMatrices(const Attributes & transform) throw (const char *)
+        void concatMatrices(const Matrix & transform) throw (const char *)
         {
-            *this *= transform;
+            this->matrix *= transform;
         }
 
+        void setMatrix(double newData[][4], int numRows, int numCols)
+        {
+            matrix.numRows = numRows;
+            matrix.numCols = numCols;
+
+            for (int i = 0; i < numRows; i++)
+            {
+                for (int j = 0; j < numCols; j++)
+                    matrix.matrixData[i][j] = newData[i][j];
+            }
+        }
 };	
 
 /******************************************************
@@ -308,7 +362,7 @@ double multRowCol(const double row[], const double col[], const int & size)
  * * so that in order to multiple A B and C, we can simply put
  * * C * B * A in the CORRECT order that they must be multiplied.
  *****************************************************/
-void Attributes::operator*=(const Attributes & rhs)
+void Matrix::operator*=(const Matrix & rhs)
 {
     // check to see if the "lhs" rows is equal to the "rhs" cols
     if (this->numRows != rhs.numCols)
@@ -328,10 +382,10 @@ void Attributes::operator*=(const Attributes & rhs)
 
             // loop through the rows of the specified column and put it into our 1x4 matrix
             for (int k = 0; k < this->numRows; k++)
-                colToRow[k] = this->matrix[k][j];
+                colToRow[k] = this->matrixData[k][j];
 
             // use helper funciton to multiply and add the current rows and columns
-            tempMatrix[i][j] += multRowCol(rhs.matrix[i], colToRow, rhs.numCols);
+            tempMatrix[i][j] = multRowCol(rhs.matrixData[i], colToRow, rhs.numCols);
         }
     }
 
@@ -342,7 +396,7 @@ void Attributes::operator*=(const Attributes & rhs)
     for (int i = 0; i < this->numRows; i++)
     {
         for (int j = 0; j < this->numCols; j++)
-            this->matrix[i][j] = tempMatrix[i][j];
+            this->matrixData[i][j] = tempMatrix[i][j];
     }
     return;
 }
@@ -350,17 +404,17 @@ void Attributes::operator*=(const Attributes & rhs)
 /******************************************************
  * Overloading the * operator
  *****************************************************/
-Vertex operator * (const Vertex & lhs, const Attributes & rhs)
+Vertex operator * (const Vertex & lhs, const Matrix & rhs)
 {
     // lhs = a, rhs = b -> rhs is matrix
-    if (rhs.numCols <= 4 && rhs.numCols >= 1)
+    if (rhs.numCols >= 4 && rhs.numCols <= 1)
         throw "ERROR: Cannot multiply matrices of invalid sizes.";
 
-    double tempVerts[4] = {0, 0, 0, 0};
+    double tempVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
     double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
 
     for (int i = 0; i < rhs.numRows; i++)
-        tempVerts[i] = multRowCol(rhs.matrix[i], currentVerts, rhs.numCols);
+        tempVerts[i] = multRowCol(rhs.matrixData[i], currentVerts, rhs.numCols);
 
     Vertex resultVerts = (Vertex){tempVerts[0], tempVerts[1], tempVerts[2], tempVerts[3]};
     return resultVerts;
