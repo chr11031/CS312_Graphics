@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "stdexcept"
+
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -25,6 +27,11 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+struct Vertex;
+typedef Vertex Matrix[4];
+typedef Vertex *MatrixPtr;
+
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -35,15 +42,234 @@ enum PRIMITIVES
     POINT
 };
 
-/****************************************************
- * Describes a geometric point in 3D space. 
- ****************************************************/
+// Retrieves a vertex value given an index
+// Using a template allows for using the function
+// to define both const and non-const versions
+template<typename T>
+T & getVertI(int i, T & x, T & y, T & z, T & w) {
+  switch(i)
+  {
+    case 0:
+      return x;
+      break;
+    case 1:
+      return y;
+      break;
+    case 2:
+      return z;
+      break;
+    case 3:
+      return w;
+      break;
+    default:
+      throw std::invalid_argument("Index out of bounds");
+  }
+}
+
 struct Vertex
 {
     double x;
     double y;
     double z;
     double w;
+
+    // access like an array
+    const double &operator[](int i) const
+    {
+      return getVertI<const double>(i, x, y, z, w);
+    }
+
+    double &operator[](int i)
+    {
+      return getVertI<double>(i, x, y, z, w);
+    }
+};
+
+
+/*************************************************
+ * Implements methods to multiply 4x4 and 4x1 matrixs
+ * Uses the vertex data type to represent matrixes
+ *************************************************/
+class MatrixMath
+{
+  public:
+    const Vertex *matrix;
+    Vertex *res;
+
+    // For 4x1 results
+    MatrixMath(const Vertex *m, Vertex &result)
+    {
+        matrix = m;
+        res = &result;
+    }
+
+    // For 4x4 results (Vertex pointer can be interpretted as array)
+    MatrixMath(const Vertex *m, Vertex *result)
+    {
+        matrix = m;
+        res = result;
+    }
+
+    MatrixMath operator*(const Vertex &rhs)
+    {
+        multiply(rhs);
+        return *this;
+    }
+
+    MatrixMath operator*(const Matrix rhs)
+    {
+        multiply(rhs);
+        return *this;
+    }
+
+    // For 4x1 matrix math
+    void resolveMult(const Vertex &vert, int i)
+    {
+        (*res)[i] = 0;
+        for (int k = 0; k < 4; k++)
+        {
+            (*res)[i] += matrix[i][k] * vert[k];
+        }
+    }
+
+    // For 4x4 matrix math
+    void resolveMult(const Matrix matrix2, int i)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            res[i][j] = 0;
+            for (int k = 0; k < 4; k++)
+            {
+                res[i][j] += matrix[i][k] * matrix2[k][j];
+            }
+        }
+    }
+
+    // Template used to select the correct revoleMult
+    template <class T>
+    void multiply(T &matrix2)
+    {
+        for (int i = 0; i < 4; i++)
+            resolveMult(matrix2, i);
+    }
+};
+
+/*****************************************************
+ * Implements methods for translation, rotation, and
+ * scaling a 4x1 matrix. Methods are for x and y
+ * plane, but adding functionality for z is trivial
+ *****************************************************/
+class Transform
+{
+  public:
+
+    Transform() : matrix(nullptr)
+    {
+        matrix = (Matrix*) new Vertex[4];
+        isAllocated = true;
+
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                (*matrix)[i][j] = i == j ? 1 : 0;
+    }
+
+    Transform(Matrix * m)
+    {
+        matrix = m;
+        isAllocated = false;
+    }
+
+    ~Transform()
+    {
+        if (matrix && isAllocated)
+            delete [] matrix;
+    }
+
+    // Positive X moves to the left, positive y moves down
+    // as a result of pipeline implementation
+    Transform & translate(double x = 1, double y = 1)
+    {
+      (*matrix)[0][3] = x;
+      (*matrix)[1][3] = y;
+
+      return *this;
+    }
+
+    Transform & scale(double x, double y)
+    {
+        if ((*matrix)[0][0] != 1 || (*matrix)[1][1] != 1)
+        {
+            Matrix m2 =
+                {
+                    {x, 0, 0, 0},
+                    {0, y, 0, 0},
+                    {0, 0, 1, 0},
+                    {0, 0, 0, 1}};
+
+            transformHelper(m2);
+        }
+        else // if we don't need to allocate memory then don't do it
+        {    // Another transformation involving these blocks hasn't been done
+            (*matrix)[0][0] = x;
+            (*matrix)[1][1] = y;
+        }
+
+        return *this;
+    }
+
+    // Rotate matrix counter clockwise (as a result of pipeline implementation)
+    Transform & rotate(double degrees)
+    {
+        // have to convert to radians
+        const double PI  =3.141592653589793238463;
+        double rad = degrees / 180.0 * PI;
+        double s = sin(rad);
+        double c = cos(rad);
+
+        // check if other transformations have happened to check
+        // if we have to multiply matrices which involves allocating memory
+        if ((*matrix)[0][0] != 1 || (*matrix)[1][1] != 1)
+        {
+            Matrix m2 =
+                {
+                    {c, -s, 0, 0},
+                    {s, c, 0, 0},
+                    {0, 0, 1, 0},
+                    {0, 0, 0, 1}
+        };
+
+            transformHelper(m2);
+        }
+        else // if we don't need to allocate memory then don't do it
+        {    
+            (*matrix)[0][0] = c;
+            (*matrix)[0][1] = -s;
+            (*matrix)[1][0] = s;
+            (*matrix)[1][1] = c;
+        }
+
+        return *this;
+    }
+
+    void apply(const Vertex & vert, Vertex & res)
+    {
+      MatrixMath(*matrix, res) * vert;
+    }
+
+    private:
+      Matrix *matrix;
+      bool isAllocated;
+
+      // For methods that require multiplying two matrices
+      void transformHelper(Matrix & m2)
+      {
+        // The two matrices being multiplied must stay constant
+        // so a new matrix must be allocated for the new values
+        Matrix * tmp = matrix;
+        matrix = (Matrix*) new Vertex[4];
+        MatrixMath(m2, *matrix) * *tmp;
+        delete [] tmp;
+      }
 };
 
 /******************************************************
@@ -278,6 +504,24 @@ class ImageAttr : public Attributes
         double uv[2];
 };
 
+/*******************************************************
+ * Contains values for Transform Uniforms
+ ******************************************************/
+class TransUni : public Attributes
+{
+    public:
+        TransUni() : trans(Transform())
+        {
+            this->data = &trans;
+            this->dLen = -1;
+        }
+
+        Transform & get() { return trans; }
+
+    private:
+        Transform trans;
+};
+
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -319,7 +563,7 @@ void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, c
     int xSquare = ((double*)(attributes.data))[0] * 8;
     int ySquare = ((double*)(attributes.data))[1] * 8;
 
-	// Is the X square position even? The Y? 
+    // Is the X square position even? The Y? 
     bool evenXSquare = (xSquare % 2) == 0;
     bool evenYSquare = (ySquare % 2) == 0;
 
@@ -372,6 +616,13 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void TransformVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Transform * trans = (Transform *) uniforms.data;
+    trans->apply(vertIn, vertOut);
     attrOut = vertAttr;
 }
 
