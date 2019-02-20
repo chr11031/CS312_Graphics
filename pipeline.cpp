@@ -251,11 +251,8 @@ int main()
         clearScreen(frame);
 
         // Test Draw
-        // TestDrawPixel(frame);
-        // GameOfLife(frame); // to run this, comment out other draw function, clearscreen, and processuserinputs
-        // TestDrawTriangle(frame);
-        // TestDrawFragments(frame);
-        TestDrawPerspectiveCorrect(frame);
+        // GameOfLife(frame); // to run this, comment out other draw functions, clearscreen, and processuserinputs
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -223,23 +223,39 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
+{
+
     public:
 
         // Public member variables
         PIXEL color; 
         int numValues; // number of values to interpolate (3 for rgb, 2 for UV, etc.)
         void* pointerImg; // address -> pointer without a base type
+        void* pointerImg2; // temporarily have a second pointer image
         double attrValues[5]; // according to the slides, we will likely have at most 5 attribute values
 
+        // For Matrix Multiplication
+        int numRows;
+        int numCols;
+        double matrix[4][4]; // row col
+
         // Obligatory empty constructor
-        Attributes() : numValues(0) {}
+        Attributes() : numValues(0), numRows(0), numCols(0) {}
+
+        // Non default const
+        Attributes(const int & numRows, const int & numCols) : numValues(0), pointerImg(NULL)
+        {
+            this->numRows = numRows;
+            this->numCols = numCols;
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
+
+        void operator *= (const Attributes & rhs);
 
         void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
         {
@@ -260,7 +276,95 @@ class Attributes
             for (int i = 0; i < numValues; i++)
                 attrValues[i] *= z;
         }
+
+        void concatMatrices(const Attributes & transform) throw (const char *)
+        {
+            *this *= transform;
+        }
+
 };	
+
+/******************************************************
+ * Helper function for the overloaded multiply operation
+ *****************************************************/
+double multRowCol(const double row[], const double col[], const int & size)
+{
+    double result = 0;
+
+    for (int i = 0; i < size; i++)
+        result += row[i] * col[i];
+
+    return result;
+}
+
+/******************************************************
+ * Helper function for the overloaded multiply equals operation
+ * * * IMPORTANT NOTE:
+ * * For the purposes of making things more comprehensible,
+ * * we have flipped the rhs and lhs from what it actually is
+ * * in a matrix. For example, when multiplying matrices A B and C
+ * * matrix multiplication says that we must first multiply C, 
+ * * then B, then A, so we have flipped rhs and lhs in our function
+ * * so that in order to multiple A B and C, we can simply put
+ * * C * B * A in the CORRECT order that they must be multiplied.
+ *****************************************************/
+void Attributes::operator*=(const Attributes & rhs)
+{
+    // check to see if the "lhs" rows is equal to the "rhs" cols
+    if (this->numRows != rhs.numCols)
+        throw "ERROR: Cannot multiple matrices of invalid sizes.";
+
+    // we need a matrix that we can change without messing up the multiplaction
+    double tempMatrix[4][4];
+
+    // this loop goes through the rows of the "rhs"
+    for (int i = 0; i < rhs.numRows; i++)
+    {
+        // this loop goes through the cols of the "lhs"
+        for (int j = 0; j < this->numCols; j++)
+        {
+            // this is a 1x4 "matrix" which is pretty much just the column turned sideways to resemble a row
+            double colToRow[4];
+
+            // loop through the rows of the specified column and put it into our 1x4 matrix
+            for (int k = 0; k < this->numRows; k++)
+                colToRow[k] = this->matrix[k][j];
+
+            // use helper funciton to multiply and add the current rows and columns
+            tempMatrix[i][j] += multRowCol(rhs.matrix[i], colToRow, rhs.numCols);
+        }
+    }
+
+    // make sure we update the rows
+    this->numRows = rhs.numRows;
+    
+    // loop through the matrix and overwrite it with the new matrix
+    for (int i = 0; i < this->numRows; i++)
+    {
+        for (int j = 0; j < this->numCols; j++)
+            this->matrix[i][j] = tempMatrix[i][j];
+    }
+    return;
+}
+
+/******************************************************
+ * Overloading the * operator
+ *****************************************************/
+Vertex operator * (const Vertex & lhs, const Attributes & rhs)
+{
+    // lhs = a, rhs = b -> rhs is matrix
+    if (rhs.numCols <= 4 && rhs.numCols >= 1)
+        throw "ERROR: Cannot multiply matrices of invalid sizes.";
+
+    double tempVerts[4] = {0, 0, 0, 0};
+    double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+
+    for (int i = 0; i < rhs.numRows; i++)
+        tempVerts[i] = multRowCol(rhs.matrix[i], currentVerts, rhs.numCols);
+
+    Vertex resultVerts = (Vertex){tempVerts[0], tempVerts[1], tempVerts[2], tempVerts[3]};
+    return resultVerts;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
