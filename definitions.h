@@ -224,7 +224,13 @@ class Attributes
 {      
     public:
         // Obligatory empty constructor
-        Attributes() : valuesToInterpolate(0) {}
+        Attributes() : valuesToInterpolate(0), ptrImage(NULL), numRows(0), numCols(0) {}
+
+        Attributes(const int & numRows, const int & numCols) : valuesToInterpolate(0), ptrImage(NULL)
+        {
+            this->numRows = numRows;
+            this->numCols = numCols;
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -254,11 +260,50 @@ class Attributes
             }
         }
 
-        PIXEL color;
+        // Attribute information
+        PIXEL color; // Still here for depricated code
         double attrValues[15];
         int valuesToInterpolate;
         void* ptrImage;
+
+        // Matrix information for transformations
+        double matrix[4][4];
+        int numRows;
+        int numCols;
 };  
+
+double multiplyRowAndCol(const double row[], const double col[], const int & length)
+{
+    double result = 0;
+
+    for (int i = 0; i < length; i++)
+    {
+        result += row[i] * col[i];
+    }
+
+    return result;
+}
+
+/******************************************************
+ * MATRIX MULT OVERLOADED OPERATOR
+ * Multiplies the two matricies together
+ *****************************************************/ 
+Vertex operator * (const Vertex & lhs, const Attributes & rhs) throw (const char *)
+{
+    if (rhs.numCols >= 1 && rhs.numCols <= 4)
+        throw "ERROR: Invalid matrices sizes, cannot do multiplication";
+
+    double newVerts[4] = {0, 0, 0, 0};
+    double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    
+    for (int i = 0; i < rhs.numCols; i++)
+    {
+        newVerts[i] = multiplyRowAndCol(rhs.matrix[i], currentVerts, rhs.numCols);
+    }
+
+    Vertex temp = {newVerts[0], newVerts[1], newVerts[2], newVerts[3]};
+    return temp;
+}
 
 
 /*******************************************************
