@@ -60,8 +60,7 @@ void processUserInputs(bool & running)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-template <class T>
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes<T>* attrs, Attributes<T> * const uniforms, FragmentShader<T>* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
     target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
@@ -70,8 +69,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes<T>* attrs, Attrib
  * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
-template <class T>
-void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T>* const attrs, Attributes<T>* const uniforms, FragmentShader<T>* const frag)
+void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     float x = triangle[0].x;
     float y = triangle[0].y;
@@ -97,8 +95,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T>* c
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-template <class T>
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T>* const attrs, Attributes<T>* const uniforms, FragmentShader<T>* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Bounding Box
     int yMax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
@@ -130,7 +127,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T
                 double recip = 1/interp(areaTriangle, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
                 // Interpolate attributes
-                Attributes<T> interpolatedAttribs;
+                Attributes interpolatedAttribs;
                 //RGB (or alpha ;)
                 interpolatedAttribs.setR(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getR(), attrs[1].getR(), attrs[2].getR()));
                 interpolatedAttribs.setG(recip * interp(areaTriangle, firstDet, secondDet, thirdDet, attrs[0].getG(), attrs[1].getG(), attrs[2].getG()));
@@ -151,9 +148,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes<T
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-template <class T>
-void VertexShaderExecuteVertices(const VertexShader<T>* vert, Vertex const inputVerts[], Attributes<T> const inputAttrs[], const int& numIn, 
-                                 Attributes<T>* const uniforms, Vertex transformedVerts[], Attributes<T> transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
+                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
     if(vert == NULL)
@@ -164,6 +160,9 @@ void VertexShaderExecuteVertices(const VertexShader<T>* vert, Vertex const input
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    else
+        for(int i = 0; i < numIn; i++)
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
 }
 
 /***************************************************************************
@@ -175,14 +174,13 @@ void VertexShaderExecuteVertices(const VertexShader<T>* vert, Vertex const input
  *  4) ViewPort transform
  *  5) Rasterization & Fragment Shading
  **************************************************************************/
-template <class T>
 void DrawPrimitive(PRIMITIVES prim, 
                    Buffer2D<PIXEL>& target,
                    const Vertex inputVerts[], 
-                   const Attributes<T> inputAttrs[],
-                   Attributes<T>* const uniforms,
-                   FragmentShader<T>* const frag,                   
-                   VertexShader<T>* const vert,
+                   const Attributes inputAttrs[],
+                   Attributes* const uniforms,
+                   FragmentShader* const frag,                   
+                   VertexShader* const vert,
                    Buffer2D<double>* zBuf)
 {
     // Setup count for vertices & attributes
@@ -202,7 +200,7 @@ void DrawPrimitive(PRIMITIVES prim,
 
     // Vertex shader 
     Vertex transformedVerts[MAX_VERTICES];
-    Attributes<T> transformedAttrs[MAX_VERTICES];
+    Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
     // Vertex Interpolation & Fragment Drawing
@@ -252,12 +250,13 @@ int main()
 
         /***********************************
          * Trophy Box.
-         * ********************************
+         * ********************************/
         //TestDrawPixel(frame);
         //TestDrawTriangle(frame);
-        //TestDrawFragments<double>(frame);         */
+        //TestDrawFragments(frame);         
+        //TestDrawPerspectiveCorrect(frame);
 
-        TestDrawPerspectiveCorrect<double>(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

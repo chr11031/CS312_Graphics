@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -147,11 +148,11 @@ void CADView(Buffer2D<PIXEL> & target)
 /***************************************************
  * Demonstrate pixel drawing for project 01.
  **************************************************/
-template <class T>
+
 void TestDrawPixel(Buffer2D<PIXEL> & target)
 {
         Vertex vert = {10, 502, 1, 1};
-        Attributes<T> pointAttributes;
+        Attributes pointAttributes;
         PIXEL color = 0xffff0000;
         pointAttributes.color = color;      
 
@@ -161,7 +162,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
 /***********************************************
  * Demonstrate Triangle Drawing for Project 02. 
  **********************************************/
-template <class T>
+
 void TestDrawTriangle(Buffer2D<PIXEL> & target)
 {
         /**************************************************
@@ -172,7 +173,7 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         //pointAttributes.color = color;   
 
         Vertex verts[3];
-        Attributes<T> attr[3];
+        Attributes attr[3];
         verts[0] = {100, 362, 1, 1};
         verts[1] = {150, 452, 1, 1};
         verts[2] = {50, 452, 1, 1};
@@ -239,26 +240,26 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
  * Demonstrate Fragment Shader, linear VBO 
  * interpolation for Project 03. 
  **********************************************/
-template <class T>
+
 void TestDrawFragments(Buffer2D<PIXEL> & target)
 {
         /**************************************************
         * 1. Interpolated color triangles
         *************************************************/
         Vertex colorTriangle[3];
-        Attributes<T> colorAttributes[3] = 
-                {Attributes<T>(1.0, 0.0, 0.0, 0.0),
-                 Attributes<T>(0.0, 1.0, 0.0, 0.0),
-                 Attributes<T>(0.0, 0.0, 1.0, 0.0)};
+        Attributes colorAttributes[3] = 
+                {Attributes(1.0, 0.0, 0.0, 0.0),
+                 Attributes(0.0, 1.0, 0.0, 0.0),
+                 Attributes(0.0, 0.0, 1.0, 0.0)};
         colorTriangle[0] = {25, 25, 1, 1};
         colorTriangle[1] = {485, 25, 1, 1};
         colorTriangle[2] = {25, 485, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
 
-        FragmentShader<T> myColorFragShader;
+        FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
 
-        Attributes<T> colorUniforms;
+        Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
@@ -267,10 +268,10 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         * 1.5 Second interpolated color triangle with alpha.
         * Because why not.
         *************************************************/
-        Attributes<T> colorAttributes0[3] =
-                {Attributes<T>(0.0, 0.0, 0.0, 1.0),
-                 Attributes<T>(1.0, 0.0, 0.0, 0.0),
-                 Attributes<T>(0.0, 0.0, 1.0, 0.0)};
+        Attributes colorAttributes0[3] =
+                {Attributes(0.0, 0.0, 0.0, 1.0),
+                 Attributes(1.0, 0.0, 0.0, 0.0),
+                 Attributes(0.0, 0.0, 1.0, 0.0)};
         colorTriangle[0] = {25, 485, 1, 1};
         colorTriangle[1] = {485, 25, 1, 1};
         colorTriangle[2] = {485, 485, 1, 1};
@@ -281,10 +282,10 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         /**************************************************
         * 1.75 Multi Colored triangle
         *************************************************/
-        Attributes<T> colorAttributes1[3] =
-                {Attributes<T>(1.0, 1.0, 0.0, 0.0),
-                 Attributes<T>(1.0, 0.0, 1.0, 0.0),
-                 Attributes<T>(0.0, 1.0, 1.0, 0.0)};
+        Attributes colorAttributes1[3] =
+                {Attributes(1.0, 1.0, 0.0, 0.0),
+                 Attributes(1.0, 0.0, 1.0, 0.0),
+                 Attributes(0.0, 1.0, 1.0, 0.0)};
         colorTriangle[0] = {260, 137, 1, 1};
         colorTriangle[1] = {425, 425, 1, 1};
         colorTriangle[2] = {75, 425, 1, 1};
@@ -296,7 +297,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
          * 2. Interpolated image triangle
         ****************************************************/
         Vertex imageTriangle[3];
-        Attributes<T> imageAttributes[3];
+        Attributes imageAttributes[3];
         imageTriangle[0] = {425, 112, 1, 1};
         imageTriangle[1] = {500, 252, 1, 1};
         imageTriangle[2] = {350, 252, 1, 1};
@@ -312,11 +313,11 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         static BufferImage myImage("TACO.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
-        Attributes<T> imageUniforms;
+        Attributes imageUniforms;
         imageUniforms.ptrImg = &myImage;
         // Your code for the uniform goes here
 
-        FragmentShader<T> myImageFragShader;
+        FragmentShader myImageFragShader;
         myImageFragShader.FragShader = ImageFragShader;
         // Your code for the image fragment shader goes here
 
@@ -327,7 +328,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
  * Demonstrate Perspective correct interpolation 
  * for Project 04. 
  ***********************************************/
-template <class T>
+
 void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 {
         /**************************************************
@@ -342,13 +343,13 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
                          {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
 
         Vertex verticesImgA[3];
-        Attributes<T> imageAttributesA[3];
+        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        Attributes<T> imageAttributesB[3];
+        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
@@ -372,10 +373,10 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
-        Attributes<T> imageUniforms;
+        Attributes imageUniforms;
         imageUniforms.ptrImg = &myImage;
 
-        FragmentShader<T> fragImg;
+        FragmentShader fragImg;
         fragImg.FragShader = ImageFragShader;
                 
         // Draw image triangle 
@@ -387,57 +388,67 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
  * Demonstrate simple transformations for  
  * Project 05 in the vertex shader callback. 
  ***********************************************/
-template <class T>
+
 void TestVertexShader(Buffer2D<PIXEL> & target)
 {
         /**************************************************
         * 1. Interpolated color triangle
         *************************************************/
         Vertex colorTriangle[3];
-        Attributes<T> colorAttributes[3];
+        Attributes colorAttributes[3] =
+                        {Attributes(1.0, 0.0, 0.0, 0.0),
+                         Attributes(0.0, 1.0, 0.0, 0.0),
+                         Attributes(0.0, 0.0, 1.0, 0.0)};
         colorTriangle[0] = { 350, 112, 1, 1};
         colorTriangle[1] = { 400, 200, 1, 1};
         colorTriangle[2] = { 300, 200, 1, 1};
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
-        // Your code for 'colorAttributes' goes here
 
-        FragmentShader<T> myColorFragShader;
+        FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = ColorFragShader;
 
-        Attributes<T> colorUniforms;
+        Attributes colorUniforms[4];
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
-        VertexShader<T> myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        VertexShader myColorVertexShader;
+        myColorVertexShader.VertShader = DefaultVertShader;
 
         /******************************************************************
-		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
-        // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms[0].matrix.translate(100, 50, 0);
 
-	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms[0], &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
-        // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms[1].matrix.scale(0.5);
 
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms[1], &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
-        // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms[2].matrix.rotateZ(M_PI/6.0);
 
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms[2], &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
+        Matrix matrix1;
+        matrix1.scale(0.5);
+        Matrix matrix2;
+        matrix2.translate(100, 50, 0);
+        Matrix matrix3;
+        matrix3.rotateZ(M_PI/6.0);
+
+        colorUniforms[3].matrix = matrix1 * matrix2 * matrix3; 
+        
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms[3], &myColorFragShader, &myColorVertexShader);	
 }
 
 /********************************************
@@ -445,7 +456,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
  * the end of week 07 you should be able to
  * run this code successfully.
  *******************************************/
-template <class T>
+
 void TestPipeline(Buffer2D<PIXEL> & target)
 {
         // This is similar to TestDrawPerspectiveCorrect 
@@ -476,13 +487,13 @@ void TestPipeline(Buffer2D<PIXEL> & target)
                           {-20,20, 50, 1}};
 
         Vertex verticesImgA[3];
-        Attributes<T> imageAttributesA[3];
+        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        Attributes<T> imageAttributesB[3];
+        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
@@ -493,13 +504,13 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
-        Attributes<T> imageUniforms;
+        Attributes imageUniforms;
         // Your code for the uniform goes here
 
-        FragmentShader<T> fragImg;
+        FragmentShader fragImg;
         // Your code for the image fragment shader goes here
 
-        VertexShader<T> vertImg;
+        VertexShader vertImg;
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
