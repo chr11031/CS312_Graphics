@@ -70,14 +70,6 @@ double interpolate(double area, double firstDet, double secondDet, double thirdD
 }
 
 /******************************************************
- * Affine Function
- ******************************************************/
-double affineCalc(double y, double minY, double maxY)
-{
-    return (y - minY) / (maxY - minY);
-}
-
-/******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
  * and depth buffers. Can be described as frames or 
@@ -263,13 +255,6 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-  
-        // Set the new image
-        void setImage(const char* path)
-        {
-            BufferImage newimage(path);
-            image() = newimage;
-        }
 
         /*Vertex Attributes*/
         //Color
@@ -282,17 +267,237 @@ class Attributes
         double v;
         //Image Reference
         void* ptrImage;
-        //Normal Vectors
-        Vertex normal;
-        //Fog Coordinates
-        Vertex fog;
-
-        /*Uniform Attributes*/
-        //Image data
-        BufferImage image();
-        //Light
-        double light;
+        //Other Attributes
+        double other[16];
 };	
+
+/******************************************************
+ * MATRIX
+ ******************************************************/
+class Matrix
+{
+    public:
+
+        //Setup the matrix and a single vertex
+        Matrix() 
+        {
+            //Matrix of 4x4
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    four[i][j] = 0;
+                }
+            }
+            four[0][0] = 1;
+            four[1][1] = 1;
+            four[2][2] = 1;
+            four[3][3] = 1;
+
+            //Single Vertex   
+            result.x = 0;
+            result.y = 0;
+            result.z = 0;
+            result.w = 0;
+        }
+
+        //Setup the matrix and a single vertex and call the
+        //transformation required
+        Matrix(const Vertex & vertIn, const Attributes & uniforms)
+        {
+            //Matrix of 4x4
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    four[i][j] = 0;
+                }
+            }
+            four[0][0] = 1;
+            four[1][1] = 1;
+            four[2][2] = 1;
+            four[3][3] = 1;
+
+            //Single vertex
+            result.x = 0;
+            result.y = 0;
+            result.z = 0;
+            result.w = 0;
+
+            //Based on the first number in the uniforms
+            //the wanted transformation is performed
+            switch((int)uniforms.other[0])
+            {
+                case 0:
+                translate(vertIn, uniforms);
+                break;
+                case 1:
+                scale(vertIn, uniforms);
+                break;
+                case 2:
+                rotate(vertIn, uniforms);
+                break;
+                default:
+                STR(vertIn, uniforms);
+            }
+        }
+
+        //Translate the vertex by the uniform using matrix multiplication
+        void translate(const Vertex & vertIn, const Attributes & uniforms)
+        {
+            double sum[4] = {0, 0, 0, 0};
+            double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
+
+            //Setup the matrix
+            four[0][2] = uniforms.other[1];
+            four[1][2] = uniforms.other[2];
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    sum[i] += four[i][j] * vert[j];
+                }
+            }
+
+            //Save the result
+            result.x = sum[0];
+            result.y = sum[1];
+            result.z = sum[2];
+            result.w = sum[3];
+        }
+
+        //Rotate the vertex by the uniform using matrix multiplication
+        void rotate(const Vertex & vertIn, const Attributes & uniforms)
+        {
+            //Convert degrees to radians
+            double angle = (uniforms.other[1] * 3.14) / 180;
+            double sum[4] = {0, 0, 0, 0};
+            double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
+
+            //Setup the matrix
+            four[0][0] = cos(angle);
+            four[0][1] = -sin(angle);
+            four[1][0] = sin(angle);
+            four[1][1] = cos(angle);
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    sum[i] += four[i][j] * vert[j];
+                }
+            }
+
+            //Save the result
+            result.x = sum[0];
+            result.y = sum[1];
+            result.z = sum[2];
+            result.w = sum[3];
+        }
+
+        //Scale the vertex by the uniform using matrix multiplication
+        void scale(const Vertex & vertIn, const Attributes & uniforms)
+        {
+            double sum[4] = {0, 0, 0, 0};
+            double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
+
+            //Setup the matrix
+            four[0][0] = uniforms.other[1];
+            four[1][1] = uniforms.other[1];
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    sum[i] += four[i][j] * vert[j];
+                }
+            }
+
+            //Save the result
+            result.x = sum[0];
+            result.y = sum[1];
+            result.z = sum[2];
+            result.w = sum[3];
+        }
+
+        void STR(const Vertex & vertIn, const Attributes & uniforms)
+        {
+            //Convert degrees to radians
+            double angle = (uniforms.other[4] * 3.14) / 180;
+
+            //Holds the translation results
+            double transSum[4] = {0, 0, 0, 0};
+
+            //Holds the rotation results
+            double rotateSum[4] = {0, 0, 0, 0};
+
+            //Holds the scaled results
+            double scaledSum[4] = {0, 0, 0, 0};
+
+            //Converts the vertex into an array
+            double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
+
+            //Setup the matrix
+            four[0][0] = uniforms.other[1];
+            four[1][1] = uniforms.other[1];
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    scaledSum[i] += four[i][j] * vert[j];
+                }
+            }
+            
+            //Setup the matrix
+            four[0][2] = uniforms.other[2];
+            four[1][2] = uniforms.other[3];
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    transSum[i] += four[i][j] * scaledSum[j];
+                }
+            }
+
+            //Setup the matrix
+            four[0][0] = cos(angle);
+            four[0][1] = -sin(angle);
+            four[1][0] = sin(angle);
+            four[1][1] = cos(angle);
+
+            //Multiply and add the result
+            for(int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    rotateSum[i] += four[i][j] * transSum[j];
+                }
+            }
+
+            //Save the result
+            result.x = rotateSum[0];
+            result.y = rotateSum[1];
+            result.z = rotateSum[2];
+            result.w = rotateSum[3];
+        }
+
+        Vertex getResult()
+        {
+            return result;
+        }
+
+    private:
+        double four[4][4];
+        Vertex result;
+};
 
 /******************************************************
  * Fragment Shader List
@@ -377,6 +582,14 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+// Translation Shader
+void transVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix matrix(vertIn, uniforms);
+    vertOut = matrix.getResult();
     attrOut = vertAttr;
 }
 
