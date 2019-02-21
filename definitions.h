@@ -225,6 +225,64 @@ union attrib
   void* ptr;
 };
 
+/****************************************************
+ * Matrix class
+ *  This class is ment to represent a Matrix
+ *  in math, this will be utalized to translate, 
+ *  scale, and rotate vertices locations
+ *  so that they can be manipulated appropriately
+ * *****************************************************/
+class Matrix
+{
+    public:
+
+    //Variables
+    double data[4][4];
+    int rows;
+    int cols;
+
+    //D Const
+    Matrix() { setRows(0); setCols(0); }
+    //N Const
+    Matrix(double input[][4], int r, int c) { setInfo(input, r, c); }
+
+
+    //Getters
+    int getRows(){return rows;}
+    int getCols(){return cols;}
+
+    //Setters
+    void setRows(int r){ this->rows = r; }
+    void setCols(int c){ this->cols = c; }
+    void setData(double input[][4], int r, int c)
+    {
+        for(int x = 0; x < r; x++)
+            for(int y = 0; y < c; y++)
+                data[x][y] = input[x][y];
+    }
+
+    //Fucntions
+    void setInfo(double input[][4], int r, int c)
+    {
+        setRows(r);
+        setCols(c);
+        setData(input, r, c);
+    }
+
+    //Overloaded Operators
+    void operator =(const Matrix & rhs) 
+    { 
+        //setInfo(rhs.data, rhs.getRows(), rhs.getCols()); 
+        for (int i = 0; i < rhs.rows; i++)
+            for (int j = 0; j < rhs.cols; j++)
+                this->data[i][j] = rhs.data[i][j];
+
+        setRows(rhs.rows);
+        setCols(rhs.cols);
+    }
+    void operator *=(const Matrix & rhs);
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -238,9 +296,9 @@ class Attributes
 
         // Utalizing a map for flexability
         std::map<std::string, attrib> myMap;
-        //void* ptrImg;
+        Matrix matrix;
 
-        // Obligatory empty constructor
+        // Obligatory constructor
         Attributes()
         {
             attrib empty, iEmpty;
@@ -326,6 +384,82 @@ class Attributes
             myMap["img"].ptr = img;
         }
 };
+
+/****************************************
+ * The operator overloading from the
+ * Matrix class are being defined
+ ***************************************/
+void Matrix::operator*=(const Matrix & rhs)
+{
+    // Initalizing variables
+    double temp[4][4];
+    double tempVal = 0;
+
+    // Checks if we can do that matrix math in the first place
+    if (rhs.cols != getRows())
+        throw "ERROR: Invalid sizes\n";
+
+    // Loop through the number of rows in the RHS
+    for (int x = 0; x < rhs.rows; x++)
+    {
+        // Loop through the number of cols in LHS
+        for (int y = 0; y < getCols(); y++)
+        {
+            double transfer[4];
+
+            //Flatten the LHS cols into a row for maths
+            for (int i = 0; i < getRows(); i++)
+                transfer[i] = this->data[i][y];
+
+            // Multiplies the rows and colloums
+            for (int i = 0; i < rhs.cols; i++)
+                tempVal += rhs.data[x][i] * transfer[i];
+
+            temp[x][y] = tempVal;
+        }
+    }
+    
+    // Changes the rows for the matrix
+    setRows(rhs.rows);
+
+    // Replaces the old matrix
+    for (int x = 0; x < getRows(); x++)
+        for (int y = 0; y < getCols(); y++)
+            this->data[x][y] = temp[x][y];
+}
+
+/******************************************************
+ * MATRIX MULT OVERLOADED OPERATOR
+ * Multiplies the two matricies together
+ *****************************************************/ 
+Vertex operator * (const Vertex & lhs, const Matrix & rhs)
+{
+    // Declars variables
+    double tempVal = 0;
+    Vertex ret = {0,0,0,0};
+    double newVerts[4];
+    double oldVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+
+    // Checks if we can do it
+    if (rhs.cols < 1 || rhs.cols > 4)
+        throw "ERROR: Invalid sizes";
+
+    // Runs thought the rows, do math and set the new verts to thoes values
+    for (int i = 0; i < rhs.rows; i++)
+    {
+        for (int j = 0; j < rhs.cols; j++)
+                tempVal += rhs.data[i][j] * oldVerts[j];
+                
+        newVerts[i] = tempVal;
+    }
+
+    // Fixes the return vertex and returns it 
+    ret.x = newVerts[0];
+    ret.y = newVerts[1];
+    ret.z = newVerts[2];
+    ret.w = newVerts[3];
+    return ret;
+}
 
 // Image Fragment Shader 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -423,6 +557,15 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     attrOut = vertAttr;
 }
 
+// A vertex shader that transforms based off of a matrix
+void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn * uniforms.matrix;
+    attrOut = vertAttr;
+}
+
+
+
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -489,6 +632,6 @@ double interp(double area, double *det, double attrs1, double attrs2, double att
 {
     return ((det[0] / area) * attrs3) + ((det[1] / area) * attrs1) + ((det[2] / area) * attrs2);
 }
-       
 
 #endif
+ 
