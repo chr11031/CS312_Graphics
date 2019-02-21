@@ -272,6 +272,7 @@ void Matrix :: operator *= (const Matrix & rhs)
         throw "ERROR: Cannot concatenate matrices\n";
     }
 
+    // Temporary matrix to help with multiplication
     double tempMatrix[4][4];
 
     for (int i = 0; i < rhs.numRows; i++)
@@ -292,6 +293,7 @@ void Matrix :: operator *= (const Matrix & rhs)
         }
     }
     this->numRows = rhs.numRows;
+    // Write onto the matrix
     for (int i = 0; i < this->numRows; i++)
     {
         for (int j = 0; j < this->numCols; j++)
