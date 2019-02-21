@@ -24,6 +24,7 @@
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 #define X_KEY 0
 #define Y_KEY 1
+#define DEG_TO_RAD M_PI / 180
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -230,6 +231,8 @@ class Attributes
         // vectors to store as many attributes as necessary
         std::vector<double> value;
         std::vector<void*> ptrImgs;
+        double matrix[4][4];
+        PIXEL color;
 
         // Obligatory empty constructor
         Attributes() {}
@@ -240,8 +243,42 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
-        PIXEL color;
-};	
+        Attributes &operator *= (const double rhs[][4]);// throw (const char *);
+        Attributes &operator *= (const double rhs[]);// throw (const char *);
+};
+
+Attributes &Attributes::operator *= (const double rhs[][4]) //throw (const char *)
+{
+    double multiplied[4][4];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                multiplied[i][j] += matrix[k][j] * rhs[j][k];
+            }
+        }
+    }
+
+    for (int i = 0; i < 4; i++) 
+        for (int j = 0; j < 4; j++) 
+            matrix[i][j] = multiplied[i][j];
+
+
+   return *this;
+}
+
+Attributes &Attributes::operator *= (const double rhs[]) // throw (const char *)
+{
+    double multiplied[4];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            multiplied[i] += matrix[i][j] * rhs[j];
+        }
+    }
+
+   return *this;
+}
 
 /***************************************************
  * FragShader uses interpolated color values against
@@ -365,6 +402,20 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     attrOut = vertAttr;
 }
 
+void VertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut.x = uniforms.matrix[0][0] * vertIn.x + uniforms.matrix[0][1] * vertIn.y + 
+                uniforms.matrix[0][2] * vertIn.z + uniforms.matrix[0][3] * vertIn.w;
+    vertOut.y = uniforms.matrix[1][0] * vertIn.x + uniforms.matrix[1][1] * vertIn.y + 
+                uniforms.matrix[1][2] * vertIn.z + uniforms.matrix[1][3] * vertIn.w;
+    vertOut.z = uniforms.matrix[2][0] * vertIn.x + uniforms.matrix[2][1] * vertIn.y + 
+                uniforms.matrix[2][2] * vertIn.z + uniforms.matrix[2][3] * vertIn.w;
+    vertOut.w = uniforms.matrix[3][0] * vertIn.x + uniforms.matrix[3][1] * vertIn.y + 
+                uniforms.matrix[3][2] * vertIn.z + uniforms.matrix[3][3] * vertIn.w;
+    attrOut = vertAttr;
+
+}
+
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -396,6 +447,101 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
+
+void multiply(double lhs[][4], double rhs[][4]) {
+    double multiplied[4][4];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                multiplied[i][j] += lhs[j][k] * rhs[k][j];
+            }
+        }
+    }
+
+    for (int i = 0; i < 4; i++) 
+        for (int j = 0; j < 4; j++) 
+            lhs[i][j] = multiplied[i][j];
+}
+
+void multiply(double lhs[][4], double rhs[]) {
+    double multiplied[4];
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            multiplied[i] += lhs[i][j] * rhs[j];
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+            rhs[i] = multiplied[i];
+    }
+}
+
+/***************************************************
+ * Matrix
+ **************************************************/
+class Transform
+{      
+    public:
+
+        //double matrix[4][4];
+
+        // Obligatory empty constructor
+        Transform() {}
+
+        static void reset(Attributes* uniforms) {
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    if (i == j) {
+                        uniforms->matrix[i][j] = 1;
+                    } else {
+                        uniforms->matrix[i][j] = 0;
+                    }
+                }
+            }
+        }
+
+        static void translate(double x, double y, double z, Attributes* uniforms) {
+            uniforms->matrix[0][3] += x;
+            uniforms->matrix[1][3] += y;
+            uniforms->matrix[2][3] += z;
+            
+            // double matrix[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+            // double newMatrix[4][4];
+
+            // matrix[0][3] += x;
+            // matrix[1][3] += y;
+            // matrix[2][3] += z;
+
+            // for (int i = 0; i < 4; i++) 
+            //     for (int j = 0; j < 4; j++) 
+            //         for (int k = 0; k < 4; k++) 
+            //             newMatrix[i][j] += matrix[j][k] * uniforms->matrix[k][j];
+
+            // for (int i = 0; i < 4; i++) 
+            //     for (int j = 0; j < 4; j++) 
+            //         uniforms->matrix[i][j] = newMatrix[i][j];
+            
+            //uniforms *= matrix;
+            //multiply(uniforms->matrix, matrix);
+        }
+
+        static void rotate(double angle, Attributes* uniforms) {
+            double radians = angle * DEG_TO_RAD;
+            uniforms->matrix[0][0] = cos(radians);
+            uniforms->matrix[0][1] = -sin(radians);
+            uniforms->matrix[1][0] = sin(radians);
+            uniforms->matrix[1][1] = cos(radians);
+        }
+
+        static void scale(double x, double y, double z, Attributes* uniforms) {
+            uniforms->matrix[0][0] *= x;
+            uniforms->matrix[1][1] *= y;
+            uniforms->matrix[2][2] *= z;
+        }
+};	
+
 
 // Stub for Primitive Drawing function
 /****************************************
