@@ -98,15 +98,15 @@ Attributes interpolate(int area, int det[3], Attributes* const attr, Vertex* con
 {
     // Interpolate each attribute
     Attributes final;
-    for(int i = 0; i < 2; i++)
-    {                 // Interpolate attributes
+    double depth = interp(area, det, tri[0].w, 
+                                     tri[1].w, 
+                                     tri[2].w);
+    for (int i = 0; i < 3; i++)
+    {
+        // Interpolate attributes
         final.attrs[i] = interp(area, det, attr[0].attrs[i] * tri[0].w,   
                                            attr[1].attrs[i] * tri[1].w, 
-                                           attr[2].attrs[i] * tri[2].w) /
-                      // Interpolate depths
-                         interp(area, det, tri[0].w, 
-                                           tri[1].w, 
-                                           tri[2].w);
+                                           attr[2].attrs[i] * tri[2].w) / depth;
     }
 
     return final;
@@ -181,6 +181,11 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    // Use vertex shader if one is provided
+    else
+        for(int i = 0; i < numIn; i++)
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+    
 }
 
 /***************************************************************************
@@ -266,7 +271,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
