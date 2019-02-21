@@ -65,17 +65,12 @@ public:
     Matrix(): row(0), col(0), neo(NULL), init(false) {};
 
     //non default constructor
-    Matrix(int row, int col)
+    Matrix(int row, int col) : init(false), row(row), col(col)
     {
-        this->row = row;
-        this->col = col;
         neo = new double[row * col];
 
         for(int i =  0; i < (row * col); i++)
-        {
             neo[i] = 0;
-        }
-        init = false;
     }
     //destructor
     ~Matrix()
@@ -99,21 +94,17 @@ public:
         Matrix scaler(this->row, this->col);
 
         for(int i = 0; i < this->row; i++)
-        {
             scaler.neo[i * this->col + i] = temp[i];
-        }
-        if(init == false)
+        
+        if(!init)
         {
             for(int i = 0; i < (this->row * this->col); i++)
-            {
                 this->neo[i] = scaler.neo[i];
-            }
 
             init = true;
         }
-        else{
+        else
             *this *= scaler;
-        }
     }
 
     /****************************************************
@@ -127,22 +118,17 @@ public:
         translator.neo[3 * this->col - 1] = z;
 
         for(int i = 0; i < this->row; i++)
-        {
             translator.neo[i * this->col + i] = 1;
-        }
 
-        if(init == false)
+        if(!init)
         {
             for(int i = 0; i < (this->row * this->col); i++)
-            {
                 this->neo[i] = translator.neo[i];
-            }
 
             init = true;
         }
-        else{
+        else
             *this *= translator;
-        }
 
     }
 
@@ -166,15 +152,12 @@ public:
         if(init == false)
         {
             for(int i = 0; i < (this->row * this->col); i++)
-            {
                 this->neo[i] = rotator.neo[i];
-            }
 
             init = true;
         }
-        else{
+        else
             *this *= rotator;
-        }
 
     }
 
@@ -185,16 +168,13 @@ public:
         this->col = rhs.col;
         this->init = rhs.init;
         if(this->neo != NULL)
-        {
             delete [] neo;
-        }
 
         neo = new double[this->row * this->col];
 
         for(int i = 0; i < (this->row * this->col); i++)
-        {
             this->neo[i] = rhs.neo[i];
-        }
+
         return *this;
     }
 
@@ -204,20 +184,15 @@ public:
         Matrix temp(this->row, rhs.col);
 
         for(int i = 0; i < this->row; i++)
-        {
             for(int j = 0; j < rhs.col; j++)
             {
                 double total = 0;
 
                 for(int k = 0; k < rhs.row; k++)
-                {
                      total += this->neo[i * this->col + k] * rhs.neo[k * rhs.col + j];
-                }
+
                 temp.neo[i * temp.col + j] = total;
             }
-        }
-
-
         temp.init = true;
         *this = temp;
         return *this;
