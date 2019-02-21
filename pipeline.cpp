@@ -183,6 +183,14 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    else if((*vert).VertShader == &TransformationVertShader)
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            (*vert).VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], (*uniforms));         
+            transformedAttrs[i] = inputAttrs[i];
+        }
+    }
 }
 
 /***************************************************************************
