@@ -3,9 +3,13 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <iostream>
+#include <iomanip>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+
+using namespace std;
 
 /******************************************************
  * DEFINES:
@@ -21,6 +25,9 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+//Project 03 added X_Key and Y_KEY
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -45,6 +52,333 @@ struct Vertex
     double z;
     double w;
 };
+
+/******************************************************
+ * Matrix
+ * 
+ * This class will hold matrixes and overloads the
+ * math operators to do math and stuff
+ * ***************************************************/
+class Matrix
+{
+    public:
+		Matrix();
+        Matrix(int c, int r);
+        void insert(int x, int y, double data);
+        double returnVal(int x, int y);
+		int getColumnSize();
+		int getRowSize();
+		int getSize();
+		//Matrix matrixCopy(Matrix & m);
+		//Have to write 4 different const types
+		Matrix operator*(const Matrix & m) const;
+		//Matrix operator*(const Vertex & m) const;
+		Vertex operator*(const Vertex & m) const;
+		Matrix& operator=(Matrix const& m);
+		Matrix & operator=(std::initializer_list<double> m);
+		Matrix & operator=(std::initializer_list<std::initializer_list<double>> m);
+
+    private:
+        int column;
+        int row;
+		int size;
+        double matrixData[16];
+};
+Matrix::Matrix()
+{
+	column = 0;
+    row = 0;
+	size = 0;
+}
+
+Matrix::Matrix (int c, int r)
+{
+    column = c;
+    row = r;
+	size = row * column;
+	for(int i = 0; i < size; i++)
+	{
+		matrixData[i] = 0;
+	}
+}
+
+void Matrix::insert(int x, int y, double data)
+{
+    matrixData[(x * column) + y] = data;
+}
+
+double Matrix::returnVal(int x, int y)
+{
+    return matrixData[(x * column) + y];
+}
+
+int Matrix::getColumnSize()
+{
+	return column;
+}
+
+int Matrix::getRowSize()
+{
+	return row;
+}
+
+int Matrix::getSize()
+{
+	return size;
+}
+
+Matrix computeDimensions(int c1, int r1, int c2, int r2)
+{
+	if (c1 < c2 && r1 == r2)
+	{
+		Matrix result = Matrix(c1, r1);
+		return result;
+	}
+	else if (c1 == c2 && r1 < r2)
+	{
+		Matrix result = Matrix(c1, r1);
+		return result;
+	}
+	
+	else if (c2 < c1 && r2 == r1)
+	{
+		Matrix result = Matrix(c2, r2);
+		return result;
+	}
+	else if (c2 == c1 && r2 < r1)
+	{
+		Matrix result = Matrix(c2, r2);
+		return result;
+	}
+	else if (c1 == c2 && r1 == r2)
+	{
+		Matrix result = Matrix(c1, r1);
+		return result;
+	}
+	else
+	{
+		std::cerr << "WARNING: DIMENSIONAL MISMATCH ABORTING PROGRAM\n";
+		exit(1);
+	}
+}
+
+/********************************************************
+* Matrix Copy
+*
+* Overloading the equal operator doesn't work I don't
+* know why so I'm making this.
+********************************************************/
+/*
+Matrix Matrix::matrixCopy(Matrix & m)
+{
+	delete [] matrixData;
+	matrixData = NULL;
+	this->~Matrix();
+	
+	
+	column = m.column;
+	row = m.row;
+	size = m.size;
+	
+	matrixData = new double[size];
+	
+	for (int i = 0; i < size; i++)
+	{
+		//cout << "entering in " << m.matrixData[i] << " at " << i << endl;
+		matrixData[i] =  m.matrixData[i];
+		//cout << "matrixData[" << i << "] is " << this->matrixData[i] << endl;
+	}
+	
+	
+	
+	return *this;
+}
+*/
+
+
+/******************************************************
+* * Multiplication Operator Overload
+*
+* 
+******************************************************/
+Matrix Matrix::operator*(const Matrix & m) const
+{
+	Matrix result = computeDimensions(column, row, m.column, m.row);
+	//Matrix result = Matrix(1, 3);
+	
+	/*result.insert(0, 0, 5);
+	cout << "inserted 5\n";
+	result.insert(0, 1, 5);
+	cout << "inserted 5\n";
+	result.insert(0, 2, 6);*/
+	
+	
+	for (int x = 0; x < row; x++)
+	{
+		for (int y = 0; y < m.column; y++)
+		{
+			for (int k = 0; k < column; k++)
+			{
+				result.insert(x, y, (result.returnVal(x, y) + (matrixData[(x * column)+k] * m.matrixData[(k * m.column) + y])));
+			}
+		}
+	}
+	
+	return result;
+}
+
+/*************************************************************
+* Overloaded * Operator for vertex
+*
+*************************************************************/
+
+/*Matrix Matrix::operator*(const Vertex & m) const
+{
+	Matrix result = computeDimensions(4, 4, 1, 4);
+	
+	result.insert(0, 0, m.x);
+	result.insert(0, 1, m.y);
+	result.insert(0, 2, m.z);
+	result.insert(0, 3, m.w);
+	
+	result = *this * result;
+	
+	return result;
+}*/
+
+Vertex Matrix::operator*(const Vertex & m) const
+{
+	Vertex v;
+	
+	Matrix result = computeDimensions(4, 4, 1, 4);
+	
+	result.insert(0, 0, m.x);
+	result.insert(0, 1, m.y);
+	result.insert(0, 2, m.z);
+	result.insert(0, 3, m.w);
+	
+	result = *this * result;
+	
+	v.x = result.returnVal(0, 0);
+	v.y = result.returnVal(0, 1);
+	v.z = result.returnVal(0, 2);
+	v.w = result.returnVal(0, 3);
+	
+	return v;
+}
+
+/***********************************************************
+* operator = Overload
+*
+* Need to do deep copy operations. 
+***********************************************************/
+
+Matrix& Matrix::operator = (Matrix const& m)
+{
+	this->~Matrix();
+	
+	
+	column = m.column;
+	row = m.row;
+	size = m.size;
+	
+	
+	
+	for (int i = 0; i < size; i++)
+	{
+		//cout << "entering in " << m.matrixData[i] << " at " << i << endl;
+		matrixData[i] =  m.matrixData[i];
+		//cout << "matrixData[" << i << "] is " << this->matrixData[i] << endl;
+	}
+	
+	
+	
+	return *this;
+}
+
+/***********************************************************
+* = operator Overload
+* 
+* If we are entering in a 1 dimensional array it will be
+* entered as 1 x 4, 1 x 6. whatever column will always 
+* be one.
+************************************************************/
+
+Matrix & Matrix::operator = (std::initializer_list<double> m)
+{
+	//delete old stuff
+	column = 1;
+	row = m.size();
+	size = (column * row);
+	
+	
+	
+	int i = 0;
+	std::initializer_list<double>::iterator it;
+	for (it = m.begin(); it != m.end(); ++it)
+	{
+		insert(0, i, *it);
+		i++;
+	}
+	return *this;
+}
+
+Matrix & Matrix::operator=(std::initializer_list<std::initializer_list<double>> m)
+{
+	//debug
+	//cout << "Length of array = ";
+	//cout << m.size() << endl;
+	//Have a nested initializer list so multiple iterators are required
+	std::initializer_list<std::initializer_list<double>>::iterator it;
+	std::initializer_list<double>::iterator it2;
+	it = m.begin();
+	it2 = it->begin();
+	
+	//Set column value and build new array
+	column = it->size();
+	//cout << "Length of second dimension is = " << it->size();
+	//cout << endl;
+	row = m.size();
+	size = (column * row);
+	
+	//delete old stuff
+	
+	
+	
+	int i = 0;
+	for (it = m.begin(); it != m.end(); ++it)
+	{
+		for (it2 = it->begin(); it2 != it->end(); ++it2)
+		{
+			insert(0, i, *it2);
+			//cout << "inserting " << *it2 << " at " << i << endl;
+			i++;
+		}
+	}
+	//debug
+	/*cout << "Values in matrixData are \n";
+	for (int j = 0; j < 8; j++)
+	{
+		cout << "at " << j << " = " << matrixData[j] << endl;
+	}*/
+	
+	
+	return *this;
+}
+
+
+
+void displayMatrix(Matrix m)
+{
+	for (int x = 0; x < m.getRowSize(); x++)
+	{
+		for (int y = 0; y < m.getColumnSize(); y++)
+		{
+			cout << setw(4) << m.returnVal(x, y) << ",";
+		}
+		cout << endl;
+	}
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -223,6 +557,19 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        //These veriables will hold color and positions of texture
+        double u;
+        double v; 
+        void* ptrImg;
+
+        double r;
+        double g;
+        double b;
+
+        //Now we need to hold a matrix for our transofrmations
+        Matrix transforms;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -231,13 +578,58 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
+        PIXEL color;
 };	
+
+/**********************************************************
+ *          IMAGE_FRAGMENT_SHADER
+ *  @description
+ * Passed fragment and attributes this function takes every
+ * pixel of the image and then stretches it... well more
+ * like places each pixel inside the polygon.
+ * *******************************************************/
+
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    fragment = (*bf)[y][x];
+}
+
+/**********************************************************
+ *          COLOR_FRAGMENT_SHADER
+ * This function translates the colors into their appropriate
+ * position in this case a gradient across the polygon.
+ * *******************************************************/
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Output our shader color value, in this case red
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r *0xff) << 16;
+    color += (unsigned int)(vertAttr.g *0xff) << 8;
+    color += (unsigned int)(vertAttr.b *0xff) << 0;
+
+    fragment = color;
+}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
+}
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
 }
 
 /*******************************************************
@@ -277,6 +669,13 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void myVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = uniforms.transforms * vertIn;
+    //vertOut = vertIn;
     attrOut = vertAttr;
 }
 
