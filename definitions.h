@@ -22,7 +22,8 @@
 #define X_KEY 0
 #define Y_KEY 1
 // Max # of vertices after clipping
-#define MAX_VERTICES 8 
+#define MAX_VERTICES 8
+#define PI 3.14159 
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -42,6 +43,70 @@ struct Vertex
     double z;
     double w;
 };
+
+class Matrix
+{
+public:
+    double matrixFinal [4][1] = {{0},
+                                {0},
+                                {0},
+                                {0}};
+
+    double & operator [] (int i) 
+    {
+        return matrixFinal[i/4][i%4];
+    }
+        
+    Matrix multiplyMatrix(Matrix & first, Matrix & second) const
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            for(int k = 0; k < 1; k++)
+            {
+                for(int y = 0; y < 4; y++)
+                {
+                    matrixFinal[x][k] += first[x][y] * second[y][k];
+                }
+            }
+        }
+
+        return matrixFinal;
+    }
+
+
+    // Matrix operator * (const Matrix & first, const Matrix & second)
+    // {
+    //     for(int x = 0; x < 4; x++)
+    //     {
+    //         for(int k = 0; k < 1; k++)
+    //         {
+    //             for(int y = 0; y < 4; y++)
+    //             {
+    //                 matrixFinal[x][k] += first[x][y] * second[y][k];
+    //             }
+    //         }
+    //     }
+
+    //     return matrixFinal;
+    // }
+     
+};
+
+Vertex operator * ()
+{
+    Vertex vertex1;
+
+    for(int x = 0; x < 4; x++)
+    {
+        for(int k = 0; k < 1; k++)
+        {
+                    vertex1[x][k] += first[x][y] * second[y][k];
+        }
+    }
+
+    return vertex1;
+}
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -210,6 +275,7 @@ class Attributes
 
     public:
         void* ptrImg;
+        Matrix aMatrix;
 
         // Obligatory empty constructor
         //Attributes() : r(0), g(0), b(0), u(0), v(0){}
@@ -308,6 +374,12 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void RealVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn * uniforms.aMatrix;
     attrOut = vertAttr;
 }
 /**********************************************************
