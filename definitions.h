@@ -39,6 +39,7 @@ enum PRIMITIVES
     POINT
 };
 
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -49,6 +50,244 @@ struct Vertex
     double z;
     double w;
 };
+
+/****************************************************
+ * Matrix for transforming vertices. 
+ ****************************************************/
+class Matrix
+{
+  private:
+    double * ptrM;
+    int rows;
+    int columns;
+    bool initTF;
+
+  public:
+    Matrix(): rows(0), columns(0), ptrM(NULL), initTF(false) {};
+
+    // constructor that sets up the matrix size
+    Matrix(int rows, int columns)
+    {
+        this->rows = rows;
+        this->columns = columns;
+        ptrM = new double[rows * columns];
+       
+       //creating the matrix
+        for(int i = 0; i < (rows * columns); i++)
+        {
+            ptrM[i] = 0;
+        }
+
+        initTF = false;
+    }
+
+    ~Matrix()
+    {
+        if(ptrM != NULL)
+        {
+            delete [] ptrM;
+            ptrM = NULL;
+        }
+    }
+
+    /*************************************************************************
+     * Add rotation to the current matrix.
+     ************************************************************************/
+    void rotation(double rot1)
+    {
+        Matrix rotate(this->rows, this->columns);
+
+        // initialize the rotation matrix
+        rotate.ptrM[0] = cos(rot1);
+        rotate.ptrM[1] = -sin(rot1);
+        rotate.ptrM[1 * this->columns] = sin(rot1);
+        rotate.ptrM[1 * this->columns + 1] = cos(rot1);
+        rotate.ptrM[2 * this->columns + 2] = 1;
+        rotate.ptrM[3 * this->columns + 3] = 1;
+    
+        if (initTF == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->ptrM[i] = rotate.ptrM[i];
+            }
+
+            initTF = true;
+        }
+        //Multiply to combine
+        else
+        {
+            *this = rotate * (*this);
+        }
+    }
+
+    /*************************************************************************
+     * Add scaling to the current matrix.
+     ************************************************************************/
+    void scaling(double scaleX, double scaleY, double scaleZ)
+    {
+        // this array is used in the for loop to make things easier. 
+        double scaleArray[4] = {scaleX, scaleY, scaleZ, 1};
+
+        Matrix scale(this->rows, this->columns);
+
+        // initialize the scaling matrix
+        for(int i = 0; i < this->rows; i++)
+        {
+            scale.ptrM[i * this->columns + i] = scaleArray[i];
+        }
+
+        if (initTF == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->ptrM[i] = scale.ptrM[i];
+            }
+            initTF = true;
+        }
+        //multiply to combine.
+        else
+        {
+            *this = scale * (*this);
+        }
+    }
+
+    /*************************************************************************
+     * Add translation to the current matrix.
+     ************************************************************************/
+    void translation(double transX, double transY, double transZ)
+    {
+        Matrix translate(this->rows, this->columns);
+        //initialize translation matrix.
+        translate.ptrM[1 * this->columns - 1] = transX;
+        translate.ptrM[2 * this->columns - 1] = transY;
+        translate.ptrM[3 * this->columns - 1] = transZ;
+        for(int i = 0; i < this->rows; i++)
+        {
+            translate.ptrM[i * this->columns + i] = 1;
+        }
+        // if the matrix has nothing in it make it equal
+        if (initTF == false)
+        {
+            for(int i = 0; i < (this->rows * this->columns); i++)
+            {
+                this->ptrM[i] = translate.ptrM[i];
+            }
+            initTF = true;
+        }
+        //Multiply to combine.
+        else
+        {
+            *this = translate * (*this);
+        }
+    }
+
+    /*****************************************************************
+     * Equals operator
+     ****************************************************************/
+    Matrix & operator = (const Matrix & rhs)
+    {
+        this->rows = rhs.rows;
+        this->columns = rhs.columns;
+        this->initTF = rhs.initTF;
+        if(this->ptrM != NULL)
+        {
+            delete [] ptrM;
+        }
+        ptrM = new double[this->rows * this->columns];
+        for(int i = 0; i < (this->rows * this->columns); i++)
+        {
+            this->ptrM[i] = rhs.ptrM[i];
+        }
+        return *this;
+    }
+
+    /*************************************************************************
+     * Multiplication operator
+     ************************************************************************/
+    Matrix & operator *= (const Matrix & rhs)
+    {
+        if (this->columns != rhs.rows)
+        {
+            // the matrix cant be multiplied
+            Matrix emptyMatrix;
+            return emptyMatrix;
+        }
+
+        Matrix newMatrix(this->rows, rhs.columns);
+        for(int i = 0; i < this->rows; i++)
+        {
+            for(int j = 0; j < rhs.columns; j++)
+            {
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
+                {
+                     sum += this->ptrM[i * this->columns + k] * 
+                        rhs.ptrM[k * rhs.columns + j];
+                }
+                newMatrix.ptrM[i * newMatrix.columns + j] = sum;
+            }
+        }
+        newMatrix.initTF = true;
+        *this = newMatrix;
+        return *this;
+    }
+
+    // has to be a friend to access the private variables.
+    friend Matrix operator * (const Matrix & lhs, const Matrix & rhs);
+    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
+};
+
+/*************************************************************************
+* Multiplication operator
+* two matrices together.
+************************************************************************/
+Matrix operator * (const Matrix & lhs, const Matrix & rhs)
+{
+    if (lhs.columns != rhs.rows)
+    {
+        //matrices can't be multiplied
+        Matrix matrixNew;
+        return matrixNew;
+    }
+
+    Matrix newMatrix(lhs.rows, rhs.columns);
+    for(int i = 0; i < lhs.rows; i++)
+    {
+        for(int j = 0; j < rhs.columns; j++)
+        {
+            double sum = 0;
+            for(int k = 0; k < rhs.rows; k++)
+            {
+                sum += lhs.ptrM[i * lhs.columns + k] * 
+                       rhs.ptrM[k * rhs.columns + j];
+            }
+                newMatrix.ptrM[i * newMatrix.columns + j] = sum;
+        }
+    }
+    newMatrix.initTF = true;
+    return newMatrix; 
+}
+
+/**************************************************************
+ * multiplication operator to help when multiplying a vertex.
+ *************************************************************/
+Vertex operator * (const Matrix & rhs, const Vertex & lhs)
+{
+    if (rhs.columns != 4 || rhs.rows != 4)
+    {
+        Vertex vert;
+        return vert;
+    }
+
+    Vertex newVertex;
+    newVertex.x = rhs.ptrM[0] * lhs.x + rhs.ptrM[1] * lhs.y + rhs.ptrM[2] * lhs.z + rhs.ptrM[3] * lhs.w;
+    newVertex.y = rhs.ptrM[4] * lhs.x + rhs.ptrM[5] * lhs.y + rhs.ptrM[6] * lhs.z + rhs.ptrM[7] * lhs.w;
+    newVertex.z = rhs.ptrM[8] * lhs.x + rhs.ptrM[9] * lhs.y + rhs.ptrM[10] * lhs.z + rhs.ptrM[11] * lhs.w;
+    newVertex.w = rhs.ptrM[12] * lhs.x + rhs.ptrM[13] * lhs.y + rhs.ptrM[14] * lhs.z + rhs.ptrM[15] * lhs.w;
+
+    return newVertex;
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -220,11 +459,6 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
-union attrib
-{
-    double d;
-    void* ptr;
-};
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
@@ -243,6 +477,10 @@ class Attributes
         //Changes to make this class more flexable
         double newColor[16];
         void* ptrImg;
+       // Matrix attrMatrix;
+        //Vertex *vert;
+        Vertex *vert;
+        Matrix matrixAttributes;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -310,7 +548,7 @@ class FragmentShader
             FragShader = DefaultFragShader;
         }
 
-        // Initialize with a fragment callback
+        // initialize with a fragment callback
         FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(FragSdr);
@@ -350,7 +588,7 @@ class VertexShader
             VertShader = DefaultVertShader;
         }
 
-        // Initialize with a fragment callback
+        // initialize with a fragment callback
         VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
         {
             setShader(VertSdr);
@@ -362,6 +600,13 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
+
+// multiplies the vertex by a matrix to get the new vertices.
+void vertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = uniforms.matrixAttributes * vertIn;
+    attrOut = vertAttr;
+}
 
 // Stub for Primitive Drawing function
 /****************************************
