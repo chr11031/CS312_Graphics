@@ -75,7 +75,7 @@ void DrawPoint(Buffer2D<PIXEL> & target,
                Attributes * const uniforms, 
                FragmentShader* const frag)
 {
-    // Set our pixel according to the attribute calue!
+    // Set our pixel according to the attribute value!
     PIXEL fragment = 0;
     frag->FragShader(fragment, *attrs, *uniforms);
     target[(int)v[0].y][(int)v[0].x] = fragment;
@@ -160,14 +160,23 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
                                  Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
+    int i = 0;
     if(vert == NULL)
     {
-        for(int i = 0; i < numIn; i++)
+        for(; i < numIn; i++)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    else
+    {
+        for(; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
+    }
+    
 }
 
 /***************************************************************************
@@ -254,7 +263,7 @@ int main()
         clearScreen(frame);
 
         // Run the test
-        TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
