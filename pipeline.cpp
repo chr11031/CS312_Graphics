@@ -285,18 +285,23 @@ void DrawTriangle(Buffer2D<PIXEL> &target, Vertex *const triangle,
  * Executes the vertex shader on inputs, yielding transformed
  * outputs. 
  *************************************************************/
-void VertexShaderExecuteVertices(const VertexShader *vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int &numIn,
-                                 Attributes *const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
+void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
+                                 Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
-    if (vert == NULL)
+    for(int i = 0; i < numIn; i++)
     {
-        for (int i = 0; i < numIn; i++)
+        if(vert == NULL)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+        else
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
     }
+    
 }
 
 /***************************************************************************
@@ -393,8 +398,11 @@ int main()
         /* Uncomment to run the Project 03 - Linear Interpolation code *
         TestDrawFragments(frame);
 
-        /* Uncomment to run the Project 04 - Perspective Correction code */
+        /* Uncomment to run the Project 04 - Perspective Correction code *
         TestDrawPerspectiveCorrect(frame);
+        
+        /* Uncomment to run the Project 05 - Vertex Shader and Transformations code */
+        TestVertexShader(frame);
 
         /********** End of my code area **********/
         // Push to the GPU
