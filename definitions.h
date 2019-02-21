@@ -49,7 +49,9 @@ struct Vertex
     double w;
 };
 
-
+/****************************************************
+ * Matrix class
+ ***************************************************/
 class Matrix
 {
 private:
@@ -62,6 +64,7 @@ public:
 
     Matrix(): row(0), col(0), neo(NULL), init(false) {};
 
+    //non default constructor
     Matrix(int row, int col)
     {
         this->row = row;
@@ -74,7 +77,7 @@ public:
         }
         init = false;
     }
-
+    //destructor
     ~Matrix()
     {
         if(neo!=NULL)
@@ -84,6 +87,10 @@ public:
         }
     }
 
+    /****************************************************
+    * Scales the matrix by what ever is passed in for 
+    * x y and z
+    ***************************************************/
     void scale(double x, double y, double z)
     {
         //acts as vert to multiply matrix by
@@ -93,7 +100,7 @@ public:
 
         for(int i = 0; i < this->row; i++)
         {
-            scaler.neo[i * this->col + 1] = temp[i];
+            scaler.neo[i * this->col + i] = temp[i];
         }
         if(init == false)
         {
@@ -109,6 +116,9 @@ public:
         }
     }
 
+    /****************************************************
+    * translates the matrix
+    ***************************************************/
     void translate(double x, double y, double z)
     {
         Matrix translator(this->row, this->col);
@@ -118,7 +128,7 @@ public:
 
         for(int i = 0; i < this->row; i++)
         {
-            translator.neo[i * this->col +i] = 1;
+            translator.neo[i * this->col + i] = 1;
         }
 
         if(init == false)
@@ -136,6 +146,9 @@ public:
 
     }
 
+    /****************************************************
+    * Rotates the matrix based on the "degree" passed in
+    ***************************************************/
     void rotate(double r)
     {
         Matrix rotator(this->row, this->col);
@@ -165,7 +178,7 @@ public:
 
     }
 
-
+    //overloaded assignmed operator
     Matrix & operator = (const Matrix & rhs)
     {
         this->row = rhs.row;
@@ -185,9 +198,7 @@ public:
         return *this;
     }
 
-    /*************************************************************************
-     * Multiplication operator
-     ************************************************************************/
+    //overloaded operator for matrix multiplication
     Matrix & operator *= (const Matrix & rhs)
     {
         Matrix temp(this->row, rhs.col);
@@ -211,7 +222,7 @@ public:
         *this = temp;
         return *this;
     }
-
+    //allows access to private variables
     friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
 };
 
