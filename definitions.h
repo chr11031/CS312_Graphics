@@ -35,6 +35,17 @@ enum PRIMITIVES
     POINT
 };
 
+/******************************************************
+ * Types of matrices.
+ *****************************************************/
+enum Transformation
+{
+    Rotate,
+    Translate,
+    Scale,
+    None
+};
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -44,6 +55,144 @@ struct Vertex
     double y;
     double z;
     double w;
+};
+
+/****************************************************
+ * Describes a matrix 
+ ****************************************************/
+class Matrix 
+{
+    private:
+        
+
+        // Multiply a 1x4 and 4x1 matrix
+        double getValue( double row[4], double lhs[4][4], int column)
+        {
+            return row[0] * lhs[0][column]
+                 + row[1] * lhs[1][column]
+                 + row[2] * lhs[2][column]
+                 + row[3] * lhs[3][column];
+        }
+
+        // Multiply a row by a Vertex
+        double multiplyVertex(const double row[4], const Vertex vert) const
+        {
+            return row[0] * vert.x
+                 + row[1] * vert.y
+                 + row[2] * vert.z
+                 + row[3] * vert.w;
+        }
+
+        // Create a rotation matrix with the given values
+        void createRotationMatrix(double x, double y, double z)
+        {
+            Matrix Mat;
+            (Mat).base[0][0] = cos(z * M_PI / 180.0);
+            (Mat).base[0][1] = -sin(z * M_PI / 180.0);
+            (Mat).base[1][0] = sin(z * M_PI / 180.0);
+            (Mat).base[1][1] = cos(z * M_PI / 180.0);
+            (Mat).base[2][2] = 1;
+            (Mat).base[3][3] = 1;
+
+            *this = *this * Mat;
+        }
+
+    public:
+
+        double base[4][4];
+        // Constructor type:translate,rotate or scale and x,y,z values (degrees for rotation)
+        Matrix(Transformation transformation, double x, double y, double z)
+        {
+            // Base TransformationMatrix (4x4 Identity Matrix)
+            base[0][0] = 1;
+            base[0][1] = 0;
+            base[0][2] = 0;
+            base[0][3] = 0;
+
+            base[1][0] = 0;
+            base[1][1] = 1;
+            base[1][2] = 0;
+            base[1][3] = 0;
+
+            base[2][0] = 0;
+            base[2][1] = 0;
+            base[2][2] = 1;
+            base[2][3] = 0;
+
+            base[3][0] = 0;
+            base[3][1] = 0;
+            base[3][2] = 0;
+            base[3][3] = 1;
+
+            // Create a matrix based on the type given
+            switch (transformation)
+            {
+                case Rotate:
+                    createRotationMatrix(x, y, z);
+                    break;
+
+                case Translate:
+                    base[0][3] = x;
+                    base[1][3] = y;
+                    base[2][3] = z;
+                    break;
+
+                case Scale:
+                    base[0][0] = x;
+                    base[1][1] = y;
+                    base[2][2] = z;
+                    break;
+
+                case None:
+                default:
+                    break;
+            }
+        }
+
+        Matrix()
+        {
+            double x, y, z;
+            Matrix(None, x, y, z);
+        }
+
+        // Multiply two 4X4 matrices
+        Matrix operator*(Matrix& multiplier)
+        {
+            Matrix temp;
+            // First Row
+            temp.base[0][0] = getValue(base[0], multiplier.base, 0);
+            temp.base[0][1] = getValue(base[0], multiplier.base, 1);
+            temp.base[0][2] = getValue(base[0], multiplier.base, 2);
+            temp.base[0][3] = getValue(base[0], multiplier.base, 3);
+            // Second Row
+            temp.base[1][0] = getValue(base[1], multiplier.base, 0);
+            temp.base[1][1] = getValue(base[1], multiplier.base, 1);
+            temp.base[1][2] = getValue(base[1], multiplier.base, 2);
+            temp.base[1][3] = getValue(base[1], multiplier.base, 3);
+            // Third Row
+            temp.base[2][0] = getValue(base[2], multiplier.base, 0);
+            temp.base[2][1] = getValue(base[2], multiplier.base, 1);
+            temp.base[2][2] = getValue(base[2], multiplier.base, 2);
+            temp.base[2][3] = getValue(base[2], multiplier.base, 3);
+            // Fourth Row
+            temp.base[3][0] = getValue(base[3], multiplier.base, 0);
+            temp.base[3][1] = getValue(base[3], multiplier.base, 1);
+            temp.base[3][2] = getValue(base[3], multiplier.base, 2);
+            temp.base[3][3] = getValue(base[3], multiplier.base, 3);
+            return temp;
+        }
+
+        // Multiply a 4x4 by a 4x1
+        Vertex multiplyByVertex(const Vertex& vert) const
+        {
+            Vertex temp;
+            temp.x = multiplyVertex(base[0], vert);
+            temp.y = multiplyVertex(base[1], vert);
+            temp.z = multiplyVertex(base[2], vert);
+            temp.w = multiplyVertex(base[3], vert);
+            return temp;
+        }
+
 };
 
 /******************************************************
@@ -238,6 +387,7 @@ class Attributes
     int numValues;
     //Void pointer that can be cast to an image or other value.
     void * pointer;
+    Matrix matrix;
 };	
 
 //Creates a color with the attributes sent to it
@@ -309,6 +459,12 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
     attrOut = vertAttr;
+}
+
+void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+    vertOut = uniforms.matrix.multiplyByVertex(vertIn);
+    attrOut = attrIn;
 }
 
 /**********************************************************
