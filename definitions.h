@@ -287,7 +287,7 @@ void Matrix :: operator *= (const Matrix & rhs)
             // multiplies rows and columns
             for (int n = 0; n < rhs.numCols; n++)
             {
-                tempMatrix[i][j] += (cell[i][n] * colToRow[n]);
+                tempMatrix[i][j] += (rhs.cell[i][n] * colToRow[n]);
             }
         }
     }
