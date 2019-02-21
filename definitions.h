@@ -106,10 +106,10 @@ class MatrixTransform
         {
             // double transformationMatrix[4][4] = {{cos(rotateFactorX * M_PI / 180),-sin(rotateFactorX * M_PI / 180),0,0},{sin(rotateFactorX * M_PI / 180),cos(rotateFactorX * M_PI / 180),0,0},{0,0,1,0},{0,0,0,1}};
             // this->multiply(this->vector, transformationMatrix);
-            this->matrix[0][0] *= cos(rotateFactorX * M_PI / 180);
-            this->matrix[0][1] *= -sin(rotateFactorX * M_PI / 180);
-            this->matrix[1][0] *= sin(rotateFactorX * M_PI / 180);
-            this->matrix[1][1] *= cos(rotateFactorX * M_PI / 180);
+            this->matrix[0][0] *= cos((rotateFactorX * M_PI) / 180);
+            this->matrix[0][1] *= -sin((rotateFactorX * M_PI) / 180);
+            this->matrix[1][0] *= sin((rotateFactorY * M_PI) / 180);
+            this->matrix[1][1] *= cos((rotateFactorY * M_PI) / 180);
         }
 
         /**********************************************************
@@ -137,7 +137,7 @@ class MatrixTransform
             this->matrix[3][3] = 1;
         }
 
-        void multiply(double vector[4][1]) const
+        void multiplyVector(double vector[4][1]) const
         {
             for (int i = 0; i < 4; ++i)
             {
@@ -150,19 +150,22 @@ class MatrixTransform
                 vector[i][0] = sum;
             }
         }
-        // void multiply(double vector[4][1], double matrix[4][4])
-        // {
-        //     for (int i = 0; i < 4; ++i)
-        //     {
-        //         double sum = 0;
-        //         for (int j = 0; j < 4; ++j)
-        //         {
-        //             sum += matrix[i][j] * vector[j][0];
-        //         }
 
-        //         vector[i][0] = sum;
-        //     }
-        // }
+        void multiplyMatrices(double matrix1[4][4], double matrix2[4][4])
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    double sum = 0;
+                    for (int k = 0; k < 4; ++k)
+                    {
+                        sum += matrix2[i][j] * matrix1[j][k];
+                    }
+                    matrix1[i][j] = sum;
+                }
+            }
+        }
 };
 
 /******************************************************
@@ -418,7 +421,7 @@ void TestVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertI
     double vector[4][1] = {{vertIn.x}, {vertIn.y}, {vertIn.z}, {vertIn.w}};
 
     // Multiply the vector by the transformation matrix
-    uniforms.transform.multiply(vector);
+    uniforms.transform.multiplyVector(vector);
 
     transformedVertex.x = vector[0][0];
     transformedVertex.y = vector[1][0];
