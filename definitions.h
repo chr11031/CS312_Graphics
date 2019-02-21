@@ -1,8 +1,13 @@
 #define SDL_MAIN_HANDLED
+#include <iostream>
+#include <vector>
 #include "SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+
+using namespace std;
+using std::vector;
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -69,6 +74,95 @@ class BoundingBox
         int minX;
         int maxY;
         int minY;
+};
+
+class MatrixTransform
+{
+    public:
+        // This is the matrix that will be manipulated into a transform
+        double matrix[4][4];
+        
+        // Default Constructor
+        MatrixTransform() {
+            // Declare an Identity Matrix
+            identity();
+        }
+    
+        void translate(double x, double y)
+        {
+            this->matrix[0][3] += x;
+            this->matrix[1][3] += y;
+        }
+
+        void scale(double scaleFactorX, double scaleFactorY)
+        {
+            // double transformationMatrix[4][4] = {{scaleFactorX,0,0,0},{0,scaleFactorY,0,0},{0,0,1,0},{0,0,0,1}};
+            // this->multiply(this->vector, transformationMatrix);
+            this->matrix[0][0] *= scaleFactorX;
+            this->matrix[1][1] *= scaleFactorY;
+        }
+
+        void rotate(double rotateFactorX, double rotateFactorY)
+        {
+            // double transformationMatrix[4][4] = {{cos(rotateFactorX * M_PI / 180),-sin(rotateFactorX * M_PI / 180),0,0},{sin(rotateFactorX * M_PI / 180),cos(rotateFactorX * M_PI / 180),0,0},{0,0,1,0},{0,0,0,1}};
+            // this->multiply(this->vector, transformationMatrix);
+            this->matrix[0][0] *= cos(rotateFactorX * M_PI / 180);
+            this->matrix[0][1] *= -sin(rotateFactorX * M_PI / 180);
+            this->matrix[1][0] *= sin(rotateFactorX * M_PI / 180);
+            this->matrix[1][1] *= cos(rotateFactorX * M_PI / 180);
+        }
+
+        /**********************************************************
+         * IDENTITY
+         * Clears the transformations placed upon the matrix by
+         * making the matrix an identity matrix.
+         * *******************************************************/
+        void identity()
+        {
+            this->matrix[0][0] = 1;
+            this->matrix[0][1] = 0;
+            this->matrix[0][2] = 0;
+            this->matrix[0][3] = 0;
+            this->matrix[1][0] = 0;
+            this->matrix[1][1] = 1;
+            this->matrix[1][2] = 0;
+            this->matrix[1][3] = 0;
+            this->matrix[2][0] = 0;
+            this->matrix[2][1] = 0;
+            this->matrix[2][2] = 1;
+            this->matrix[2][3] = 0;
+            this->matrix[3][0] = 0;
+            this->matrix[3][1] = 0;
+            this->matrix[3][2] = 0;
+            this->matrix[3][3] = 1;
+        }
+
+        void multiply(double vector[4][1]) const
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                double sum = 0;
+                for (int j = 0; j < 4; ++j)
+                {
+                    sum += this->matrix[i][j] * vector[j][0];
+                }
+
+                vector[i][0] = sum;
+            }
+        }
+        // void multiply(double vector[4][1], double matrix[4][4])
+        // {
+        //     for (int i = 0; i < 4; ++i)
+        //     {
+        //         double sum = 0;
+        //         for (int j = 0; j < 4; ++j)
+        //         {
+        //             sum += matrix[i][j] * vector[j][0];
+        //         }
+
+        //         vector[i][0] = sum;
+        //     }
+        // }
 };
 
 /******************************************************
@@ -265,6 +359,9 @@ class Attributes
 
         // An array that holds attribute values, such as RGB values or UV Coordinates
         double values[5];
+
+        // A Matrix Transform that can be used to transform a vertex
+        MatrixTransform transform;
 };	
 
 // Example of a fragment shader
@@ -311,6 +408,26 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void TestVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Create a Vector from the Vertex vertIn
+    Vertex transformedVertex;
+    double vector[4][1] = {{vertIn.x}, {vertIn.y}, {vertIn.z}, {vertIn.w}};
+
+    // Multiply the vector by the transformation matrix
+    uniforms.transform.multiply(vector);
+
+    transformedVertex.x = vector[0][0];
+    transformedVertex.y = vector[1][0];
+    transformedVertex.z = vector[2][0];
+    transformedVertex.w = vector[3][0];
+
+    vertOut = transformedVertex;
+
+    // Modify Attributes
     attrOut = vertAttr;
 }
 

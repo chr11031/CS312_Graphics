@@ -186,6 +186,12 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+    } else {
+        // For each inputVert, send it to the shader
+        for (int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
     }
 }
 
@@ -270,7 +276,7 @@ int main()
     FRAME_BUF = SDL_ConvertSurface(SDL_GetWindowSurface(WIN), SDL_GetWindowSurface(WIN)->format, 0);
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
-    BufferImage bmpImage("../battletoads.bmp");
+    // BufferImage bmpImage("../battletoads.bmp");
 
     // Draw loop 
     bool running = true;
@@ -282,30 +288,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
-        // TestDrawTriangle(frame);
-
-        // Attributes attrs;
-        // FragmentShader greenSdr(GreenFragmentShader);
-
-        // // Here, we will make a double for loop
-        // for (int y = 0; y < 256; y++) {
-        //     for (int x = 0; x < 256; x++) {
-        //         //frame[y][x] = bmpImage[y][x];
-        //         //Attributes attrs;
-        //         // FragmentShader fragSdr(DefaultFragShader);                
-                
-        //         attrs.color = bmpImage[y][x];
-
-        //         Vertex v;
-        //         v.x = x;
-        //         v.y = y;
-        //         v.z = 1;
-        //         v.w = 1;
-
-        //         DrawPrimitive(POINT, frame, &v, &attrs, NULL, &greenSdr);
-        //     }
-        // }
+        // TestDrawFragments(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
