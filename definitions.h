@@ -21,6 +21,7 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define DEG_TO_RAD M_PI / 180.0
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -45,6 +46,148 @@ struct Vertex
     double z;
     double w;
 };
+
+/**********************************************************
+ * MATRIX
+ * Encapsulates a transformation matrix
+ *********************************************************/
+class Matrix
+{
+    private:
+        double matrix[4][4];
+
+        void initialize(double matrix[4][4])
+        {
+            for(int y = 0; y < 4; y++)
+            {
+                for(int x = 0; x < 4; x++)
+                {
+                    this->matrix[y][x] = matrix[y][x];
+                }
+            }
+        }
+
+    public:
+        Matrix() 
+        {
+            double data[4][4] = {
+                {1.0, 0.0, 0.0, 0.0},
+                {0.0, 1.0, 0.0, 0.0},
+                {0.0, 0.0, 1.0, 0.0},
+                {0.0, 0.0, 0.0, 1.0}};
+            initialize(data);
+        }
+
+        Matrix(double matrix[4][4])
+        {
+            initialize(matrix);
+        }
+
+        double* operator[](int i)
+        {
+            if(i < 0 || i >= 4)
+                throw(false);
+            return matrix[i];
+        }
+
+        const double* operator[](int i) const
+        {
+            if(i < 0 || i >= 4)
+                throw(false);
+            return matrix[i];
+        }
+};
+
+// The identity matrix
+Matrix IdentityMatrix()
+{
+    double data[4][4] = {
+        {1.0, 0.0, 0.0, 0.0}, 
+        {0.0, 1.0, 0.0, 0.0}, 
+        {0.0, 0.0, 1.0, 0.0}, 
+        {0.0, 0.0, 0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Transformation matrix that translates
+Matrix TranslationMatrix(double dx, double dy, double dz)
+{
+    double data[4][4] = {
+        {1.0, 0.0, 0.0, dx}, 
+        {0.0, 1.0, 0.0, dy}, 
+        {0.0, 0.0, 1.0, dz}, 
+        {0.0, 0.0, 0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Transformation matrix that scales
+Matrix ScaleMatrix(double sx, double sy, double sz)
+{
+    double data[4][4] = {
+        { sx, 0.0, 0.0, 0.0}, 
+        {0.0,  sy, 0.0, 0.0}, 
+        {0.0, 0.0,  sz, 0.0}, 
+        {0.0, 0.0, 0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Transformation matrix that rotates ccw around the x-axis
+Matrix XRotationMatrix(double rad)
+{
+    double data[4][4] = {
+        {1.0,       0.0,       0.0, 0.0}, 
+        {0.0,  cos(rad), -sin(rad), 0.0}, 
+        {0.0,  sin(rad),  cos(rad), 0.0}, 
+        {0.0,       0.0,       0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Transformation matrix that rotates ccw around the y-axis
+Matrix YRotationMatrix(double rad)
+{
+    double data[4][4] = {
+        { cos(rad), 0.0, sin(rad), 0.0}, 
+        {      0.0, 1.0,      0.0, 0.0}, 
+        {-sin(rad), 0.0, cos(rad), 0.0}, 
+        {      0.0, 0.0,      0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Transformation matrix that rotates ccw around the z-axis
+Matrix ZRotationMatrix(double rad)
+{
+    double data[4][4] = {
+        {cos(rad), -sin(rad), 0.0, 0.0}, 
+        {sin(rad),  cos(rad), 0.0, 0.0}, 
+        {     0.0,       0.0, 1.0, 0.0}, 
+        {     0.0,       0.0, 0.0, 1.0}};
+    return Matrix(data);
+}
+
+// Multiplies two matrices
+Matrix operator*(const Matrix &lhs, const Matrix &rhs)
+{
+    Matrix result;
+    for(int y = 0; y < 4; y++)
+    {
+        for(int x = 0; x < 4; x++)
+        {
+            result[y][x] = lhs[y][0] * rhs[0][x] + lhs[y][1] * rhs[1][x] + lhs[y][2] * rhs[2][x] + lhs[y][3] * rhs[3][x];
+        }
+    }
+    return result;
+}
+
+// Muliplies a matrix by a vertex
+Vertex operator*(const Matrix &lhs, const Vertex &rhs)
+{
+    Vertex result;
+    result.x = rhs.x * lhs[0][0] + rhs.y * lhs[0][1] + rhs.z * lhs[0][2] + rhs.w * lhs[0][3];
+    result.y = rhs.x * lhs[1][0] + rhs.y * lhs[1][1] + rhs.z * lhs[1][2] + rhs.w * lhs[1][3];
+    result.z = rhs.x * lhs[2][0] + rhs.y * lhs[2][1] + rhs.z * lhs[2][2] + rhs.w * lhs[2][3];
+    result.w = rhs.x * lhs[3][0] + rhs.y * lhs[3][1] + rhs.z * lhs[3][2] + rhs.w * lhs[3][3];
+    return result;
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -241,6 +384,8 @@ class Attributes
         double r;
         double g;
         double b;
+
+        Matrix transform;
 };	
 
 // Image Fragment Shader 
@@ -303,6 +448,12 @@ class FragmentShader
             FragShader = FragSdr;
         }
 };
+
+void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = uniforms.transform * vertIn;
+    attrOut = vertAttr;
+}
 
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
@@ -375,6 +526,6 @@ double determinant(double v1x, double v1y, double v2x, double v2y)
 double lerp(double area, double d1, double d2, double d3, double a1, double a2, double a3) 
 {
     return ((d1 * a3) + (d2 * a1) + (d3 * a2)) / area;
-}             
+}   
        
 #endif
