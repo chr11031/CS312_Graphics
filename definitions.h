@@ -468,7 +468,7 @@ void TestVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertI
 
     // Multiply the vector by the transformation matrix
     uniforms.transform.multiplyVector(vector);
-    // uniforms.transform.operator*(vector);
+    // MatrixTransform resultTransform = uniforms.transform * vector;
 
     transformedVertex.x = vector[0][0];
     transformedVertex.y = vector[1][0];
