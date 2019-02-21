@@ -81,10 +81,21 @@ class MatrixTransform
     public:
         // This is the matrix that will be manipulated into a transform
         double matrix[4][4];
+
+        // To make operator overloading happy
+        double vector[4][1];
         
         // Default Constructor
         MatrixTransform() {
             // Declare an Identity Matrix
+            identity();
+        }
+
+        MatrixTransform(double vect[4][1]) {
+            for (int i = 0; i < 4; i++)
+            {
+                this->vector[i][0] = vect[i][0];
+            }
             identity();
         }
     
@@ -92,6 +103,9 @@ class MatrixTransform
         {
             this->matrix[0][3] += x;
             this->matrix[1][3] += y;
+
+            // double translateMatrix[4][4] = {{1,0,0,x}, {0,1,0,y}, {0,0,1,0}, {0,0,0,1}};
+            // multiplyMatrices(this->matrix, translateMatrix);
         }
 
         void scale(double scaleFactorX, double scaleFactorY)
@@ -105,7 +119,9 @@ class MatrixTransform
 
         void rotate(double rotateFactorX, double rotateFactorY)
         {
-            double rotateMatrix[4][4] = {{cos(rotateFactorX * M_PI / 180),-sin(rotateFactorX * M_PI / 180),0,0},{sin(rotateFactorX * M_PI / 180),cos(rotateFactorX * M_PI / 180),0,0},{0,0,1,0},{0,0,0,1}};
+            double sinOp = (sin(rotateFactorY * (M_PI / 180.0)));
+            cout << sinOp << endl;
+            double rotateMatrix[4][4] = {{(cos(rotateFactorX * M_PI / 180.0)),-(sin(rotateFactorX * (M_PI / 180.0))),0,0},{sinOp,(cos(rotateFactorY * (M_PI / 180.0))),0,0},{0,0,1,0},{0,0,0,1}};
             // this->multiply(this->vector, transformationMatrix);
             multiplyMatrices(this->matrix, rotateMatrix);
             // this->matrix[0][0] *= cos((rotateFactorX * M_PI) / 180);
@@ -141,6 +157,7 @@ class MatrixTransform
 
         void multiplyVector(double vector[4][1]) const
         {
+            double result[4][1];
             for (int i = 0; i < 4; ++i)
             {
                 double sum = 0;
@@ -149,24 +166,51 @@ class MatrixTransform
                     sum += this->matrix[i][j] * vector[j][0];
                 }
 
-                vector[i][0] = sum;
+                result[i][0] = sum;
+            }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                vector[i][0] = result[i][0];
             }
         }
 
         void multiplyMatrices(double matrix1[4][4], double matrix2[4][4])
         {
+            double result[4][4];
             for (int i = 0; i < 4; ++i)
             {
                 for (int j = 0; j < 4; ++j)
                 {
-                    double sum = 0;
+                    float sum = 0;
                     for (int k = 0; k < 4; ++k)
                     {
-                        sum += matrix2[i][j] * matrix1[j][k];
+                        sum += (matrix2[i][j] * matrix1[j][k]);
                     }
-                    matrix1[i][j] = sum;
+                    result[i][j] = sum;
                 }
             }
+
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    matrix1[i][j] = result[i][j];
+                }
+            }
+        }
+
+        MatrixTransform operator * (double vector[4][1])
+        {
+            // Copy the vector over so this function can be const
+            double operatorVector[4][1];
+            for (int i = 0; i < 4; i++)
+            {
+                operatorVector[i][0] = vector[i][0];
+            }
+            multiplyVector(operatorVector);
+
+            return MatrixTransform(operatorVector);
         }
 };
 
@@ -424,6 +468,7 @@ void TestVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertI
 
     // Multiply the vector by the transformation matrix
     uniforms.transform.multiplyVector(vector);
+    // uniforms.transform.operator*(vector);
 
     transformedVertex.x = vector[0][0];
     transformedVertex.y = vector[1][0];
