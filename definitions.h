@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "matrix.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -214,6 +215,20 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+
+
+Vertex operator*(const Vertex &lhs, const Matrix &rhs)
+{
+    double newVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    double verts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    for (int i = 0; i < rhs.numRow-1; i++)
+        newVerts[i] = MatrixMultiply(rhs.grid[i], verts, 4);
+
+    Vertex temp = {newVerts[0], newVerts[1], newVerts[2], newVerts[3]};
+    return temp;
+}
+
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -226,20 +241,11 @@ class Attributes
         // Obligatory empty constructor
         Attributes() : numValues(0) {}
         
-         PIXEL color;
+        PIXEL color;
         int numValues;
-        double attrValues[16];
+        double attrValues[15];
         void* ptrImg;
-
-        /* Old way
-        double r;
-        double g;
-        double b;
-
-        double u;
-        double v;
-        
-        */
+        Matrix matrix;
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -252,9 +258,9 @@ class Attributes
             double w2 = det2 / area;
             double w3 = 1 - w2 - w1;
 
-             for (int i = 0; i < numValues; i++)
+            for (int i = 0; i < numValues; i++)
             {
-                attrValues[i] = vertAttrs[0].attrValues[i] * w2 + vertAttrs[1].attrValues[i] * w3 + vertAttrs[2].attrValues[i] * w1;
+             attrValues[i] = vertAttrs[0].attrValues[i] * w2 + vertAttrs[1].attrValues[i] * w3 + vertAttrs[2].attrValues[i] * w1;
             }
         }
 
@@ -265,8 +271,8 @@ class Attributes
                 attrValues[i] *= correctedZ;
             }
         }
-       
 };	
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

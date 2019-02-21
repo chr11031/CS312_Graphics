@@ -1,5 +1,3 @@
-#include "definitions.h"
-
 #ifndef SHADERS_H
 #define SHADERS_H
 
@@ -21,18 +19,11 @@ BufferImage* myPointer = (BufferImage*)uniforms.ptrImg;
     int y = attr.attrValues[1] * (myPointer->height() - 1);
 
     fragment = (*myPointer)[y][x];
-
-    // PIXEL color;
-    // BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
-
-    // int wid = ptr->width();
-    // int hgt = ptr->height();
-
-    // int x = attr.attrValues[0] * wid;
-    // int y = attr.attrValues[1] * hgt;
-
-    // color = (*ptr)[y][x];
-    // fragment = color;
 }
 
+void TransformShader (Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn * uniforms.matrix;
+    attrOut = vertAttr;
+}
 #endif
