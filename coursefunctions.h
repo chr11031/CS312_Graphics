@@ -430,13 +430,12 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	colorAttributes[2].setBlue(1.0);
 
         FragmentShader myColorFragShader;
-        myColorFragShader.setShader(ColorFragShader);
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
-        myColorVertexShader.setShader(TransformVertexShader);
+        myColorVertexShader = TransformVertexShader;
         // Your code for the vertex shader goes here 
 
 
