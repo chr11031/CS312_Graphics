@@ -180,7 +180,7 @@ class Matrix
         }
     }
     /*************************************************************************
-	* Add rotation to the current matrix.
+	* Add rotation to the matrix.
 	************************************************************************/
     void rotation(double rot1)
     {
@@ -211,7 +211,7 @@ class Matrix
     }
 
     /*************************************************************************
-	* Add scaling to the current matrix.
+	* Add scaling to the matrix
 	************************************************************************/
     void scaling(double scaleX, double scaleY, double scaleZ)
     {
@@ -242,7 +242,7 @@ class Matrix
     }
 
     /*************************************************************************
-	* Add translation to the current matrix.
+	* Add translation to the matrix.
 	************************************************************************/
     void translation(double transX, double transY, double transZ)
     {
@@ -272,7 +272,7 @@ class Matrix
     }
 
     /*****************************************************************
-	* Equals operator
+	* Equals operator for the matrix
 	****************************************************************/
     Matrix &operator=(const Matrix &rhs)
     {
@@ -292,7 +292,7 @@ class Matrix
     }
 
     /*************************************************************************
-	* Multiplication operator
+	* Multiplication operator for the matrix
 	************************************************************************/
     Matrix &operator*=(const Matrix &rhs)
     {
