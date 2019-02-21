@@ -321,6 +321,7 @@ Vertex operator * (const Vertex & lhs, const Matrix & rhs)
             tempVerts[i] += (rhs.cell[i][n] * currentVerts[n]);
         }
     }
+    return {tempVerts[0], tempVerts[1], tempVerts[2], tempVerts[3]};
 }
 
 /***************************************************
