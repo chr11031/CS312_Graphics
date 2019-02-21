@@ -214,6 +214,151 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/*******************************************
+ * MatrixMult
+ * multiply 4X4 and 4X1 matrices
+*******************************************/
+class Transformer
+{
+    public:
+        int row;
+        int col;
+        double matrix[4][4] = {{1,0,0,0},
+                               {0,1,0,0},
+                               {0,0,1,0},
+                               {0,0,0,1}};
+
+        Transformer() 
+        {
+            this->row = 4;
+            this->col = 4;
+        }
+
+        Transformer(int row, int col)
+        {
+            this->row = row;
+            this->col = col;
+        }
+
+        Transformer(double vertex[4][1])
+        {
+            this->row = 4;
+            this->col = 4;
+            for (int i = 0; i < 4; i++)
+                matrix[i][0] = vertex[i][0];
+        }
+
+        Transformer(Vertex vert)
+        {
+            this->row = 4;
+            this->col = 1;
+            this->matrix[0][0] = vert.x;
+            this->matrix[1][0] = vert.y;
+            this->matrix[2][0] = vert.z;
+            this->matrix[3][0] = vert.w;
+        }
+
+        Transformer(double matrix[4][4])
+        {
+            this->row = 4;
+            this->col = 4;
+            for(int i = 0; i < row; i++)
+                for(int j = 0; j < col; j++)
+                    this->matrix[i][j] = matrix[i][j];            
+        }
+
+        Transformer scale(double x, double y, double z)
+        {
+            Transformer mat;
+            mat.matrix[0][0] = x;
+            mat.matrix[1][1] = y;
+            mat.matrix[2][2] = z;
+
+            return (*this) * mat;
+        }
+
+        Transformer translate(double x, double y, double z)
+        {
+            Transformer mat;
+            mat.matrix[0][3] = x;
+            mat.matrix[1][3] = y;
+            mat.matrix[2][3] = z;
+
+            return (*this) * mat;
+        }
+
+        Transformer zRotate(double angle)
+        {
+            Transformer mat;
+            double sinRot = sin(angle * M_PI / 180.0);
+            double cosRot = cos(angle * M_PI / 180.0);
+
+            mat.matrix[0][0] = cosRot;
+            mat.matrix[0][1] = -sinRot;
+            mat.matrix[1][0] = sinRot;
+            mat.matrix[1][1] = cosRot;
+
+            return (*this) * mat;
+        }
+
+        Transformer xRotate(double angle)
+        {
+            Transformer mat;
+            double sinRot = sin(angle * M_PI / 180.0);
+            double cosRot = cos(angle * M_PI / 180.0);
+
+            mat.matrix[1][1] = cosRot;
+            mat.matrix[1][2] = -sinRot;
+            mat.matrix[2][1] = sinRot;
+            mat.matrix[2][2] = cosRot;
+
+            return (*this) * mat;
+        }       
+
+        Transformer yRotate(double angle)
+        {
+            Transformer mat;
+            double sinRot = sin(angle * M_PI / 180.0);
+            double cosRot = cos(angle * M_PI / 180.0);
+
+            mat.matrix[0][0] = cosRot;
+            mat.matrix[0][2] = sinRot;
+            mat.matrix[2][0] = -sinRot;
+            mat.matrix[2][3] = cosRot;
+
+            return (*this) * mat;
+        }
+
+        Transformer operator*(const Vertex &vert)
+        {
+            Transformer mat(4, 1);
+            double vertex[4][1];
+            vertex[0][0] = vert.x;
+            vertex[1][0] = vert.y;
+            vertex[2][0] = vert.z;
+            vertex[3][0] = vert.w;
+
+            for(int i = 0; i < this->row; i++)
+                for(int j = 0; j < 4; j++)
+                    mat.matrix[i][0] += this->matrix[i][j] * vertex[j][0];
+
+            return mat;
+        }
+
+        //I think there is a problem here. 
+        Transformer operator*(Transformer &multMatrix)
+        {
+            Transformer mat;
+
+            int i, j, k; 
+            for (i = 0; i < this->row; i++) 
+                for (j = 0; j < multMatrix.col; j++) 
+                    for (k = 0; k < multMatrix.row; k++) 
+                        mat.matrix[i][j] += this->matrix[i][k] * multMatrix.matrix[k][j]; 
+            return mat;
+        }
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -230,6 +375,7 @@ class Attributes
         // For image interpolation
         double size = 3;
         void* ptrImg;
+        Transformer matrix;
                
         // Obligatory empty constructor
         Attributes() {}
@@ -315,6 +461,22 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+/**************************
+ * vShader is the vertex shader 
+ *******************************/
+void vShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Transformer mult = uniforms.matrix;
+    Transformer matrix = mult * vertIn;
+
+    vertOut.x = matrix.matrix[0][0];
+    vertOut.y = matrix.matrix[1][0];
+    vertOut.z = matrix.matrix[2][0];
+    vertOut.w = matrix.matrix[3][0];
+    
     attrOut = vertAttr;
 }
 
