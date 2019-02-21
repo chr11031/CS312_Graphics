@@ -6,6 +6,9 @@
 
 using namespace std;
 
+int x = 0;
+int rng = 0;
+
 /***************************************************
  * Team Activity for week #1.
  * When working on this activity be sure to 
@@ -411,20 +414,56 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         imageAttributesB[2].u = coordinates[0][0];
         imageAttributesB[2].v = coordinates[0][1];
 
-        BufferImage myImage("checker.bmp");
-        //BufferImage pizzaImage("pizza.bmp");
+        if (x == 0)
+        {
+           rng = rand() % 2;
+        }
+
+        //rng = 0;
+
+        //rng = rand() % 2;
+
+        if (rng == 0)
+        {
+           BufferImage myImage("checker.bmp");
+           //BufferImage myImage("pizza.bmp");
         
-        // Ensure the checkboard image is in this directory
+           // Ensure the checkboard image is in this directory
 
-        Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
+           Attributes imageUniforms;
+           imageUniforms.ptrImg = &myImage;
 
-        FragmentShader fragImg;
-        fragImg.FragShader = &ImageFragShader;
+           FragmentShader fragImg;
+           fragImg.FragShader = &ImageFragShader;
                 
-        // Draw image triangle 
-        DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
-        DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
+           // Draw image triangle 
+           DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
+           DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
+        
+        }
+        else if (rng == 1)
+        {
+           //BufferImage myImage("checker.bmp");
+           BufferImage myImage("pizza.bmp");
+        
+           // Ensure the checkboard image is in this directory
+
+           Attributes imageUniforms;
+           imageUniforms.ptrImg = &myImage;
+
+           FragmentShader fragImg;
+           fragImg.FragShader = &ImageFragShader;
+                
+           // Draw image triangle 
+           DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
+           DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
+        }
+        else
+        {
+                /* code */
+        }
+
+        x = 100;
 }
 
 /************************************************
@@ -443,34 +482,51 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         colorTriangle[2] = { 300, 200, 1, 1};
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
-        // Your code for 'colorAttributes' goes here
+        
+         // Red
+        colorAttributes[0].r = 1.0;
+        colorAttributes[0].g = 0.0;
+        colorAttributes[0].b = 0.0;
+        // Green
+        colorAttributes[1].r = 0.0;
+        colorAttributes[1].g = 1.0;
+        colorAttributes[1].b = 0.0;
+        // Blue
+        colorAttributes[2].r = 0.0;
+        colorAttributes[2].g = 0.0;
+        colorAttributes[2].b = 1.0;
 
         FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = ColorFragmentShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
+        // Your code for the uniform goes here, if any (don't pass NULL here)	
+        
         
         VertexShader myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        myColorVertexShader = VertexFragmentShader; 
 
         /******************************************************************
-		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
-        // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms.matrix.clear();
+        translateMatrix(colorUniforms, {100, 50, 0, 0});
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
-        // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms.matrix.clear();
+        scaleMatrix(colorUniforms, {0.5, 0.5, 1.0, 1.0});
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
-        // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        colorUniforms.matrix.clear();
+        rotateMatrix(colorUniforms, 30);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -478,8 +534,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+        colorUniforms.matrix.clear();
+        scaleTranslateRotateMatrix(colorUniforms,{0.5, 0.5, 1.0, 1.0},{100, 50, 0, 0}, 30);
+
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
