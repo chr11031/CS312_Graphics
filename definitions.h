@@ -96,20 +96,22 @@ class MatrixTransform
 
         void scale(double scaleFactorX, double scaleFactorY)
         {
-            // double transformationMatrix[4][4] = {{scaleFactorX,0,0,0},{0,scaleFactorY,0,0},{0,0,1,0},{0,0,0,1}};
+            double scaleMatrix[4][4] = {{scaleFactorX,0,0,0},{0,scaleFactorY,0,0},{0,0,1,0},{0,0,0,1}};
             // this->multiply(this->vector, transformationMatrix);
-            this->matrix[0][0] *= scaleFactorX;
-            this->matrix[1][1] *= scaleFactorY;
+            multiplyMatrices(this->matrix, scaleMatrix);
+            // this->matrix[0][0] *= scaleFactorX;
+            // this->matrix[1][1] *= scaleFactorY;
         }
 
         void rotate(double rotateFactorX, double rotateFactorY)
         {
-            // double transformationMatrix[4][4] = {{cos(rotateFactorX * M_PI / 180),-sin(rotateFactorX * M_PI / 180),0,0},{sin(rotateFactorX * M_PI / 180),cos(rotateFactorX * M_PI / 180),0,0},{0,0,1,0},{0,0,0,1}};
+            double rotateMatrix[4][4] = {{cos(rotateFactorX * M_PI / 180),-sin(rotateFactorX * M_PI / 180),0,0},{sin(rotateFactorX * M_PI / 180),cos(rotateFactorX * M_PI / 180),0,0},{0,0,1,0},{0,0,0,1}};
             // this->multiply(this->vector, transformationMatrix);
-            this->matrix[0][0] *= cos((rotateFactorX * M_PI) / 180);
-            this->matrix[0][1] *= -sin((rotateFactorX * M_PI) / 180);
-            this->matrix[1][0] *= sin((rotateFactorY * M_PI) / 180);
-            this->matrix[1][1] *= cos((rotateFactorY * M_PI) / 180);
+            multiplyMatrices(this->matrix, rotateMatrix);
+            // this->matrix[0][0] *= cos((rotateFactorX * M_PI) / 180);
+            // this->matrix[0][1] *= -sin((rotateFactorX * M_PI) / 180);
+            // this->matrix[1][0] *= sin((rotateFactorY * M_PI) / 180);
+            // this->matrix[1][1] *= cos((rotateFactorY * M_PI) / 180);
         }
 
         /**********************************************************
