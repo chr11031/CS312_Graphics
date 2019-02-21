@@ -242,10 +242,10 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors1[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors1[i];
+                attr[i].add(colors1[i]);
 
         // setting the first attribute's color to the first color in the PIXEL color just defined
-        attr[0].color = colors1[0];
+        // attr[0].color = colors1[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -255,9 +255,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors2[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors2[i];
+                attr[i].add(colors2[i]);
 
-        attr[0].color = colors2[1];
+        // attr[0].color = colors2[1];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -267,9 +267,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors3[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors3[i];
+                attr[i].add(colors3[i]);
 
-        attr[0].color = colors3[2];
+        // attr[0].color = colors3[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -279,9 +279,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors4[3] = {0xffff0000, 0xffff0000, 0xffff0000};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors4[i];
+                attr[i].add(colors4[i]);
 
-        attr[0].color = colors4[0];
+        // attr[0].color = colors4[0];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 
@@ -291,9 +291,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors5[3] = {0xffff0000, 0xff00ff00, 0x0000ff};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors5[i];
+                attr[i].add(colors5[i]);
 
-        attr[0].color = colors5[1];
+        // attr[0].color = colors5[1];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
         
@@ -303,9 +303,9 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
         PIXEL colors6[3] = {0xff0000ff, 0xff0000ff, 0xff0000ff};
         // Your color code goes here for 'attr'
         for(int i = 0; i < 3; i++)
-                attr[i].color = colors6[i];
+                attr[i].add(colors6[i]);
 
-        attr[0].color = colors6[2];
+        // attr[0].color = colors6[2];
 
         DrawPrimitive(TRIANGLE, target, verts, attr);
 }
@@ -365,7 +365,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         myAttributes[2].add(coordinates[2][0]);
         myAttributes[2].add(coordinates[2][1]);
 
-        static BufferImage myImage("../Google Drive/G-Sync/Computer Graphics/babboon.bmp");
+        static BufferImage myImage("baboon.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
@@ -585,26 +585,44 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        colorAttributes[0].add(1.0);
+        colorAttributes[0].add(0.0);
+        colorAttributes[0].add(0.0);
+
+        colorAttributes[1].add(0.0);
+        colorAttributes[1].add(1.0);
+        colorAttributes[1].add(0.0);
+
+        colorAttributes[2].add(0.0);
+        colorAttributes[2].add(0.0);
+        colorAttributes[2].add(1.0);
 
         FragmentShader myColorFragShader;
+        myColorFragShader.setShader(ColorFragShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
-        
+        // set the matrix identity to 1
+        Transform::Reset(colorUniforms);
+
         VertexShader myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        // Your code for the vertex shader goes here
+        // myColorVertexShader.setShader(MyVertShader);
+        myColorVertexShader.VertShader = MyVertShader;
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+        Transform::Translate(100, 50, 0, colorUniforms);
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        Transform::Reset(colorUniforms);
+        Transform::Scale(0.5, 0.5, 0.5, colorUniforms);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -612,6 +630,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        Transform::Reset(colorUniforms);
+        Transform::Rotate(30, 'z', colorUniforms);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -619,8 +639,11 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+	Transform::Translate(100, 50, 0, colorUniforms);
+        Transform::Scale(0.5, 0.5, 0.5, colorUniforms);
+        Transform::Rotate(30, 'z', colorUniforms);
+
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 

@@ -5,6 +5,8 @@
 #include "math.h"
 #include <vector>
 
+#include <iostream>
+
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
@@ -25,6 +27,9 @@
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
+
+// My definitions
+#define DEG_TO_RAD M_PI/180
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -240,6 +245,9 @@ class Attributes
         void * ptrImg;  // points to the .bmp
 
         std::vector<double> values; // vector to allow for as many as the user would like
+        // std::vector<void*> ptrImgs; // vector to allow for as many textures as the user would like
+
+        double matrix[4][4];
 
         // easier to add another value to the vector
         void add(const double value) { values.push_back(value); }
@@ -247,9 +255,113 @@ class Attributes
         // clears the vector for future use
         void reset() { values.clear(); }
 
-        // I'm confused about what the Attributes class needs to be able to do in the future,
-        //    does it need more vectors of other data types? Does it need methods to access it's
-        //    values instead of direct access? Are other data types needed?
+        // multiplies the matrix by a 4x4 matrix
+        void multiply (Attributes &attr, const double rhs[][4])
+        {
+            std::cout << "old: " << attr.matrix[0][0];
+            double newMatrix[4][4];
+
+            for(int i = 0; i < 4; i++)
+                for(int j = 0; j < 4; j++)
+                    for(int k = 0; k < 4; k++)
+                    {
+                        newMatrix[i][j] += attr.matrix[i][k] * rhs[k][j];
+                    }
+                    
+            for(int i = 0; i < 4; i++)
+                for(int j = 0; j < 4; j++)
+                {
+                    attr.matrix[i][j] = newMatrix[i][j];
+                }
+            std::cout << "new: " << attr.matrix[0][0] << std::endl;
+        }
+};
+
+/*
+/***************************************************
+ * MATRIX
+ * Holds a matrix and functions to manipulate it
+ *************************************************
+class Matrix
+{
+};
+*/
+
+/***************************************************
+ * TRANSFORM
+ * Manipulates vertices in local space
+ **************************************************/
+class Transform
+{
+
+public:
+
+    // translates the triangle on the x, y, or z axis
+    static void Translate(double x, double y, double z, Attributes &colorUniforms)
+    {
+        // double newMatrix[4][4] = {{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0}};
+        colorUniforms.matrix[0][3] += x;
+        colorUniforms.matrix[1][3] += y;
+        colorUniforms.matrix[2][3] += z;
+
+        // colorUniforms.multiply(colorUniforms, newMatrix);
+    }
+
+    // scales the triangle
+    static void Scale(double x, double y, double z, Attributes &colorUniforms)
+    {
+        // double newMatrix[4][4] = {{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0}};
+        colorUniforms.matrix[0][0] *= x;
+        colorUniforms.matrix[1][1] *= y;
+        colorUniforms.matrix[2][2] *= z;
+
+        // colorUniforms.multiply(colorUniforms, newMatrix);
+    }
+
+    // sets the matrix vertices based on which axis the user would like to rotate on
+    static void Rotate(double angle, const char axis, Attributes &colorUniforms)
+    {
+        angle *= DEG_TO_RAD;
+        // double newMatrix[4][4] = {{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0},{0, 0, 0, 0}};
+        switch (axis)
+        {
+            case 'x':
+            colorUniforms.matrix[1][1] = cos(angle);
+            colorUniforms.matrix[1][2] = -sin(angle);
+            colorUniforms.matrix[2][1] = sin(angle);
+            colorUniforms.matrix[2][2] = cos(angle);   
+            break;
+            case 'y':
+            colorUniforms.matrix[0][0] = cos(angle);
+            colorUniforms.matrix[2][0] = -sin(angle);
+            colorUniforms.matrix[0][2] = sin(angle);
+            colorUniforms.matrix[2][2] = cos(angle);
+            break;
+            case 'z':
+            colorUniforms.matrix[0][0] = cos(angle);
+            colorUniforms.matrix[0][1] = -sin(angle);
+            colorUniforms.matrix[1][0] = sin(angle);
+            colorUniforms.matrix[1][1] = cos(angle);
+            break;
+        }
+
+        // colorUniforms.multiply(colorUniforms, newMatrix);
+    }
+
+    // sets the matrix identity back to all 1s
+    static void Reset(Attributes &colorUniforms )
+    {
+        for (int i = 0; i < 4; i++)
+        {
+                for (int j = 0; j < 4; j++)
+                {
+                        if (i == j)
+                                colorUniforms.matrix[i][j] = 1;
+                        else
+                                colorUniforms.matrix[i][j] = 0;
+                }
+        }
+    }
 };
 
 // Example of a fragment shader

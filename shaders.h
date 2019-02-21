@@ -3,6 +3,24 @@
 #define SHADERS_H
 
 /****************************************************
+ * MYVERTSHADER:
+ * Vertex shader for transformations
+ ***************************************************/
+void MyVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut.x = uniforms.matrix[0][0] * vertIn.x + uniforms.matrix[0][1] * vertIn.y + uniforms.matrix[0][2] * vertIn.z +
+        uniforms.matrix[0][3] * vertIn.w;
+    vertOut.y = uniforms.matrix[1][0] * vertIn.x + uniforms.matrix[1][1] * vertIn.y + uniforms.matrix[1][2] * vertIn.z +
+        uniforms.matrix[1][3] * vertIn.w;
+    vertOut.z = uniforms.matrix[2][0] * vertIn.x + uniforms.matrix[2][1] * vertIn.y + uniforms.matrix[2][2] * vertIn.z +
+        uniforms.matrix[2][3] * vertIn.w;
+    vertOut.w = uniforms.matrix[3][0] * vertIn.x + uniforms.matrix[3][1] * vertIn.y + uniforms.matrix[3][2] * vertIn.z +
+        uniforms.matrix[3][3] * vertIn.w;
+
+    attrOut = vertAttr;
+}
+
+/****************************************************
  * COLORFRAGSHADER:
  * The fragment shader when drawing pixels based off
  * of individual rgb values
