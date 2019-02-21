@@ -293,7 +293,7 @@ void Matrix :: operator *= (const Matrix & rhs)
         }
     }
     this->numRows = rhs.numRows;
-    // Write onto the matrix
+    // Write onto the matrix for assignment
     for (int i = 0; i < this->numRows; i++)
     {
         for (int j = 0; j < this->numCols; j++)
