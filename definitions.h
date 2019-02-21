@@ -75,8 +75,7 @@ class Buffer2D
         }
 
         // Empty Constructor
-        Buffer2D()
-        {}
+        Buffer2D() {}
 
     public:
         // Free dynamic memory
@@ -218,6 +217,96 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+class Matrix
+{
+    public: 
+        double matrix4[4][4] = {{1,0,0,0}, {0,1,0,0}, {0,0,1,0}, {0,0,0,1}};
+        
+        // Obligatory empty constructor
+        Matrix(){}
+
+        Matrix(const double matrix[4][4])
+        {
+            for(int x=0;x<4;x++) for(int y=0;y<4;y++) matrix4[x][y] = matrix[x][y];
+        }
+        Matrix(double x, double y, double z)
+        {
+            matrix4[0][0] = x;
+            matrix4[1][1] = y;
+            matrix4[2][2] = z;
+        }
+
+        Matrix trans(double x, double y, double z)
+        {
+            double trans[4][4] = {{1,0,0,x}, {0,1,0,y}, {0,0,1,z}, {0,0,0,1}};
+            return Matrix(trans);
+        }
+        Matrix scale(double x, double y, double z) { return Matrix(x,y,z); }
+        Matrix rotate(double x, double y, double z)
+        {
+            double cosX = cos(x * M_PI/180); double cosY = cos(y * M_PI/180); double cosZ = cos(z * M_PI/180);
+            double sinX = sin(x * M_PI/180); double sinY = sin(y * M_PI/180); double sinZ = sin(z * M_PI/180);
+            double xAxis[4][4] = {{1,0,0,0}, {0,cosX,-sinX,0}, {0,sinX,cosX,0}, {0,0,0,1}};
+            double yAxis[4][4] = {{cosY,0,sinY,0}, {0,1,0,0}, {-sinY,0,cosY,0}, {0,0,0,1}};
+            double zAxis[4][4] = {{cosZ,-sinZ,0,0}, {sinZ,cosZ,0,0}, {0,0,1,0}, {0,0,0,1}};
+            Matrix xMatr = Matrix(xAxis);
+            return xMatr.multi(yAxis).multi(zAxis);
+        }
+        Matrix multi(double matrix[4][4])
+        {
+            double multi[4][4];
+            multi[0][0] = (matrix4[0][0] * matrix[0][0]) + (matrix4[0][1] * matrix[1][0])
+                        + (matrix4[0][2] * matrix[2][0]) + (matrix4[0][3] * matrix[3][0]);
+            multi[0][1] = (matrix4[0][0] * matrix[0][1]) + (matrix4[0][1] * matrix[1][1])
+                        + (matrix4[0][2] * matrix[2][1]) + (matrix4[0][3] * matrix[3][1]);
+            multi[0][2] = (matrix4[0][0] * matrix[0][2]) + (matrix4[0][1] * matrix[1][2])
+                        + (matrix4[0][2] * matrix[2][2]) + (matrix4[0][3] * matrix[3][2]);
+            multi[0][3] = (matrix4[0][0] * matrix[0][3]) + (matrix4[0][1] * matrix[1][3])
+                        + (matrix4[0][2] * matrix[2][3]) + (matrix4[0][3] * matrix[3][3]);
+                        
+            multi[1][0] = (matrix4[1][0] * matrix[0][0]) + (matrix4[1][1] * matrix[1][0])
+                        + (matrix4[1][2] * matrix[2][0]) + (matrix4[1][3] * matrix[3][0]);
+            multi[1][1] = (matrix4[1][0] * matrix[0][1]) + (matrix4[1][1] * matrix[1][1])
+                        + (matrix4[1][2] * matrix[2][1]) + (matrix4[1][3] * matrix[3][1]);
+            multi[1][2] = (matrix4[1][0] * matrix[0][2]) + (matrix4[1][1] * matrix[1][2])
+                        + (matrix4[1][2] * matrix[2][2]) + (matrix4[1][3] * matrix[3][2]);
+            multi[1][3] = (matrix4[1][0] * matrix[0][3]) + (matrix4[1][1] * matrix[1][3])
+                        + (matrix4[1][2] * matrix[2][3]) + (matrix4[1][3] * matrix[3][3]);
+                    
+            multi[2][0] = (matrix4[2][0] * matrix[0][0]) + (matrix4[2][1] * matrix[1][0])
+                        + (matrix4[2][2] * matrix[2][0]) + (matrix4[2][3] * matrix[3][0]);
+            multi[2][1] = (matrix4[2][0] * matrix[0][1]) + (matrix4[2][1] * matrix[1][1])
+                        + (matrix4[2][2] * matrix[2][1]) + (matrix4[2][3] * matrix[3][1]);
+            multi[2][2] = (matrix4[2][0] * matrix[0][2]) + (matrix4[2][1] * matrix[1][2])
+                        + (matrix4[2][2] * matrix[2][2]) + (matrix4[2][3] * matrix[3][2]);
+            multi[2][3] = (matrix4[2][0] * matrix[0][3]) + (matrix4[2][1] * matrix[1][3])
+                        + (matrix4[2][2] * matrix[2][3]) + (matrix4[2][3] * matrix[3][3]);
+                        
+            multi[3][0] = (matrix4[3][0] * matrix[0][0]) + (matrix4[3][1] * matrix[1][0])
+                        + (matrix4[3][2] * matrix[2][0]) + (matrix4[3][3] * matrix[3][0]);
+            multi[3][1] = (matrix4[3][0] * matrix[0][1]) + (matrix4[3][1] * matrix[1][1])
+                        + (matrix4[3][2] * matrix[2][1]) + (matrix4[3][3] * matrix[3][1]);
+            multi[3][2] = (matrix4[3][0] * matrix[0][2]) + (matrix4[3][1] * matrix[1][2])
+                        + (matrix4[3][2] * matrix[2][2]) + (matrix4[3][3] * matrix[3][2]);
+            multi[3][3] = (matrix4[3][0] * matrix[0][3]) + (matrix4[3][1] * matrix[1][3])
+                        + (matrix4[3][2] * matrix[2][3]) + (matrix4[3][3] * matrix[3][3]);
+            return Matrix(multi);
+        }
+        Vertex multi(Vertex vertIn) 
+        {
+            double x = (matrix4[0][0] * vertIn.x) + (matrix4[0][1] * vertIn.y)
+                        + (matrix4[0][2] * vertIn.z) + (matrix4[0][3] * vertIn.w);
+            double y = (matrix4[1][0] * vertIn.x) + (matrix4[1][1] * vertIn.y)
+                        + (matrix4[1][2] * vertIn.z) + (matrix4[1][3] * vertIn.w);
+            double z = (matrix4[2][0] * vertIn.x) + (matrix4[2][1] * vertIn.y)
+                        + (matrix4[2][2] * vertIn.z) + (matrix4[2][3] * vertIn.w);
+            double w = (matrix4[3][0] * vertIn.x) + (matrix4[3][1] * vertIn.y)
+                        + (matrix4[3][2] * vertIn.z) + (matrix4[3][3] * vertIn.w);
+            Vertex vertOut = {x,y,z,w};
+            return vertOut;
+        }
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -233,6 +322,7 @@ class Attributes
 {   
     public:
         //PIXEL color;
+        Matrix matrix;
         vector<doublePointer> colorAttr;
 
         // Obligatory empty constructor
@@ -244,12 +334,12 @@ class Attributes
             // Your code goes here when clipping is implemented
             
         }
-        Attributes(Attributes* const attrs, const double & area0, const double & area1, const double & area2)
+        Attributes(Attributes* const attrs, const double & area0, const double & area1, const double & area2, const double & Z)
         {
             for(int i = 0; i < attrs[0].colorAttr.size(); i++)
             {
                 //determine attribute by adding each portion of vertex given by the corresponding area
-                addDouble((attrs[0][i].d * area0) + (attrs[1][i].d * area1) + (attrs[2][i].d * area2));
+                addDouble(((attrs[0][i].d * area0) + (attrs[1][i].d * area1) + (attrs[2][i].d * area2))*Z);
             }
         }
         void addDouble (const double & d)
@@ -257,6 +347,24 @@ class Attributes
             doublePointer newD;
             newD.d = d;
             colorAttr.push_back(newD);
+        }
+        void addDouble (const double & d0, const double & d1, const double & d2)
+        {
+            doublePointer newD;
+            newD.d = d0;
+            colorAttr.push_back(newD);
+            newD.d = d1;
+            colorAttr.push_back(newD);
+            newD.d = d2;
+            colorAttr.push_back(newD);
+        }
+        void addDouble (const double* & d, const int length)
+        {
+            for(int x = 0; x < length; x++){
+                doublePointer newD;
+                newD.d = d[x];
+                colorAttr.push_back(newD);
+            }
         }
         void addPtr (void * ptr)
         {
@@ -366,7 +474,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    const Attributes inputAttrs[],
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
-                   VertexShader* const vert = NULL,
+                   VertexShader* const vertIn = NULL,
                    Buffer2D<double>* zBuf = NULL);
 
 

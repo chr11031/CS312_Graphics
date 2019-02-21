@@ -4,6 +4,8 @@
 #include "personalProject1.h"
 using namespace std;
 
+
+bool DEBUG = true;
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -107,9 +109,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if ( (area0 >= 0) && (area1 >= 0) && (area2 >= 0) )
             {
                 //Interpolate attributes
-                Attributes interAttr(attrs, area0, area1, area2);
                 double Z = 1/((triangle[0].w*area0) + (triangle[1].w*area1) + (triangle[2].w*area2));
-                interAttr.addDouble(Z);
+                Attributes interAttr(attrs, area0, area1, area2, Z);
 
                 //frag callback -> coloring the fragment(in this case pixel)
                 frag -> FragShader(target[y][x], interAttr, *uniforms);
@@ -133,6 +134,13 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    }
+    else 
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -221,8 +229,8 @@ int main()
         clearScreen(frame);
 
         // TODO Your code goes here
-            TestMarshmallowFrag(frame);
-            //TestVertexShader(frame);
+            //TestMarshmallowFrag(frame);
+            TestVertexShader(frame);
             //TestDrawPerspectiveCorrect(frame);
             //TestDrawFragments(frame);
             //TestDrawTriangle(frame);

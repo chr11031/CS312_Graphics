@@ -7,8 +7,8 @@
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* ptr = (BufferImage*)uniforms[0].ptr;
-    int x = vertAttr[0].d * vertAttr[2].d * (ptr -> width()-1);
-    int y = vertAttr[1].d * vertAttr[2].d * (ptr -> height()-1);
+    int x = vertAttr[0].d * (ptr -> width()-1);
+    int y = vertAttr[1].d * (ptr -> height()-1);
     fragment = (*ptr)[y][x];
 }
 
@@ -21,6 +21,14 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     color += (unsigned int)(vertAttr[1].d *0xff) << 8;
     color += (unsigned int)(vertAttr[2].d *0xff) << 0;
     fragment = color;
+}
+
+//My Vertex Shader
+void BasicVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix mat = uniforms.matrix;
+    vertOut = mat.multi(vertIn);
+    attrOut = vertAttr;
 }
 
 /****************************************
@@ -36,5 +44,69 @@ inline double determinant(const double & A, const double & B, const double & C, 
  ********************************************************************/
 inline double crossProduct(double* v1, double* v2) { return (v1[0] * v2[1]) - (v1[1] * v2[0]); }
 
+/*Matrix multiply(double matrix1[4][4], double matrix[4][4])
+{
+    double multi[4][4];
+    multi[0][0] = (matrix1[0][0] * matrix[0][0]) + (matrix1[0][1] * matrix[1][0])
+                + (matrix1[0][2] * matrix[2][0]) + (matrix1[0][3] * matrix[3][0]);
+    multi[0][1] = (matrix1[0][0] * matrix[0][1]) + (matrix1[0][1] * matrix[1][1])
+                + (matrix1[0][2] * matrix[2][1]) + (matrix1[0][3] * matrix[3][1]);
+    multi[0][2] = (matrix1[0][0] * matrix[0][2]) + (matrix1[0][1] * matrix[1][2])
+                + (matrix1[0][2] * matrix[2][2]) + (matrix1[0][3] * matrix[3][2]);
+    multi[0][3] = (matrix1[0][0] * matrix[0][3]) + (matrix1[0][1] * matrix[1][3])
+                + (matrix1[0][2] * matrix[2][3]) + (matrix1[0][3] * matrix[3][3]);
+                
+    multi[1][0] = (matrix1[1][0] * matrix[0][0]) 
+                + (matrix1[1][1] * matrix[1][0])
+                + (matrix1[1][2] * matrix[2][0])
+                + (matrix1[1][3] * matrix[3][0]);
+    multi[1][1] = (matrix1[1][0] * matrix[0][1]) 
+                + (matrix1[1][1] * matrix[1][1])
+                + (matrix1[1][2] * matrix[2][1])
+                + (matrix1[1][3] * matrix[3][1]);
+    multi[1][2] = (matrix1[1][0] * matrix[0][2]) 
+                + (matrix1[1][1] * matrix[1][2])
+                + (matrix1[1][2] * matrix[2][2])
+                + (matrix1[1][3] * matrix[3][2]);
+    multi[1][3] = (matrix1[1][0] * matrix[0][3]) 
+                + (matrix1[1][1] * matrix[1][3])
+                + (matrix1[1][2] * matrix[2][3])
+                + (matrix1[1][3] * matrix[3][3]);
+                
+    multi[2][0] = (matrix1[2][0] * matrix[0][0]) 
+                + (matrix1[2][1] * matrix[1][0])
+                + (matrix1[2][2] * matrix[2][0])
+                + (matrix1[2][3] * matrix[3][0]);
+    multi[2][1] = (matrix1[2][0] * matrix[0][1]) 
+                + (matrix1[2][1] * matrix[1][1])
+                + (matrix1[2][2] * matrix[2][1])
+                + (matrix1[2][3] * matrix[3][1]);
+    multi[2][2] = (matrix1[2][0] * matrix[0][2]) 
+                + (matrix1[2][1] * matrix[1][2])
+                + (matrix1[2][2] * matrix[2][2])
+                + (matrix1[2][3] * matrix[3][2]);
+    multi[2][3] = (matrix1[2][0] * matrix[0][3]) 
+                + (matrix1[2][1] * matrix[1][3])
+                + (matrix1[2][2] * matrix[2][3])
+                + (matrix1[2][3] * matrix[3][3]);
+                
+    multi[3][0] = (matrix1[3][0] * matrix[0][0]) 
+                + (matrix1[3][1] * matrix[1][0])
+                + (matrix1[3][2] * matrix[2][0])
+                + (matrix1[3][3] * matrix[3][0]);
+    multi[3][1] = (matrix1[3][0] * matrix[0][1]) 
+                + (matrix1[3][1] * matrix[1][1])
+                + (matrix1[3][2] * matrix[2][1])
+                + (matrix1[3][3] * matrix[3][1]);
+    multi[3][2] = (matrix1[3][0] * matrix[0][2]) 
+                + (matrix1[3][1] * matrix[1][2])
+                + (matrix1[3][2] * matrix[2][2])
+                + (matrix1[3][3] * matrix[3][2]);
+    multi[3][3] = (matrix1[3][0] * matrix[0][3]) 
+                + (matrix1[3][1] * matrix[1][3])
+                + (matrix1[3][2] * matrix[2][3])
+                + (matrix1[3][3] * matrix[3][3]);
+    return Matrix(multi);
+}*/
 
 #endif
