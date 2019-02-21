@@ -51,6 +51,33 @@ struct Vertex
     double w;
 };
 
+/***************************************************
+ * ATTRIBUTES (shadows OpenGL VAO, VBO)
+ * The attributes associated with a rendered 
+ * primitive as a whole OR per-vertex. Will be 
+ * designed/implemented by the programmer. 
+ **************************************************/
+class Attributes
+{      
+    public:
+        //public member variabels
+        PIXEL color;
+        double r, g, b, u, v;
+
+        vector<double> vAttr;
+
+        void* ptrImg;
+
+        // Obligatory empty constructor
+        Attributes() {}
+
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        {
+            // Your code goes here when clipping is implemented
+        }
+};	
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -402,6 +429,12 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     color += (unsigned int)(vertAttr.b *0xff) << 0;
 
     fragment = color;
+}
+
+void CustomVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn;
+    attrOut = vertAttr;
 }
 
 // Example of a fragment shader
