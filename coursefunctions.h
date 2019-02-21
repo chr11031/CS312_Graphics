@@ -432,17 +432,18 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
         Matrix rotate = Matrix(Rotate, 0, 0, 30);
-        colorUniforms.matrix = rotate;
+        //this is a temporary fix for whatever is wrong with rotate
+        Matrix translate2 = Matrix(Translate, -150, 0, 0);
+        colorUniforms.matrix = translate2 * rotate;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-        transform = rotate * translate * scale;
+        transform = (translate2 * rotate) * translate * scale;
         colorUniforms.matrix = transform;
-        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
-//*/
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 }
 
 /********************************************

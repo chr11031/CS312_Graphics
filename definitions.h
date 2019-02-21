@@ -83,7 +83,7 @@ class Matrix
                  + row[3] * vert.w;
         }
 
-        // Create a rotation matrix with the given values
+        //Only working for z right now
         void createRotationMatrix(double x, double y, double z)
         {
             Matrix Mat;
@@ -100,10 +100,9 @@ class Matrix
     public:
 
         double base[4][4];
-        // Constructor type:translate,rotate or scale and x,y,z values (degrees for rotation)
         Matrix(Transformation transformation, double x, double y, double z)
         {
-            // Base TransformationMatrix (4x4 Identity Matrix)
+            //The identity matrix
             base[0][0] = 1;
             base[0][1] = 0;
             base[0][2] = 0;
@@ -124,19 +123,20 @@ class Matrix
             base[3][2] = 0;
             base[3][3] = 1;
 
-            // Create a matrix based on the type given
             switch (transformation)
             {
                 case Rotate:
                     createRotationMatrix(x, y, z);
                     break;
 
+                //creates a translation matrix with the values given
                 case Translate:
                     base[0][3] = x;
                     base[1][3] = y;
                     base[2][3] = z;
                     break;
 
+                //scales the matrix by the values given
                 case Scale:
                     base[0][0] = x;
                     base[1][1] = y;
@@ -155,26 +155,26 @@ class Matrix
             Matrix(None, x, y, z);
         }
 
-        // Multiply two 4X4 matrices
+        // Multiply two matrices
         Matrix operator*(Matrix& multiplier)
         {
             Matrix temp;
-            // First Row
+
             temp.base[0][0] = getValue(base[0], multiplier.base, 0);
             temp.base[0][1] = getValue(base[0], multiplier.base, 1);
             temp.base[0][2] = getValue(base[0], multiplier.base, 2);
             temp.base[0][3] = getValue(base[0], multiplier.base, 3);
-            // Second Row
+
             temp.base[1][0] = getValue(base[1], multiplier.base, 0);
             temp.base[1][1] = getValue(base[1], multiplier.base, 1);
             temp.base[1][2] = getValue(base[1], multiplier.base, 2);
             temp.base[1][3] = getValue(base[1], multiplier.base, 3);
-            // Third Row
+
             temp.base[2][0] = getValue(base[2], multiplier.base, 0);
             temp.base[2][1] = getValue(base[2], multiplier.base, 1);
             temp.base[2][2] = getValue(base[2], multiplier.base, 2);
             temp.base[2][3] = getValue(base[2], multiplier.base, 3);
-            // Fourth Row
+
             temp.base[3][0] = getValue(base[3], multiplier.base, 0);
             temp.base[3][1] = getValue(base[3], multiplier.base, 1);
             temp.base[3][2] = getValue(base[3], multiplier.base, 2);
@@ -182,7 +182,7 @@ class Matrix
             return temp;
         }
 
-        // Multiply a 4x4 by a 4x1
+
         Vertex multiplyByVertex(const Vertex& vert) const
         {
             Vertex temp;
@@ -463,6 +463,7 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 
 void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
+    //multiplies the values with the matrix
     vertOut = uniforms.matrix.multiplyByVertex(vertIn);
     attrOut = attrIn;
 }
