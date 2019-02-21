@@ -90,8 +90,22 @@ class Matrix
             entry[i][i] *= num;
     }
 
-    //void rotateX();
-    //void rotateY();
+    void rotateX(double rad)
+    {
+        entry[1][1] = cos(rad);
+        entry[2][2] = cos(rad);
+        entry[1][2] = sin(rad);
+        entry[2][1] = -sin(rad);
+    }
+
+    void rotateY(double rad)
+    {
+        entry[0][0] = cos(rad);
+        entry[2][2] = cos(rad);
+        entry[0][2] = -sin(rad);
+        entry[2][0] = sin(rad);
+    }
+
     void rotateZ(double rad)
     {
         entry[0][0] = cos(rad);
