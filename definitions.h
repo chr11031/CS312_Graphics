@@ -215,6 +215,114 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+class Matrix
+{
+    public:
+        double cell[4][4];
+        int numRows;
+        int numCols;
+
+    // Default constructor
+    Matrix ()
+    {
+        numRows = 0;
+        numCols = 0;
+    }
+    // Non-default constructor
+    Matrix(double data[][4], int rows, int cols)
+    {
+        this->numRows = rows;
+        this->numCols = cols;
+        for (int i = 0; i < numRows; i++)
+        {
+            for (int j = 0; j < numCols; j++)
+            {
+                cell[i][j] = data[i][j];
+            }
+        }
+    }
+    //  Operators
+    void operator *= (const Matrix & rhs);
+    void operator = (const Matrix & rhs);
+};
+
+/**************************************************
+ * Assignment operator
+ ***************************************************/
+void Matrix :: operator = (const Matrix & rhs)
+{
+        for (int i = 0; i < rhs.numRows; i++)
+        {
+            for (int j = 0; j < rhs.numCols; j++)
+            {
+                this->cell[i][j] = rhs.cell[i][j];
+            }
+        }
+        this->numRows = rhs.numRows;
+        this->numCols = rhs.numCols;
+}
+
+/***************************************
+ * Override *= operator for matrices
+ * *************************************/
+void Matrix :: operator *= (const Matrix & rhs)
+{
+    if (this->numRows != rhs.numCols)
+    {
+        throw "ERROR: Cannot concatenate matrices\n";
+    }
+
+    double tempMatrix[4][4];
+
+    for (int i = 0; i < rhs.numRows; i++)
+    {
+        for (int j = 0; j < this->numCols; j++)
+        {
+            double colToRow[4];
+            for (int k = 0; k < this->numRows; k++)
+            {
+                colToRow[k] = this->cell[k][j];
+            }
+            tempMatrix[i][j] = 0;
+            // multiplies rows and columns
+            for (int n = 0; n < rhs.numCols; n++)
+            {
+                tempMatrix[i][j] += (cell[i][n] * colToRow[n]);
+            }
+        }
+    }
+    this->numRows = rhs.numRows;
+    for (int i = 0; i < this->numRows; i++)
+    {
+        for (int j = 0; j < this->numCols; j++)
+        {
+            this->cell[i][j] = tempMatrix[i][j];
+        }
+    }
+}
+
+/*****************************************************
+ * Override multiplication operator for vertices and matrices
+ * ****************************************************/
+Vertex operator * (const Vertex & lhs, const Matrix & rhs)
+{
+    if (rhs.numCols < 1 || rhs.numCols > 4)
+    {
+        throw "ERROR: Cannot multiply matrices\n";
+    }
+    double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    double tempVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    for (int i = 0; i < rhs.numRows; i++)
+    {
+        // multiplies rows and columns
+        tempVerts[i] = 0;
+        for (int n = 0; n < rhs.numCols; n++)
+        {
+            tempVerts[i] += (rhs.cell[i][n] * currentVerts[n]);
+        }
+    }
+}
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -226,8 +334,13 @@ class Attributes
     public:
         // value[] is used for r, g, b, u, and v values
         double value[3];
+        int numValues;
         // Used for image fragment shader
         void * ptrImg;
+
+        // For matrices
+        Matrix matrix;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -260,6 +373,32 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     color += (unsigned int)(vertAttr.value[2] *0xff) << 0;
     fragment = color;
 }
+
+void SineShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* buffer = (BufferImage*)uniforms.ptrImg;
+    //int x = vertAttr.value[0] = (buffer -> width()); <--
+    //int y = vertAttr.value[1] = (buffer -> height()); <--
+    int x = (buffer -> width());
+    int y = (buffer -> height());
+    if (y > sin(x / 10.0) * 10 + 20)
+    {
+        fragment = 0xFFFFFFFF;
+    }
+    else
+    {
+        fragment = 0xFF00FF00;
+    }
+}
+
+void StaticNoiseShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    if (rand() % 2)
+       fragment = 0xFFFFFFFF;
+    else
+       fragment = 0xFF000000;
+}
+
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -305,6 +444,13 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+// Transformation Vertex Shader
+void transVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = (vertIn * uniforms.matrix);
     attrOut = vertAttr;
 }
 
