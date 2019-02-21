@@ -25,13 +25,12 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
-// Sine of 45 degrees
-#define SIN45 0.7071067811865
-// Cosine of 45 degrees (same as sine)
-#define COS45 0.7071067811865
+// Pre-computed values of trig functions
+#define SIN45 0.707107
+#define COS45 0.707107
 
 #define SIN30 0.5
-#define COS30 0.8660254
+#define COS30 0.866025
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -228,6 +227,25 @@ union attrib
     void* ptr;
 };
 
+class Attributes; // forward declaration of Attributes
+
+/***************************************************
+ * MATRIX - Class to facilitate matrix operations
+ **************************************************/
+class Matrix {
+    public:
+    Matrix() { clear(); }               // initialize with identity matrix
+    Matrix(double* values);             // initialize with 16 values
+    Matrix(const Attributes& uniforms); // initialize with 16 values from the uniforms
+
+    double v[4][4];
+
+    void clear(); // set back to default state (identity matrix)
+
+    const double& operator[](const int i) const { return v[i/4][i%4]; } // array access
+    double& operator[](const int i) { return v[i/4][i%4]; }             // non-const array access
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -241,6 +259,8 @@ class Attributes
         // Members
     	int numMembers = 0;
         attrib arr[16];
+
+        Matrix matrix;
 
         // Obligatory empty constructor
         Attributes() {numMembers = 0;}
@@ -292,6 +312,144 @@ class Attributes
         }
 }; 
 
+// Constructor that takes an array of 16 values for the matrix
+Matrix::Matrix(double* values) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = values[r*4 + c];
+}
+
+// Constructor that takes a uniforms object and gets 16 values from there
+Matrix::Matrix(const Attributes& uniforms) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = uniforms[r*4 + c].d;
+}
+
+// Sets the values of the matrix to the identity matrix
+void Matrix::clear() {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = (r == c ? 1 : 0);
+}
+
+// Multiplication of 4x4 by 4x1 matrix
+Vertex operator* (const Matrix& lhs, const Vertex& rhs) {
+    Vertex result = {
+          lhs[0] * rhs.x
+        + lhs[1] * rhs.y
+        + lhs[2] * rhs.z
+        + lhs[3] * rhs.w,
+
+          lhs[4] * rhs.x
+        + lhs[5] * rhs.y
+        + lhs[6] * rhs.z
+        + lhs[7] * rhs.w,
+
+          lhs[8] * rhs.x
+        + lhs[9] * rhs.y
+        + lhs[10] * rhs.z
+        + lhs[11] * rhs.w,
+
+          lhs[12] * rhs.x
+        + lhs[13] * rhs.y
+        + lhs[14] * rhs.z
+        + lhs[15] * rhs.w,
+    };
+    return result;
+}
+
+// Multiplication of 4x4 by 4x4 matrix
+Matrix operator* (const Matrix& lhs, const Matrix& rhs) {
+    Matrix result;
+    
+    // Loop over every cell in result
+    for (int i = 0; i < 16; i++) {
+        int r = 4 * (i / 4);
+        int c = i % 4;
+        double sum = 0;
+
+        // Loop 4 times (row is 4 long, col is 4 long)
+        for (int j = 0; j < 4; j++) {
+            sum += (lhs[r] * rhs[c]);
+            r++;
+            c += 4;
+        }
+        result[i] = sum;
+    }
+
+    return result;
+}
+
+/***************************************************
+ * Matrix transformation functions - return a
+ * matrix that has the specified transformation
+ **************************************************/
+void translateMatrix(Attributes& attr, Vertex v) {
+    attr.matrix[3]  = v.x;
+    attr.matrix[7]  = v.y;
+    attr.matrix[11] = v.z;
+}
+
+void scaleMatrix(Attributes& attr, Vertex v) {
+    attr.matrix[0]  = v.x;
+    attr.matrix[5]  = v.y;
+    attr.matrix[10] = v.z;
+}
+
+// This function takes an angle in degrees and converts it to radians
+void rotateZMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[0] = cosangle;
+    attr.matrix[1] = -sinangle;
+    attr.matrix[4] = sinangle;
+    attr.matrix[5] = cosangle;
+}
+
+// These functions are not used in the week05 project, but they are still here
+void rotateXMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[5]  = cosangle;
+    attr.matrix[6]  = -sinangle;
+    attr.matrix[9]  = sinangle;
+    attr.matrix[10] = cosangle;
+}
+
+void rotateYMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[0]  = cosangle;
+    attr.matrix[2]  = sinangle;
+    attr.matrix[8]  = -sinangle;
+    attr.matrix[10] = cosangle;
+}
+
+// Does all three previous operations at once in right to left order
+void STRMatrix(Attributes& attr, Vertex s, Vertex t, double r) {
+    Attributes sAttr;
+    sAttr.matrix.clear();
+    scaleMatrix(sAttr, s);
+    Attributes tAttr;
+    tAttr.matrix.clear();
+    translateMatrix(tAttr, t);
+    Attributes rAttr;
+    rAttr.matrix.clear();
+    rotateZMatrix(rAttr, r);
+
+    attr.matrix = rAttr.matrix * tAttr.matrix * sAttr.matrix;
+}
+
 /***************************************************
  * LERP = Find the value between two doubles that
  * is some specific amount in between
@@ -307,82 +465,6 @@ inline double lerp(double a, double b, double amount) {
  **************************************************/
 inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
     return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
-}
-
-/***************************************************
- * MATRIX - Class to facilitate matrix operations
- **************************************************/
-class Matrix {
-    public:
-    Matrix();                       // initialize with identity matrix
-    Matrix(double* values);         // initialize with 16 values
-    Matrix(const Attributes& uniforms);    // initialize with 16 values from the uniforms
-    
-    double v[4][4];
-
-    void clear(); // set back to default state (identity matrix)
-
-    Vertex operator* (const Vertex& rhs); // 4x4 matrix times 4x1
-    Matrix operator* (const Matrix& rhs); // 4x4 matrix times 4x4
-};
-
-// Default constructor: initialize 4x4 matrix of all 0s TODO: identity matrix
-Matrix::Matrix() {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = 0;
-}
-
-// Constructor that takes an array of 16 values for the matrix
-Matrix::Matrix(double* values) {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = values[r*4 + c];
-}
-
-// Constructor that takes a uniforms object and gets 16 values from there
-Matrix::Matrix(const Attributes& uniforms) {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = uniforms[r*4 + c].d;
-}
-
-void Matrix::clear() {
-    return;
-}
-
-// Multiplication of 4x4 by 4x1 matrix
-Vertex Matrix::operator* (const Vertex& rhs) {
-    Vertex result = {
-          v[0][0] * rhs.x
-        + v[0][1] * rhs.y
-        + v[0][2] * rhs.z
-        + v[0][3] * rhs.w,
-
-          v[1][0] * rhs.x
-        + v[1][1] * rhs.y
-        + v[1][2] * rhs.z
-        + v[1][3] * rhs.w,
-
-          v[2][0] * rhs.x
-        + v[2][1] * rhs.y
-        + v[2][2] * rhs.z
-        + v[2][3] * rhs.w,
-
-          v[3][0] * rhs.x
-        + v[3][1] * rhs.y
-        + v[3][2] * rhs.z
-        + v[3][3] * rhs.w
-    };
-    return result;
-}
-
-// Multiplication of 4x4 by 4x4 matrix
-Matrix Matrix::operator* (const Matrix& rhs) {
-    Matrix result;
-    
-
-    return result;
 }
 
 // Example of a fragment shader
