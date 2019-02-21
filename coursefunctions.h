@@ -4,8 +4,6 @@
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
-double test = 0;
-
 /***************************************************
  * Team Activity for week #1.
  * When working on this activity be sure to 
