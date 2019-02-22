@@ -189,6 +189,30 @@ public:
         return *this * temp;
     }
 
+    /*************************************************
+     * TRANSLATE FUNCTION FOR MATRICES
+     *************************************************/
+    Matrix translate(double x, double y){
+
+        Matrix temp(4,4);
+        temp.matrix[0][3] = x;
+        temp.matrix[1][3] = y;
+
+        return *this * temp;
+    }
+
+    /*************************************************
+     * SCALE FUNCTION FOR MATRICES
+     *************************************************/
+    Matrix scale(double factor){
+        
+        Matrix temp(4,4);
+        temp.matrix[0][0] = factor;
+        temp.matrix[1][1] = factor;
+
+        return *this * temp;
+    }
+
 };  
 
 /******************************************************
