@@ -535,7 +535,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
         colorUniforms.matrix.clear();
-        scaleTranslateRotateMatrix(colorUniforms,{0.5, 0.5, 1.0, 1.0},{100, 50, 0, 0}, 30);
+        scaleTranslateRotateMatrix(colorUniforms, {0.5, 0.5, 1.0, 1.0}, {100, 50, 0, 0}, 30);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }

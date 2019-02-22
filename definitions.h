@@ -308,7 +308,7 @@ Matrix operator * (const Matrix& lhs, const Matrix& rhs)
        int row = 4 * (q / 4);
        int col = q % 4;
        
-       int sum = 0;
+       double sum = 0.0;
 
        // Loop 4 times for each row and column
        for (int k = 0; k < 4; k++)
@@ -321,6 +321,8 @@ Matrix operator * (const Matrix& lhs, const Matrix& rhs)
 
        result[q] = sum;
     }
+
+    return result;
 }
 
 // Translation Matrix
@@ -364,7 +366,7 @@ void scaleTranslateRotateMatrix(Attributes& attr, Vertex vS, Vertex vT, double r
    Attributes rotAttrs;
    rotateMatrix(rotAttrs, rot);
 
-   attr.matrix = vSattrs.matrix * (vTattrs.matrix * rotAttrs.matrix);
+   attr.matrix = rotAttrs.matrix * vTattrs.matrix * vSattrs.matrix;
 }
 
 /*
