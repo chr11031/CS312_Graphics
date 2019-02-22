@@ -60,9 +60,36 @@ void processUserInputs(bool & running)
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
 	// Your code goes here 
-	//TestDrawPixel(frame);
 	target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
+
+
+/****************************************
+ * determinant (cross product)
+ * Takes vertexes and uses cross product math
+ * to find the determinant
+ ***************************************/
+double determinant(const double & vtx1, const double & vtx2, 
+                    const double & vty1, const double & vty2)//XXYY
+{
+    double determ = 0.0;
+    determ = (vtx1 * vty2) - (vty1 * vtx2);
+    return determ;
+}
+
+/****************************************
+ * Interpolation helper
+ * Area = 1/2 (area * area * area)
+ ***************************************/
+double interpolate(double areaTri, double determ1, double determ2, 
+                    double determ3, double attr1, double attr2, double attr3)
+{
+    double w1 = (determ2 / areaTri) * attr1;
+    double w2 = (determ3 / areaTri) * attr2;
+    double w3 = (determ1 / areaTri) * attr3; 
+
+    return w1 + w2 + w3;//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
+} 
 
 /****************************************
  * DRAW_TRIANGLE
@@ -72,12 +99,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 {
     // Your code goes here
     
-
-
- 
 }
-
-//Edgepoint?
 
 /*************************************************************
  * DRAW_TRIANGLE
@@ -87,18 +109,21 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-    // I have decided on the Barycentric fill algorithm, counter clockwise
+    //Barycentric fill algorithm, counter clockwise
     //Step one bounding area
     double xmin = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
     double xmax = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
     double ymin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
     double ymax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //Step two define pos/neg areas
-    //define lines of triangle and pos, neg, counter clockwise
-    //Start with vertexes
-    Vertex a = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    Vertex b = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y};
+    //Step two define pos/neg areas, Start with vertexes
+    double a[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
+    double b[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
+    double c[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
+
+    double area = determinant(a[X_Key], -c[X_Key], a[y_Key], -c[y_Key]);
+    
+    //double areaTri = determinant(a.x,b.x,a.y,b.y);
 
     //step three, fill in
     //for point in bounding box, if positive drawpixel
@@ -106,25 +131,42 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     {
         for(int xpix = xmin; xpix <= xmax; xpix++)
         {
+
+            /*if(xpix == 250 && ypix == 140)
+            {
+                xpix %= 10000;
+            }*/
+
             //iterating point
-            Vertex c = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
+            Vertex cMid = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
 
-            //Berycentric calculations (Cross Product)
+            //Berycentric calculations (Cross Product deteminants)
+            //double c1 = (cMid.x * b.y - cMid.y * b.x) / (a.x * b.y - a.y * b.x);
+            //double c2 = (a.x * cMid.y - a.y * cMid.x) / (a.x * b.y - a.y * b.x);
 
-            float c1 = (c.x * b.y - c.y * b.x) / (a.x * b.y - a.y * b.x);
-            float c2 = (a.x * c.y - a.y * c.x) / (a.x * b.y - a.y * b.x);
+            double firstDet = determinant(a[X_Key], xpix - triangle[0].x, a[y_Key], ypix - triangle[0].y);//1x,2x,1y,2y
+            double secondDet = determinant(b[X_Key], xpix - triangle[1].x, b[y_Key], ypix - triangle[1].y);
+            double thirdDet = determinant(c[X_Key], xpix - triangle[2].x, c[y_Key], ypix - triangle[2].y);
+
+            //double areaTri = firstDet * 5;
+            //double areaTri = areaTriangle;
 
             //If inside the triangle draw
-            if ((c1 >= 0) && (c2 >= 0) && (c1 + c2 <= 1))
+            if (firstDet >= 0 && secondDet >= 0 && thirdDet >=0)
             {
-                target[ypix][xpix] = attrs[0].color;
+                target[(int)ypix][(int)xpix] = attrs[0].color;
+                //target[ypix][xpix] = attrs[0].color;
+                Attributes interpolatedAttribs;
+                interpolatedAttribs.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpolatedAttribs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpolatedAttribs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
+                frag->FragShader(target[ypix][xpix], interpolatedAttribs, *uniforms);
             }
+
         }
+
     }
-
-
-    //      if//if positive draw, if neg don't
-    //          drawpixel(tempPoint);
 
 }
 
@@ -231,13 +273,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        //TestDrawPixel(frame);
-        //GameOfLife(frame);
-        TestDrawTriangle(frame);
-
-        //w3 team activity done with Paul
-
-
+        TestDrawFragments(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -4,7 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/MinGW\bin" 
+                "C:/MinGW\\bin",
+                "C:/MinGW\\include",
+                "C:Users\\jdmdo\\OneDrive\\Documents\\GitHub\\CS312_Graphics" 
             ],
             "defines": [
                 "_DEBUG",

@@ -22,6 +22,10 @@
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 
+//set aside numbers
+#define X_Key 0
+#define y_Key 1
+
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
@@ -210,6 +214,8 @@ class BufferImage : public Buffer2D<PIXEL>
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
+            //May need
+            //SDL_LockSurface(img);
             setupInternal();
         }
 };
@@ -223,10 +229,26 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        //color
+        double r;
+        double g;
+        double b;
+        //image
+        double u;
+        double v;
+
+        //for image
+        void* ptrImg;
+        double size = 3;
+
+        PIXEL color;//?Did I do it right?
+        //secondary reference bit. Could use instead of RGBUR etc
+        double argb[4];
+        //double vertexPoints[4];
+
         // Obligatory empty constructor
         Attributes() {}
 
-		PIXEL color;//?Did I do it right?
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -280,6 +302,33 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
     attrOut = vertAttr;
+}
+
+
+
+//Written in class
+void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+    //PIXEL color;
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int wid = ptr->width();
+    int hgth = ptr->height();
+
+    int x = vertAttr.u * wid;
+    int y = vertAttr.v * hgth;
+
+    /*color*/fragment = (*ptr)[y][x];
+
+    //fragment = color;
+}
+
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(vertAttr.r * 0xff) << 16;//16
+    color += (unsigned int)(vertAttr.g * 0xff) << 8;//8
+    color += (unsigned int)(vertAttr.b * 0xff) << 0;//0
+
+    fragment = color;
 }
 
 /**********************************************************
