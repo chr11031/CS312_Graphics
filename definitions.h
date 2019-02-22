@@ -517,7 +517,7 @@ void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     Matrix scaleMatrix = createScaleMatrix(xScale,yScale,zScale);
     Matrix rotationMatrix = createRotationMatrix(xRotate,yRotate,zRotate);
     Matrix translateMatrix = createTranslationMatrix(xTranslate,yTranslate,zTranslate);
-    Matrix finalMatrix = rotationMatrix * scaleMatrix * translateMatrix;
+    Matrix finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
     vertOut = finalMatrix * vertIn;
     attrOut = vertAttr;
 
