@@ -471,7 +471,7 @@ class FragmentShader
         }
 };
 
-Vertex matrixMultiplyVertex(Matrix matrix, Vertex vertex){
+Vertex operator*(Matrix lhs, Vertex rhs){
 
     int size = 4;
 
@@ -482,16 +482,16 @@ Vertex matrixMultiplyVertex(Matrix matrix, Vertex vertex){
 
             double vectorValue;
             switch(j) {
-                case 0 : vectorValue = vertex.x; 
+                case 0 : vectorValue = rhs.x; 
                         break;       
-                case 1 : vectorValue = vertex.y;
+                case 1 : vectorValue = rhs.y;
                         break;
-                case 2 : vectorValue = vertex.z;
+                case 2 : vectorValue = rhs.z;
                         break;
-                case 3 : vectorValue = vertex.w;
+                case 3 : vectorValue = rhs.w;
                         break;
             }           
-            double matrixValue = matrix.getElement(i,j);
+            double matrixValue = lhs.getElement(i,j);
             tempResult[i] += matrixValue * vectorValue;
         }
     }
@@ -517,8 +517,8 @@ void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     Matrix scaleMatrix = createScaleMatrix(xScale,yScale,zScale);
     Matrix rotationMatrix = createRotationMatrix(xRotate,yRotate,zRotate);
     Matrix translateMatrix = createTranslationMatrix(xTranslate,yTranslate,zTranslate);
-    Matrix finalMatrix = (scaleMatrix * rotationMatrix) * translateMatrix;
-    vertOut = matrixMultiplyVertex(finalMatrix, vertIn);
+    Matrix finalMatrix = rotationMatrix * scaleMatrix * translateMatrix;
+    vertOut = finalMatrix * vertIn;
     attrOut = vertAttr;
 
 
