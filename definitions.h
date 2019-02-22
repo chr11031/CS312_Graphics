@@ -194,6 +194,9 @@ public:
      *************************************************/
     Matrix translate(double x, double y){
 
+        /*Create a new matrix with transformation and 
+        then proceed to the multiplication*/
+        
         Matrix temp(4,4);
         temp.matrix[0][3] = x;
         temp.matrix[1][3] = y;
@@ -206,6 +209,9 @@ public:
      *************************************************/
     Matrix scale(double factor){
         
+        /*Create a new matrix with transformation and 
+        then proceed to the multiplication*/
+
         Matrix temp(4,4);
         temp.matrix[0][0] = factor;
         temp.matrix[1][1] = factor;
