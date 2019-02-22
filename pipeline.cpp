@@ -161,6 +161,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 interpolatedAttribs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
                 interpolatedAttribs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
+                //for the image
+                interpolatedAttribs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
+                interpolatedAttribs.v = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);;
+
                 frag->FragShader(target[ypix][xpix], interpolatedAttribs, *uniforms);
             }
 

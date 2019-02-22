@@ -328,12 +328,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].u = 1;
-        imageAttributes[0].v = 0;
-        imageAttributes[1].u = 1;
-        imageAttributes[1].v = 1;
-        imageAttributes[2].u = 0;
-        imageAttributes[2].v = 1;
+        imageAttributes[0].u = coordinates[0][0];//1
+        imageAttributes[0].v = coordinates[0][1];//0
+        imageAttributes[1].u = coordinates[1][0];//1
+        imageAttributes[1].v = coordinates[1][1];//1
+        imageAttributes[2].u = coordinates[2][0];//0
+        imageAttributes[2].v = coordinates[2][1];//1
 
         //BufferImage myImage("C:\Users\jdmdo\OneDrive\Documents\GitHub\CS312_Graphics\solid_chess-board.bmp");//LINK TO IMAGE I CHOOSE!!!!!
         BufferImage myImage("checker.bmp");//LINK TO IMAGE I CHOOSE!!!!!

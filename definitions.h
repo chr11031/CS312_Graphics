@@ -314,15 +314,15 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int wid = ptr->width();
     int hgth = ptr->height();
 
-    int x = vertAttr.u * wid;
-    int y = vertAttr.v * hgth;
+    int x = vertAttr.u * (wid - 1);// -1 or not?
+    int y = vertAttr.v * (hgth - 1);
 
     /*color*/fragment = (*ptr)[y][x];
 
     //fragment = color;
 }
 
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
     PIXEL color = 0xff000000;
     color += (unsigned int)(vertAttr.r * 0xff) << 16;//16
     color += (unsigned int)(vertAttr.g * 0xff) << 8;//8
