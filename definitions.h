@@ -286,13 +286,13 @@ class Matrix
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    four[i][j] = 0;
+                    matrix[i][j] = 0;
                 }
             }
-            four[0][0] = 1;
-            four[1][1] = 1;
-            four[2][2] = 1;
-            four[3][3] = 1;
+            matrix[0][0] = 1;
+            matrix[1][1] = 1;
+            matrix[2][2] = 1;
+            matrix[3][3] = 1;
 
             //Single Vertex   
             result.x = 0;
@@ -310,13 +310,13 @@ class Matrix
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    four[i][j] = 0;
+                    matrix[i][j] = 0;
                 }
             }
-            four[0][0] = 1;
-            four[1][1] = 1;
-            four[2][2] = 1;
-            four[3][3] = 1;
+            matrix[0][0] = 1;
+            matrix[1][1] = 1;
+            matrix[2][2] = 1;
+            matrix[3][3] = 1;
 
             //Single vertex
             result.x = 0;
@@ -349,15 +349,15 @@ class Matrix
             double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
 
             //Setup the matrix
-            four[0][2] = uniforms.other[1];
-            four[1][2] = uniforms.other[2];
+            matrix[0][2] = uniforms.other[1];
+            matrix[1][2] = uniforms.other[2];
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    sum[i] += four[i][j] * vert[j];
+                    sum[i] += matrix[i][j] * vert[j];
                 }
             }
 
@@ -372,22 +372,22 @@ class Matrix
         void rotate(const Vertex & vertIn, const Attributes & uniforms)
         {
             //Convert degrees to radians
-            double angle = (uniforms.other[1] * 3.14) / 180;
+            double angle = (uniforms.other[1] * M_PI) / 180;
             double sum[4] = {0, 0, 0, 0};
             double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
 
             //Setup the matrix
-            four[0][0] = cos(angle);
-            four[0][1] = -sin(angle);
-            four[1][0] = sin(angle);
-            four[1][1] = cos(angle);
+            matrix[0][0] = cos(angle);
+            matrix[0][1] = -sin(angle);
+            matrix[1][0] = sin(angle);
+            matrix[1][1] = cos(angle);
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    sum[i] += four[i][j] * vert[j];
+                    sum[i] += matrix[i][j] * vert[j];
                 }
             }
 
@@ -405,15 +405,15 @@ class Matrix
             double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
 
             //Setup the matrix
-            four[0][0] = uniforms.other[1];
-            four[1][1] = uniforms.other[1];
+            matrix[0][0] = uniforms.other[1];
+            matrix[1][1] = uniforms.other[1];
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    sum[i] += four[i][j] * vert[j];
+                    sum[i] += matrix[i][j] * vert[j];
                 }
             }
 
@@ -427,7 +427,7 @@ class Matrix
         void STR(const Vertex & vertIn, const Attributes & uniforms)
         {
             //Convert degrees to radians
-            double angle = (uniforms.other[4] * 3.14) / 180;
+            double angle = (uniforms.other[4] * M_PI) / 180;
 
             //Holds the translation results
             double transSum[4] = {0, 0, 0, 0};
@@ -442,43 +442,45 @@ class Matrix
             double vert[4] = {vertIn.x, vertIn.y, vertIn.z, vertIn.w};
 
             //Setup the matrix
-            four[0][0] = uniforms.other[1];
-            four[1][1] = uniforms.other[1];
+            matrix[0][0] = uniforms.other[1];
+            matrix[1][1] = uniforms.other[1];
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    scaledSum[i] += four[i][j] * vert[j];
+                    scaledSum[i] += matrix[i][j] * vert[j];
                 }
             }
             
             //Setup the matrix
-            four[0][2] = uniforms.other[2];
-            four[1][2] = uniforms.other[3];
+            resetMatrix();
+            matrix[0][2] = uniforms.other[2];
+            matrix[1][2] = uniforms.other[3];
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    transSum[i] += four[i][j] * scaledSum[j];
+                    transSum[i] += matrix[i][j] * scaledSum[j];
                 }
             }
 
             //Setup the matrix
-            four[0][0] = cos(angle);
-            four[0][1] = -sin(angle);
-            four[1][0] = sin(angle);
-            four[1][1] = cos(angle);
+            resetMatrix();
+            matrix[0][0] = cos(angle);
+            matrix[0][1] = -sin(angle);
+            matrix[1][0] = sin(angle);
+            matrix[1][1] = cos(angle);
 
             //Multiply and add the result
             for(int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    rotateSum[i] += four[i][j] * transSum[j];
+                    rotateSum[i] += matrix[i][j] * transSum[j];
                 }
             }
 
@@ -494,8 +496,24 @@ class Matrix
             return result;
         }
 
+        void resetMatrix()
+        {
+            //Matrix of 4x4
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    matrix[i][j] = 0;
+                }
+            }
+            matrix[0][0] = 1;
+            matrix[1][1] = 1;
+            matrix[2][2] = 1;
+            matrix[3][3] = 1;
+        }
+
     private:
-        double four[4][4];
+        double matrix[4][4];
         Vertex result;
 };
 
