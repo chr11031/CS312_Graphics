@@ -475,7 +475,7 @@ Vertex matrixMultiplyVertex(Matrix matrix, Vertex vertex){
 
     int size = 4;
 
-    double * tempResult;
+    double tempResult[size];
 
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
@@ -504,7 +504,7 @@ Vertex matrixMultiplyVertex(Matrix matrix, Vertex vertex){
 void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     
-    double xScale = 2;/*uniforms[0].d;*/
+    double xScale = uniforms[0].d;
     double yScale = uniforms[1].d; 
     double zScale = uniforms[2].d; 
     double xRotate = uniforms[3].d; 
@@ -515,28 +515,10 @@ void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     double zTranslate = uniforms[8].d; 
 
     Matrix scaleMatrix = createScaleMatrix(xScale,yScale,zScale);
-
-    double a = scaleMatrix.getElement(0,0);
-    double aa = scaleMatrix.getElement(0,1);
-    double aaa = scaleMatrix.getElement(0,2);
-    double aaaa = scaleMatrix.getElement(0,3);
-    double aaaaa = scaleMatrix.getElement(1,0);
-    double aaaaaa = scaleMatrix.getElement(1,1);
-    double aaaaaaa = scaleMatrix.getElement(1,2);
-    double aaaaaaaa = scaleMatrix.getElement(1,3);
-    double aaaaaaaaa = scaleMatrix.getElement(2,0);
-    double aaaaaaaaaa = scaleMatrix.getElement(2,1);
-    double aaaaaaaaaaa = scaleMatrix.getElement(2,2);
-    double aaaaaaaaaaaa = scaleMatrix.getElement(2,3);
-    double aaaaaaaaaaaaa = scaleMatrix.getElement(3,0);
-    double aaaaaaaaaaaaaa = scaleMatrix.getElement(3,1);
-    double aaaaaaaaaaaaaaa = scaleMatrix.getElement(3,2);
-    double aaaaaaaaaaaaaaaa = scaleMatrix.getElement(3,3);
-
     Matrix rotationMatrix = createRotationMatrix(xRotate,yRotate,zRotate);
     Matrix translateMatrix = createTranslationMatrix(xTranslate,yTranslate,zTranslate);
     Matrix finalMatrix = (scaleMatrix * rotationMatrix) * translateMatrix;
-    vertOut = matrixMultiplyVertex(scaleMatrix, vertIn);
+    vertOut = matrixMultiplyVertex(finalMatrix, vertIn);
     attrOut = vertAttr;
 
 

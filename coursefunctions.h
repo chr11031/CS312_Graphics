@@ -450,7 +450,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         colorUniforms.insertDbl(.5); // Scale
         colorUniforms.insertDbl(.5);
-        colorUniforms.insertDbl(1);
+        colorUniforms.insertDbl(.5);
         colorUniforms.insertDbl(0); // Rotate
         colorUniforms.insertDbl(0);
         colorUniforms.insertDbl(0);
@@ -473,7 +473,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         colorUniforms.insertDbl(1);
         colorUniforms.insertDbl(0); // Rotate
         colorUniforms.insertDbl(0);
-        colorUniforms.insertDbl(45);
+        colorUniforms.insertDbl(30);
         colorUniforms.insertDbl(0); // Translate
         colorUniforms.insertDbl(0);
         colorUniforms.insertDbl(0); 
@@ -491,10 +491,10 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         colorUniforms.insertDbl(.5); // Scale
         colorUniforms.insertDbl(.5);
-        colorUniforms.insertDbl(1);
+        colorUniforms.insertDbl(.5);
         colorUniforms.insertDbl(0); // Rotate
         colorUniforms.insertDbl(0);
-        colorUniforms.insertDbl(45);
+        colorUniforms.insertDbl(30);
         colorUniforms.insertDbl(100); // Translate
         colorUniforms.insertDbl(50);
         colorUniforms.insertDbl(0); 

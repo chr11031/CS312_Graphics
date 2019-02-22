@@ -31,9 +31,14 @@ class Matrix {
         Matrix(double _rows, double _cols,double* matrix){
             rows = _rows;
             cols = _cols;
-            mat = matrix;
 
             size = _rows * _cols;
+
+            mat = new double[size];
+
+            for(int i = 0; i < size; i++){
+                *(mat + i) = *(matrix + i);
+            };
 
         };
 
