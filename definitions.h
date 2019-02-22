@@ -217,6 +217,13 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Interpoaltes between 3 weighted points 3 different double values for barycentric
+inline double baryInterp(const double & firstWgt, const double & secndWgt, const double & thirdWgt,
+			 const double & firstVal, const double & secndVal, const double & thirdVal)
+{
+  return ((firstWgt * thirdVal) + (secndWgt * firstVal) + (thirdWgt * secndVal));
+}
+
 // Combine two datatypes in one
 union attrib
 {
@@ -241,15 +248,15 @@ class Attributes
         Attributes() {numMembers = 0;}
 
         // Interpolation Constructor
-        Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
-                    const Attributes & first, const Attributes & secnd, const Attributes & third)
+        Attributes( const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third,
+		    const double & correctZ)
         {
             while(numMembers < first.numMembers)
             {
-                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
-                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
-                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);               
-                numMembers += 1;
+	         arr[numMembers].d = baryInterp(firstWgt, secndWgt, thirdWgt, first.arr[numMembers].d, secnd[numMembers].d, third.arr[numMembers].d);
+		 arr[numMembers].d = arr[numMembers].d * correctZ;
+		 numMembers += 1;
             }
         }
 

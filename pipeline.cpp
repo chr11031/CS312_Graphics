@@ -241,11 +241,19 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
             double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
+	    double firstWgt = firstDet / areaTriangle;
+	    double secndWgt = secndDet / areaTriangle;
+	    double thirdWgt = thirdDet / areaTriangle;
+
             // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
             if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
+	        // Find corrected 'Z' value
+	        double correctZ = baryInterp(firstWgt, secndWgt, thirdWgt, triangle[0].w, triangle[1].w, triangle[2].w);
+		correctZ = 1.0 / correctZ;
+	      
                 // Interpolate Attributes for this pixel - In this case the R,G,B values
-                Attributes interpolatedAttribs(areaTriangle, firstDet, secndDet, thirdDet, attrs[0], attrs[1], attrs[2]);
+                Attributes interpolatedAttribs(firstWgt, secndWgt, thirdWgt, attrs[0], attrs[1], attrs[2], correctZ);
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -356,8 +364,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawFragments(frame);
-        //TestDrawTriangle(frame);
+	// Demonstrate perspective
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
