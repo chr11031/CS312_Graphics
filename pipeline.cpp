@@ -173,9 +173,8 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
              //transformedVerts[i] = inputVerts[i];
             // transformedAttrs[i] = inputAttrs[i];
-            //vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
-            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
 
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
