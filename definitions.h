@@ -219,6 +219,144 @@ class BufferImage : public Buffer2D<PIXEL>
 };
 
 /***************************************************
+ * Matrix
+ **************************************************/
+class Transform
+{      
+    public:
+
+        double matrix[4][4];
+        int row;
+        int col;
+
+        // Default constructor
+        Transform() : row(4), col(4) 
+        {
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < col; j++) {
+                    if (i == j) 
+                        matrix[i][j] = 1;
+                    else 
+                        matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // Nondefault Constructor
+        Transform(int row, int col) : row(row), col(col)
+        {
+            if (col != 1) {
+                for (int i = 0; i < row; i++) {
+                    for (int j = 0; j < col; j++) {
+                        if (i == j) 
+                            matrix[i][j] = 1;
+                        else 
+                            matrix[i][j] = 0;
+                    }
+                }
+            } else {
+                for (int i = 0; i < row; i++) {
+                    matrix[i][0] = 1;
+                }
+            }
+        }
+
+        // Reset the matrix to "identity"
+        void reset() {
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < col; j++) {
+                    if (i ==j)
+                        matrix[i][j] = 1;
+                    else 
+                        matrix[i][j] = 0;
+                }
+            }
+        }
+
+        // move the shape by x y and z
+        void translate(double x, double y, double z) {
+            Transform unit(4,4);
+            unit.matrix[0][3] += x;
+            unit.matrix[1][3] += y;
+            unit.matrix[2][3] += z;
+            *this *= unit;
+        }
+
+        // rotate the shape counter clockwise by degrees
+        void rotate(double angle) {
+            Transform unit(4,4);
+            double radians = angle * DEG_TO_RAD;
+            unit.matrix[0][0] = cos(radians);
+            unit.matrix[0][1] = -sin(radians);
+            unit.matrix[1][0] = sin(radians);
+            unit.matrix[1][1] = cos(radians);
+            *this *= unit;
+        }
+
+        // scale the shape by percentage values
+        void scale(double x, double y, double z) {
+            Transform unit(4,4);
+            unit.matrix[0][0] *= x;
+            unit.matrix[1][1] *= y;
+            unit.matrix[2][2] *= z;
+            *this *= unit;
+        }
+
+        // overloaded operators
+        Transform operator *= (const Transform rhs);
+        Transform operator *= (const Vertex rhs);
+        Transform operator = (const Transform rhs);
+};
+
+Transform Transform::operator *= (const Transform rhs) {
+    // temp value to store sums
+    double multiplied[4][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+
+    // loop through the arrays and multiply
+    for (int i = 0; i < rhs.row; i++) {
+        for (int j = 0; j < rhs.col; j++) {
+            for (int k = 0; k < 4; k++) {
+                multiplied[i][j] += this->matrix[i][k] * rhs.matrix[k][j];
+            }
+        }
+    }
+
+    // copy temp values into original matrix
+    for (int i = 0; i < rhs.row; i++) 
+        for (int j = 0; j < rhs.col; j++) 
+            this->matrix[i][j] = multiplied[i][j];
+}
+
+Transform Transform::operator *= (const Vertex rhs) {
+    // get temp variables
+    double vert[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
+    double temp[4] = {0, 0, 0, 0};
+
+    // matrix multiplication, storing sum in temp
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            temp[i] += matrix[i][j] * vert[j];
+        }
+    }
+
+    // copy temp values into original matrix
+    for (int i = 0; i < 4; i++) {
+        matrix[i][0] = temp[i];
+    }
+
+    return *this;
+}
+
+Transform Transform::operator = (const Transform rhs) {
+    // loop through and copy matrix to other matrix
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            matrix[i][j] = rhs.matrix[i][j];
+        }
+    }
+}
+
+/***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
  * primitive as a whole OR per-vertex. Will be
@@ -231,7 +369,9 @@ class Attributes
         // vectors to store as many attributes as necessary
         std::vector<double> value;
         std::vector<void*> ptrImgs;
-        double matrix[4][4];
+
+        Transform matrix;
+
         PIXEL color;
 
         // Obligatory empty constructor
@@ -242,43 +382,7 @@ class Attributes
         {
             // Your code goes here when clipping is implemented
         }
-
-        Attributes &operator *= (const double rhs[][4]);// throw (const char *);
-        Attributes &operator *= (const double rhs[]);// throw (const char *);
 };
-
-Attributes &Attributes::operator *= (const double rhs[][4]) //throw (const char *)
-{
-    double multiplied[4][4];
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            for (int k = 0; k < 4; k++) {
-                multiplied[i][j] += matrix[k][j] * rhs[j][k];
-            }
-        }
-    }
-
-    for (int i = 0; i < 4; i++) 
-        for (int j = 0; j < 4; j++) 
-            matrix[i][j] = multiplied[i][j];
-
-
-   return *this;
-}
-
-Attributes &Attributes::operator *= (const double rhs[]) // throw (const char *)
-{
-    double multiplied[4];
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            multiplied[i] += matrix[i][j] * rhs[j];
-        }
-    }
-
-   return *this;
-}
 
 /***************************************************
  * FragShader uses interpolated color values against
@@ -404,16 +508,20 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 
 void VertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    vertOut.x = uniforms.matrix[0][0] * vertIn.x + uniforms.matrix[0][1] * vertIn.y + 
-                uniforms.matrix[0][2] * vertIn.z + uniforms.matrix[0][3] * vertIn.w;
-    vertOut.y = uniforms.matrix[1][0] * vertIn.x + uniforms.matrix[1][1] * vertIn.y + 
-                uniforms.matrix[1][2] * vertIn.z + uniforms.matrix[1][3] * vertIn.w;
-    vertOut.z = uniforms.matrix[2][0] * vertIn.x + uniforms.matrix[2][1] * vertIn.y + 
-                uniforms.matrix[2][2] * vertIn.z + uniforms.matrix[2][3] * vertIn.w;
-    vertOut.w = uniforms.matrix[3][0] * vertIn.x + uniforms.matrix[3][1] * vertIn.y + 
-                uniforms.matrix[3][2] * vertIn.z + uniforms.matrix[3][3] * vertIn.w;
-    attrOut = vertAttr;
+    // get temporary matrix
+    Transform vert(4,4);
+    vert = uniforms.matrix;
 
+    // multiply vertices to matrix
+    vert *= vertIn;
+
+    // assign values into vertOut
+    vertOut.x = vert.matrix[0][0];
+    vertOut.y = vert.matrix[1][0];
+    vertOut.z = vert.matrix[2][0];
+    vertOut.w = vert.matrix[3][0];
+
+    attrOut = vertAttr;
 }
 
 /**********************************************************
@@ -447,101 +555,6 @@ class VertexShader
             VertShader = VertSdr;
         }
 };
-
-void multiply(double lhs[][4], double rhs[][4]) {
-    double multiplied[4][4];
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            for (int k = 0; k < 4; k++) {
-                multiplied[i][j] += lhs[j][k] * rhs[k][j];
-            }
-        }
-    }
-
-    for (int i = 0; i < 4; i++) 
-        for (int j = 0; j < 4; j++) 
-            lhs[i][j] = multiplied[i][j];
-}
-
-void multiply(double lhs[][4], double rhs[]) {
-    double multiplied[4];
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            multiplied[i] += lhs[i][j] * rhs[j];
-        }
-    }
-
-    for (int i = 0; i < 4; i++) {
-            rhs[i] = multiplied[i];
-    }
-}
-
-/***************************************************
- * Matrix
- **************************************************/
-class Transform
-{      
-    public:
-
-        //double matrix[4][4];
-
-        // Obligatory empty constructor
-        Transform() {}
-
-        static void reset(Attributes* uniforms) {
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    if (i == j) {
-                        uniforms->matrix[i][j] = 1;
-                    } else {
-                        uniforms->matrix[i][j] = 0;
-                    }
-                }
-            }
-        }
-
-        static void translate(double x, double y, double z, Attributes* uniforms) {
-            uniforms->matrix[0][3] += x;
-            uniforms->matrix[1][3] += y;
-            uniforms->matrix[2][3] += z;
-            
-            // double matrix[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
-            // double newMatrix[4][4];
-
-            // matrix[0][3] += x;
-            // matrix[1][3] += y;
-            // matrix[2][3] += z;
-
-            // for (int i = 0; i < 4; i++) 
-            //     for (int j = 0; j < 4; j++) 
-            //         for (int k = 0; k < 4; k++) 
-            //             newMatrix[i][j] += matrix[j][k] * uniforms->matrix[k][j];
-
-            // for (int i = 0; i < 4; i++) 
-            //     for (int j = 0; j < 4; j++) 
-            //         uniforms->matrix[i][j] = newMatrix[i][j];
-            
-            //uniforms *= matrix;
-            //multiply(uniforms->matrix, matrix);
-        }
-
-        static void rotate(double angle, Attributes* uniforms) {
-            double radians = angle * DEG_TO_RAD;
-            uniforms->matrix[0][0] = cos(radians);
-            uniforms->matrix[0][1] = -sin(radians);
-            uniforms->matrix[1][0] = sin(radians);
-            uniforms->matrix[1][1] = cos(radians);
-        }
-
-        static void scale(double x, double y, double z, Attributes* uniforms) {
-            uniforms->matrix[0][0] *= x;
-            uniforms->matrix[1][1] *= y;
-            uniforms->matrix[2][2] *= z;
-        }
-};	
-
 
 // Stub for Primitive Drawing function
 /****************************************

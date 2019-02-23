@@ -543,8 +543,6 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
-        // Your code for the uniform goes here, if any (don't pass NULL here)
-        Transform::reset(&colorUniforms);
 
         VertexShader myColorVertexShader;
         myColorVertexShader.VertShader = VertShader;
@@ -553,7 +551,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
         *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        Transform::translate(100, 50, 0, &colorUniforms);
+        colorUniforms.matrix.translate(100, 50, 0);
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -561,9 +559,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         //Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        
-        Transform::reset(&colorUniforms);
-        Transform::scale(0.5, 0.5, 0.5, &colorUniforms);
+        colorUniforms.matrix.reset();
+        colorUniforms.matrix.scale(0.5, 0.5, 0.5);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -571,8 +568,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        Transform::reset(&colorUniforms);
-        Transform::rotate(30, &colorUniforms);
+        colorUniforms.matrix.reset();
+        colorUniforms.matrix.rotate(30);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -581,10 +578,10 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
 	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-	Transform::reset(&colorUniforms);
-        Transform::rotate(30, &colorUniforms);	
-        Transform::scale(0.5, 0.5, 0.5, &colorUniforms);
-        //Transform::translate(100, 50, 0, &colorUniforms);
+        colorUniforms.matrix.reset();
+        colorUniforms.matrix.rotate(30);
+        colorUniforms.matrix.translate(100, 50, 0); 
+        colorUniforms.matrix.scale(0.5, 0.5, 0.5);
         
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
