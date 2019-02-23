@@ -297,34 +297,6 @@ class Transformer
             return Transformer(matrix);
         }
 
-        // Transformer xRotate(double angle)
-        // {
-        //     Transformer mat;
-        //     double sinRot = sin(angle * M_PI / 180.0);
-        //     double cosRot = cos(angle * M_PI / 180.0);
-
-        //     mat.matrix[1][1] = cosRot;
-        //     mat.matrix[1][2] = -sinRot;
-        //     mat.matrix[2][1] = sinRot;
-        //     mat.matrix[2][2] = cosRot;
-
-        //     return (*this) * mat;
-        // }       
-
-        // Transformer yRotate(double angle)
-        // {
-        //     Transformer mat;
-        //     double sinRot = sin(angle * M_PI / 180.0);
-        //     double cosRot = cos(angle * M_PI / 180.0);
-
-        //     mat.matrix[0][0] = cosRot;
-        //     mat.matrix[0][2] = sinRot;
-        //     mat.matrix[2][0] = -sinRot;
-        //     mat.matrix[2][3] = cosRot;
-
-        //     return (*this) * mat;
-        // }
-
         double* operator[](int i)
         {
             return this->matrix[i];
