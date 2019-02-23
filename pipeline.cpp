@@ -2,6 +2,8 @@
 #include "coursefunctions.h"
 #include <cmath>
 
+#include <iostream>
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -210,6 +212,7 @@ void DrawPrimitive(PRIMITIVES prim,
  ************************************************************/
 int main()
 {
+
     // -----------------------DATA TYPES----------------------
     SDL_Window* WIN;               // Our Window
     SDL_Renderer* REN;             // Interfaces CPU with GPU
@@ -228,7 +231,7 @@ int main()
     // Draw loop 
     bool running = true;
     while(running) 
-    {           
+    {        
         // Handle user inputs
         processUserInputs(running);
 
