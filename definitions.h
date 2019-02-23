@@ -223,21 +223,29 @@ class Transformer
     public:
         int row;
         int col;
-        double matrix[4][4] = {{1,0,0,0},
-                               {0,1,0,0},
-                               {0,0,1,0},
-                               {0,0,0,1}};
+        double matrix[4][4]; 
+        
+        void initialize(double matrix[4][4])
+        {
+            for(int i = 0; i < 4; i++)
+                for(int j = 0; j < 4; j++)
+                    this->matrix[i][j] = matrix[i][j];
+        }
 
         Transformer() 
         {
             this->row = 4;
             this->col = 4;
+            double data[4][4] = {{1,0,0,0},
+                                 {0,1,0,0},
+                                 {0,0,1,0},
+                                 {0,0,0,1}};
+            initialize(data);
         }
 
-        Transformer(int row, int col)
+        Transformer(double matrix[4][4])
         {
-            this->row = row;
-            this->col = col;
+           initialize(matrix);
         }
 
         Transformer(double vertex[4][1])
@@ -258,106 +266,94 @@ class Transformer
             this->matrix[3][0] = vert.w;
         }
 
-        Transformer(double matrix[4][4])
-        {
-            this->row = 4;
-            this->col = 4;
-            for(int i = 0; i < row; i++)
-                for(int j = 0; j < col; j++)
-                    this->matrix[i][j] = matrix[i][j];            
-        }
-
         Transformer scale(double x, double y, double z)
         {
-            Transformer mat;
-            mat.matrix[0][0] = x;
-            mat.matrix[1][1] = y;
-            mat.matrix[2][2] = z;
-
-            return (*this) * mat;
+            double matrix[4][4] = {{x,0,0,0},
+                                   {0,y,0,0},
+                                   {0,0,z,0},
+                                   {0,0,0,1}};
+            return Transformer(matrix);
         }
 
         Transformer translate(double x, double y, double z)
         {
-            Transformer mat;
-            mat.matrix[0][3] = x;
-            mat.matrix[1][3] = y;
-            mat.matrix[2][3] = z;
-
-            return (*this) * mat;
+            double matrix[4][4] = {{1,0,0,x},
+                                   {0,1,0,y},
+                                   {0,0,1,z},
+                                   {0,0,0,1}};
+            return Transformer(matrix);
         }
 
         Transformer zRotate(double angle)
         {
-            Transformer mat;
             double sinRot = sin(angle * M_PI / 180.0);
             double cosRot = cos(angle * M_PI / 180.0);
 
-            mat.matrix[0][0] = cosRot;
-            mat.matrix[0][1] = -sinRot;
-            mat.matrix[1][0] = sinRot;
-            mat.matrix[1][1] = cosRot;
+            double matrix[4][4] = {{cosRot,-sinRot,0,0},
+                                   {sinRot,cosRot,0,0},
+                                   {0,0,1,0},
+                                   {0,0,0,1}};
 
-            return (*this) * mat;
+            return Transformer(matrix);
         }
 
-        Transformer xRotate(double angle)
+        // Transformer xRotate(double angle)
+        // {
+        //     Transformer mat;
+        //     double sinRot = sin(angle * M_PI / 180.0);
+        //     double cosRot = cos(angle * M_PI / 180.0);
+
+        //     mat.matrix[1][1] = cosRot;
+        //     mat.matrix[1][2] = -sinRot;
+        //     mat.matrix[2][1] = sinRot;
+        //     mat.matrix[2][2] = cosRot;
+
+        //     return (*this) * mat;
+        // }       
+
+        // Transformer yRotate(double angle)
+        // {
+        //     Transformer mat;
+        //     double sinRot = sin(angle * M_PI / 180.0);
+        //     double cosRot = cos(angle * M_PI / 180.0);
+
+        //     mat.matrix[0][0] = cosRot;
+        //     mat.matrix[0][2] = sinRot;
+        //     mat.matrix[2][0] = -sinRot;
+        //     mat.matrix[2][3] = cosRot;
+
+        //     return (*this) * mat;
+        // }
+
+        double* operator[](int i)
         {
-            Transformer mat;
-            double sinRot = sin(angle * M_PI / 180.0);
-            double cosRot = cos(angle * M_PI / 180.0);
-
-            mat.matrix[1][1] = cosRot;
-            mat.matrix[1][2] = -sinRot;
-            mat.matrix[2][1] = sinRot;
-            mat.matrix[2][2] = cosRot;
-
-            return (*this) * mat;
-        }       
-
-        Transformer yRotate(double angle)
-        {
-            Transformer mat;
-            double sinRot = sin(angle * M_PI / 180.0);
-            double cosRot = cos(angle * M_PI / 180.0);
-
-            mat.matrix[0][0] = cosRot;
-            mat.matrix[0][2] = sinRot;
-            mat.matrix[2][0] = -sinRot;
-            mat.matrix[2][3] = cosRot;
-
-            return (*this) * mat;
+            return this->matrix[i];
         }
 
-        Transformer operator*(const Vertex &vert)
+        const double* operator[](int i) const
         {
-            Transformer mat(4, 1);
-            double vertex[4][1];
-            vertex[0][0] = vert.x;
-            vertex[1][0] = vert.y;
-            vertex[2][0] = vert.z;
-            vertex[3][0] = vert.w;
-
-            for(int i = 0; i < this->row; i++)
-                for(int j = 0; j < 4; j++)
-                    mat.matrix[i][0] += this->matrix[i][j] * vertex[j][0];
-
-            return mat;
-        }
-
-        //I think there is a problem here. 
-        Transformer operator*(Transformer &multMatrix)
-        {
-            Transformer mat;
-
-            int i, j, k; 
-            for (i = 0; i < this->row; i++) 
-                for (j = 0; j < multMatrix.col; j++) 
-                    for (k = 0; k < multMatrix.row; k++) 
-                        mat.matrix[i][j] += this->matrix[i][k] * multMatrix.matrix[k][j]; 
-            return mat;
+            return this->matrix[i];
         }
 };
+
+Transformer operator*(const Transformer &lhs, const Transformer &rhs)
+        {
+            Transformer matrix;
+            for(int y = 0; y < 4; y++)
+                for(int x = 0; x < 4; x++)
+                    matrix[y][x] = lhs[y][0] * rhs[0][x] + lhs[y][1] * rhs[1][x] + lhs[y][2] * rhs[2][x] + lhs[y][3] * rhs[3][x];
+            return matrix;
+        }
+//matrix to vertex multiplication
+Vertex operator*(const Transformer &matrix, const Vertex &vertex)
+{
+    Vertex vert;
+    vert.x = vertex.x * matrix[0][0] + vertex.y * matrix[0][1] + vertex.z * matrix[0][2] + vertex.w * matrix[0][3];
+    vert.y = vertex.x * matrix[1][0] + vertex.y * matrix[1][1] + vertex.z * matrix[1][2] + vertex.w * matrix[1][3];
+    vert.z = vertex.x * matrix[2][0] + vertex.y * matrix[2][1] + vertex.z * matrix[2][2] + vertex.w * matrix[2][3];
+    vert.w = vertex.x * matrix[3][0] + vertex.y * matrix[3][1] + vertex.z * matrix[3][2] + vertex.w * matrix[3][3];
+    return vert;
+}
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
@@ -469,14 +465,7 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
  *******************************/
 void vShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    Transformer mult = uniforms.matrix;
-    Transformer matrix = mult * vertIn;
-
-    vertOut.x = matrix.matrix[0][0];
-    vertOut.y = matrix.matrix[1][0];
-    vertOut.z = matrix.matrix[2][0];
-    vertOut.w = matrix.matrix[3][0];
-    
+    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
 
