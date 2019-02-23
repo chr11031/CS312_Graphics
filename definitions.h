@@ -44,68 +44,90 @@ struct Vertex
     double w;
 };
 
+
+/****************************************************
+ * Matrix class 
+ ****************************************************/
 class Matrix
 {
+private:
 public:
-    double matrixFinal [4][1] = {{0},
-                                {0},
-                                {0},
-                                {0}};
 
-    double & operator [] (int i) 
+    double matrix[4][4]  = {{1,0,0,0},
+                            {0,1,0,0},
+                            {0,0,1,0},
+                            {0,0,0,1}};
+
+    Matrix() {}
+
+    //setting the matrices
+    Matrix(double newMatrix[4][4])
     {
-        return matrixFinal[i/4][i%4];
-    }
-        
-    Matrix multiplyMatrix(Matrix & first, Matrix & second) const
-    {
-        for(int x = 0; x < 4; x++)
+        for(int y = 0; y < 3; y++)
         {
-            for(int k = 0; k < 1; k++)
-            {
-                for(int y = 0; y < 4; y++)
-                {
-                    matrixFinal[x][k] += first[x][y] * second[y][k];
-                }
+            for(int x = 0; x < 3; x++)
+            { 
+                 this->matrix[y][x] = newMatrix[y][x];
             }
-        }
+       }
+    }       
 
-        return matrixFinal;
+    double * operator[](int i)
+    {
+        if(i == 1 || i == 2 || i == 3 || i ==4)
+        {
+            return matrix[i];
+        }
     }
 
+    const double * operator[](int i) const
+    {
+        if(i == 1 || i == 2 || i == 3 || i ==4)
+        {
+            return matrix[i];
+        }
+    }
 
-    // Matrix operator * (const Matrix & first, const Matrix & second)
-    // {
-    //     for(int x = 0; x < 4; x++)
-    //     {
-    //         for(int k = 0; k < 1; k++)
-    //         {
-    //             for(int y = 0; y < 4; y++)
-    //             {
-    //                 matrixFinal[x][k] += first[x][y] * second[y][k];
-    //             }
-    //         }
-    //     }
-
-    //     return matrixFinal;
-    // }
-     
 };
 
-Vertex operator * ()
+/****************************************************
+ * Multiplies any two 4x4 matrices 
+ ****************************************************/
+Matrix operator * (const Matrix & first, const Matrix & second)
 {
-    Vertex vertex1;
-
+    double sum = 0;
+    double resultMatrix[4][4];
     for(int x = 0; x < 4; x++)
     {
-        for(int k = 0; k < 1; k++)
+        for(int k = 0; k < 4; k++)
         {
-                    vertex1[x][k] += first[x][y] * second[y][k];
+            sum = 0;
+            for(int y = 0; y < 4; y++)
+            {
+                sum = sum + (first[x][y] * second[y][k]);  
+            }
+            resultMatrix[x][k] = sum;      
         }
     }
-
-    return vertex1;
+    return resultMatrix;
 }
+     
+
+/****************************************************
+ * Multiply the vertices
+ ****************************************************/
+Vertex operator * (const Matrix & first, const Vertex & second)
+{
+    Vertex resultVertex;
+
+    resultVertex.x = second.x * first[0][0] + second.y * first[0][1] + second.z * first[0][2] + second.w * first[0][3];
+    resultVertex.y = second.x * first[1][0] + second.y * first[1][1] + second.z * first[1][2] + second.w * first[1][3];
+    resultVertex.z = second.x * first[2][0] + second.y * first[2][1] + second.z * first[2][2] + second.w * first[2][3];
+    resultVertex.w = second.x * first[3][0] + second.y * first[3][1] + second.z * first[3][2] + second.w * first[3][3];
+
+    return resultVertex;
+}
+
 
 /******************************************************
  * BUFFER_2D:
@@ -379,7 +401,9 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 
 void RealVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    vertOut = vertIn * uniforms.aMatrix;
+    Matrix vertMatrix = uniforms.aMatrix;
+    
+    vertOut = uniforms.aMatrix * vertIn;
     attrOut = vertAttr;
 }
 /**********************************************************
