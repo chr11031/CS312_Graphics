@@ -301,18 +301,11 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorAttributes[2].g = 0;
         colorAttributes[2].b = 1;
 
-        FragmentShader myColorFragShader;//(TriangleColorShader);
-        // Your code for the color fragment shader goes here
+        FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
-        //colorUniforms.vertexPoints[0] = colorTriangle[0];
-        //colorUniforms.vertexPoints[1] = colorTriangle[1];
-        //colorUniforms.vertexPoints[2] = colorTriangle[2];
-        //colorUniforms.color[0] = colors[0];
-        //colorUniforms.color[1] = colors[1];
-        //colorUniforms.color[2] = colors[2];
 
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes,
@@ -335,24 +328,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].u = coordinates[2][0];//0
         imageAttributes[2].v = coordinates[2][1];//1
 
-        //BufferImage myImage("C:\Users\jdmdo\OneDrive\Documents\GitHub\CS312_Graphics\solid_chess-board.bmp");//LINK TO IMAGE I CHOOSE!!!!!
-        BufferImage myImage("checker.bmp");//LINK TO IMAGE I CHOOSE!!!!!
 
-        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
+        BufferImage myImage("checker.bmp");
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
-        imageUniforms.ptrImg = &myImage;//need the rest?
-        //imageUniforms.vertexPoints[0] = imageTriangle[0];
-        //imageUniforms.vertexPoints[1] = imageTriangle[1];
-        //imageUniforms.vertexPoints[2] = imageTriangle[2];
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader myImageFragShader;
-        // Your code for the image fragment shader goes here
-        //FragmentShader myImageFragShader(TriangleImageShader);
         myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
+
 }
 
 /************************************************
@@ -386,15 +372,30 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].u = coordinates[0][0];//1
+        imageAttributesA[0].v = coordinates[0][1];//0
+        imageAttributesA[1].u = coordinates[1][0];//1
+        imageAttributesA[1].v = coordinates[1][1];//1
+        imageAttributesA[2].u = coordinates[2][0];//0
+        imageAttributesA[2].v = coordinates[2][1];//1
+
+        imageAttributesB[0].u = coordinates[2][0];//1
+        imageAttributesB[0].v = coordinates[2][1];//0
+        imageAttributesB[1].u = coordinates[3][0];//1
+        imageAttributesB[1].v = coordinates[3][1];//1
+        imageAttributesB[2].u = coordinates[0][0];//0
+        imageAttributesB[2].v = coordinates[0][1];//1
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = &myImage;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);

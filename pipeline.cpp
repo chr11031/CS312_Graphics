@@ -78,17 +78,18 @@ double determinant(const double & vtx1, const double & vtx2,
 }
 
 /****************************************
- * Interpolation helper
- * Area = 1/2 (area * area * area)
+ * Interpolation
+ * returns interpolation math
  ***************************************/
 double interpolate(double areaTri, double determ1, double determ2, 
-                    double determ3, double attr1, double attr2, double attr3)
+                    double determ3, double attr1, double attr2, double attr3, double zCorrect = 1)
 {
+    //pull weights
     double w1 = (determ2 / areaTri) * attr1;
     double w2 = (determ3 / areaTri) * attr2;
     double w3 = (determ1 / areaTri) * attr3; 
 
-    return w1 + w2 + w3;//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
+    return zCorrect * (w1 + w2 + w3);//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
 } 
 
 /****************************************
@@ -116,40 +117,26 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     double ymin = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
     double ymax = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //Step two define pos/neg areas, Start with vertexes
+    //define vertexes
     double a[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
     double b[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
     double c[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
     double area = determinant(a[X_Key], -c[X_Key], a[y_Key], -c[y_Key]);
-    
-    //double areaTri = determinant(a.x,b.x,a.y,b.y);
 
-    //step three, fill in
     //for point in bounding box, if positive drawpixel
     for(int ypix = ymin; ypix <= ymax; ypix++)
     {
         for(int xpix = xmin; xpix <= xmax; xpix++)
         {
 
-            /*if(xpix == 250 && ypix == 140)
-            {
-                xpix %= 10000;
-            }*/
-
             //iterating point
-            Vertex cMid = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
+            //Vertex cMid = {(xpix - triangle[0].x) , (ypix - triangle[0].y)};
 
-            //Berycentric calculations (Cross Product deteminants)
-            //double c1 = (cMid.x * b.y - cMid.y * b.x) / (a.x * b.y - a.y * b.x);
-            //double c2 = (a.x * cMid.y - a.y * cMid.x) / (a.x * b.y - a.y * b.x);
-
+            //determinants of triangle
             double firstDet = determinant(a[X_Key], xpix - triangle[0].x, a[y_Key], ypix - triangle[0].y);//1x,2x,1y,2y
             double secondDet = determinant(b[X_Key], xpix - triangle[1].x, b[y_Key], ypix - triangle[1].y);
             double thirdDet = determinant(c[X_Key], xpix - triangle[2].x, c[y_Key], ypix - triangle[2].y);
-
-            //double areaTri = firstDet * 5;
-            //double areaTri = areaTriangle;
 
             //If inside the triangle draw
             if (firstDet >= 0 && secondDet >= 0 && thirdDet >=0)
@@ -157,21 +144,21 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 target[(int)ypix][(int)xpix] = attrs[0].color;
                 //target[ypix][xpix] = attrs[0].color;
                 Attributes interpolatedAttribs;
+
+                double zCorrect = 1 / interpolate(area, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w); 
+
                 interpolatedAttribs.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
                 interpolatedAttribs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
                 interpolatedAttribs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
                 //for the image
-                interpolatedAttribs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);;
+                interpolatedAttribs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u, zCorrect);
+                interpolatedAttribs.v = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v, zCorrect);;
 
                 frag->FragShader(target[ypix][xpix], interpolatedAttribs, *uniforms);
             }
-
         }
-
     }
-
 }
 
 /**************************************************************
@@ -277,7 +264,8 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
+        TestDrawPerspectiveCorrect(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
