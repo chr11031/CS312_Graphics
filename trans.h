@@ -9,185 +9,153 @@
  *****************************************************/
 class Transform
 {
-  // 2D Array
- private:
-  double** mat;
+    // 2D Array
+    private:
+        double mat[4][4];
 
-
-  // Update Matrix values by array
-  void copyValues(const Transform & source)
-  {
-    if(rowLen != source.rowLen || colLen != source.colLen) return;
-    for(int r = 0; r < rowLen; r++)
-      {
-	for(int c = 0; c < colLen; c++)
-	  {
-	    mat[r][c] = (source.get(r))[c];
-	  }
-      }
-  }
-
-  // Update Matrix values by array
-  void setValues(double values[])
-  {
-    int i = 0;
-    for(int r = 0; r < rowLen; r++)
-      {
-	for(int c = 0; c < colLen; c++)
-	  {
-	    mat[r][c] = values[i++];
-	  }
-      }
-  }
-
-  // Dynamic memory 
-  void alloc()
-  {
-    // Allocate pointers for column references
-    mat = (double**)malloc(sizeof(double*) * rowLen);
-
-    // Allocate pointer to each row
-    for(int i = 0; i < rowLen; i++)
-      {
-	mat[i] = (double*)malloc(sizeof(double) * colLen);
-      }
-  }
-
-  // Matrix Dimensions
- public:
-  int colLen;
-  int rowLen;
-
-  // Initialize size, setup identity matrix or set values to zero
-  Transform(int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
+    // Update Matrix values by array
+    void copyValues(const Transform & source)
     {
-      colLen = width;
-      rowLen = height;
-      alloc();
-      setIdentity();
-    }
-
-  // Initialize a vertex as a matrix
-  Transform(const Vertex & vert)
-    {
-      rowLen = 4;
-      colLen = 1;
-      alloc();
-      mat[0][0] = vert.x;
-      mat[1][0] = vert.y;
-      mat[2][0] = vert.z;
-      mat[3][0] = vert.w;
-    }
-
-  // De-allocate memory
-  ~Transform()
-    {
-      // De-Allocate pointer to each row
-      for(int i = 0; i < rowLen; i++)
+        if(rowLen != source.rowLen || colLen != source.colLen) return;
+        for(int r = 0; r < rowLen; r++)
         {
-	  free(mat[i]);
+            for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = (source.get(r))[c];
+            }
         }
-
-      // De-Allocate pointers for column references
-      free(mat);
-      mat = NULL;
     }
 
-  // Initialize matrix to suggested values
-  Transform(double values[], int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
+    // Update Matrix values by array
+    void setValues(double values[])
     {
-      colLen = width;
-      rowLen = height;
-      alloc();
-      setValues(values);
+        int i = 0;
+        for(int r = 0; r < rowLen; r++)
+        {
+            for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = values[i++];
+            }
+        }
     }
 
-  // Assignment operator 
-  Transform& operator = (const Transform & right)
+    // Matrix Dimensions
+    public:
+        int colLen;
+        int rowLen;
+
+    // Initialize size, setup identity matrix or set values to zero
+    Transform(int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
     {
-      colLen = right.colLen;
-      rowLen = right.rowLen;
-      alloc();
-      copyValues(right);
+        colLen = width;
+        rowLen = height;
+        setIdentity();
+    }
+
+    // Initialize a vertex as a matrix
+    Transform(const Vertex & vert)
+    {
+        rowLen = 4;
+        colLen = 1;
+        mat[0][0] = vert.x;
+        mat[1][0] = vert.y;
+        mat[2][0] = vert.z;
+        mat[3][0] = vert.w;
+    }
+
+    // Initialize matrix to suggested values
+    Transform(double values[], int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
+    {
+        colLen = width;
+        rowLen = height;
+        setValues(values);
+    }
+
+    // Assignment operator 
+    Transform& operator = (const Transform & right)
+    {
+        colLen = right.colLen;
+        rowLen = right.rowLen;
+        copyValues(right);
     }
     
-  // Dereference Matrix in 'mat[r][c]' format
-  double* operator [](int i) { return (double*)mat[i]; }
+    // Dereference Matrix in 'mat[r][c]' format
+    double* operator [](int i) { return (double*)mat[i]; }
 
-  // Const version of '[]'
-  const double* get(int i) const { return (double*)mat[i]; }
+    // Const version of '[]'
+    const double* get(int i) const { return (double*)mat[i]; }
 
-  // Is it?
-  bool isQuare()
-  {
-    return colLen == rowLen;
-  }
-
-  // Set all entries to zero
-  void setZero()
-  {
-    for(int r = 0; r < rowLen; r++)
-      {
-	for(int c = 0; c < colLen; c++)
-	  {
-	    mat[r][c] = 0.0f;
-	  }
-      }
-  }
-
-  // Setup the identity matrix if square
-  bool setIdentity()
-  {
-    setZero();
-    if(!isQuare()) return false;
-
-    for(int d = 0; d < colLen; d++)
-      {
-	mat[d][d] = 1.0f;
-      }
-  }
-
-  // Multiply two matrices together, return the result
-  Transform operator *(const Transform & right) const
+    // Is it?
+    bool isQuare()
     {
-      Transform tr(right.rowLen, this->colLen);
+        return colLen == rowLen;
+    }
 
-      if(colLen != right.rowLen)
+    // Set all entries to zero
+    void setZero()
+    {
+        for(int r = 0; r < rowLen; r++)
         {
-	  return tr;
+            for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = 0.0f;
+            }
+        }
+    }
+
+    // Setup the identity matrix if square
+    bool setIdentity()
+    {
+        setZero();
+        if(!isQuare()) return false;
+
+        for(int d = 0; d < colLen; d++)
+        {
+            mat[d][d] = 1.0f;
+        }
+    }
+
+    // Multiply two matrices together, return the result
+    Transform operator *(const Transform & right) const
+    {
+        Transform tr(right.rowLen, this->colLen);
+
+        if(colLen != right.rowLen)
+        {
+            return tr;
         }
 
-      int runLength = rowLen;
-      for(int c = 0; c < right.colLen; c++)
+        int runLength = rowLen;
+        for(int c = 0; c < right.colLen; c++)
         {
-	  for(int r = 0; r < tr.rowLen; r++)
+            for(int r = 0; r < tr.rowLen; r++)
             {
-	      tr[r][c] = 0;
-	      for(int i = 0; i < runLength; i++)
+                tr[r][c] = 0;
+                for(int i = 0; i < runLength; i++)
                 {
-		  tr[r][c] += mat[r][i] * (right.get(i))[c];
+                    tr[r][c] += mat[r][i] * (right.get(i))[c];
                 }
             }
         }
-      return tr;
+        return tr;
     } 
 
-  // Multiply a 4-component vertex by this matrix, return vertex
-  Vertex operator *(const Vertex & right) const 
+    // Multiply a 4-component vertex by this matrix, return vertex
+    Vertex operator *(const Vertex & right) const 
     {
-      // Convert Vertex to Matrix 
-      Transform vl(right);
+        // Convert Vertex to Matrix 
+        Transform vl(right);
         
-      // Multiply
-      Transform out = (*this) * vl;
+        // Multiply
+        Transform out = (*this) * vl;
         
-      // Return in vertex format
-      Vertex rv;
-      rv.x = out[0][0];
-      rv.y = out[1][0];
-      rv.z = out[2][0];
-      rv.w = out[3][0];
-      return rv;
+        // Return in vertex format
+        Vertex rv;
+        rv.x = out[0][0];
+        rv.y = out[1][0];
+        rv.z = out[2][0];
+        rv.w = out[3][0];
+        return rv;
     }
 };
 
