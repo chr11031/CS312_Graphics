@@ -11,7 +11,7 @@ class Transform
 {
     // 2D Array
     private:
-        double mat[4][4];
+        double mat[MAX_DIM_SIZE_MATRIX][MAX_DIM_SIZE_MATRIX];
 
     // Update Matrix values by array
     void copyValues(const Transform & source)
