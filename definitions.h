@@ -255,41 +255,16 @@ class Matrix
         Matrix multi(double matrix[4][4])
         {
             double multi[4][4];
-            multi[0][0] = (matrix4[0][0] * matrix[0][0]) + (matrix4[0][1] * matrix[1][0])
-                        + (matrix4[0][2] * matrix[2][0]) + (matrix4[0][3] * matrix[3][0]);
-            multi[0][1] = (matrix4[0][0] * matrix[0][1]) + (matrix4[0][1] * matrix[1][1])
-                        + (matrix4[0][2] * matrix[2][1]) + (matrix4[0][3] * matrix[3][1]);
-            multi[0][2] = (matrix4[0][0] * matrix[0][2]) + (matrix4[0][1] * matrix[1][2])
-                        + (matrix4[0][2] * matrix[2][2]) + (matrix4[0][3] * matrix[3][2]);
-            multi[0][3] = (matrix4[0][0] * matrix[0][3]) + (matrix4[0][1] * matrix[1][3])
-                        + (matrix4[0][2] * matrix[2][3]) + (matrix4[0][3] * matrix[3][3]);
-                        
-            multi[1][0] = (matrix4[1][0] * matrix[0][0]) + (matrix4[1][1] * matrix[1][0])
-                        + (matrix4[1][2] * matrix[2][0]) + (matrix4[1][3] * matrix[3][0]);
-            multi[1][1] = (matrix4[1][0] * matrix[0][1]) + (matrix4[1][1] * matrix[1][1])
-                        + (matrix4[1][2] * matrix[2][1]) + (matrix4[1][3] * matrix[3][1]);
-            multi[1][2] = (matrix4[1][0] * matrix[0][2]) + (matrix4[1][1] * matrix[1][2])
-                        + (matrix4[1][2] * matrix[2][2]) + (matrix4[1][3] * matrix[3][2]);
-            multi[1][3] = (matrix4[1][0] * matrix[0][3]) + (matrix4[1][1] * matrix[1][3])
-                        + (matrix4[1][2] * matrix[2][3]) + (matrix4[1][3] * matrix[3][3]);
-                    
-            multi[2][0] = (matrix4[2][0] * matrix[0][0]) + (matrix4[2][1] * matrix[1][0])
-                        + (matrix4[2][2] * matrix[2][0]) + (matrix4[2][3] * matrix[3][0]);
-            multi[2][1] = (matrix4[2][0] * matrix[0][1]) + (matrix4[2][1] * matrix[1][1])
-                        + (matrix4[2][2] * matrix[2][1]) + (matrix4[2][3] * matrix[3][1]);
-            multi[2][2] = (matrix4[2][0] * matrix[0][2]) + (matrix4[2][1] * matrix[1][2])
-                        + (matrix4[2][2] * matrix[2][2]) + (matrix4[2][3] * matrix[3][2]);
-            multi[2][3] = (matrix4[2][0] * matrix[0][3]) + (matrix4[2][1] * matrix[1][3])
-                        + (matrix4[2][2] * matrix[2][3]) + (matrix4[2][3] * matrix[3][3]);
-                        
-            multi[3][0] = (matrix4[3][0] * matrix[0][0]) + (matrix4[3][1] * matrix[1][0])
-                        + (matrix4[3][2] * matrix[2][0]) + (matrix4[3][3] * matrix[3][0]);
-            multi[3][1] = (matrix4[3][0] * matrix[0][1]) + (matrix4[3][1] * matrix[1][1])
-                        + (matrix4[3][2] * matrix[2][1]) + (matrix4[3][3] * matrix[3][1]);
-            multi[3][2] = (matrix4[3][0] * matrix[0][2]) + (matrix4[3][1] * matrix[1][2])
-                        + (matrix4[3][2] * matrix[2][2]) + (matrix4[3][3] * matrix[3][2]);
-            multi[3][3] = (matrix4[3][0] * matrix[0][3]) + (matrix4[3][1] * matrix[1][3])
-                        + (matrix4[3][2] * matrix[2][3]) + (matrix4[3][3] * matrix[3][3]);
+            double sum = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    for (int k = 0; k < 4; k++) sum += matrix4[i][k] * matrix[k][j];
+                    multi[i][j] = sum;
+                    sum = 0;
+                }
+            }
             return Matrix(multi);
         }
         Vertex multi(Vertex vertIn) 
@@ -476,6 +451,5 @@ void DrawPrimitive(PRIMITIVES prim,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vertIn = NULL,
                    Buffer2D<double>* zBuf = NULL);
-
 
 #endif
