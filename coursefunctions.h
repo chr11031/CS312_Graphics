@@ -553,7 +553,12 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         scaleTransRot *= transMatrix;
         scaleTransRot *= rotMatrix;
 
-        colorUniforms.matrix = scaleTransRot;
+        // Scale * Trans * Rot
+
+        // Rot * Trans * Scale
+
+
+        colorUniforms.matrix = scaleTransRot;3
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
