@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "trans.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -27,6 +28,16 @@
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
+
+/****************************************************
+ * X, Y, Z, handy enums
+ ***************************************************/
+enum DIMENSION
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -236,11 +247,11 @@ class BufferImage : public Buffer2D<PIXEL>
             {
                 for(int x = 0; x < w; x++)
                 {
-                    grid[y][x] =    0xff000000 + 
-                                    ((pixelPtr->r) << 16) +
-                                    ((pixelPtr->g) << 8) +
-                                    ((pixelPtr->b));
-                                    ++pixelPtr;
+                    grid[y][x] = 0xff000000 + 
+                                 ((pixelPtr->r) << 16) +
+                                 ((pixelPtr->g) << 8) +
+                                 ((pixelPtr->b));
+                                 ++pixelPtr;
                 }
             }
     
