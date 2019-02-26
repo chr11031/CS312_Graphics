@@ -55,6 +55,59 @@ void processUserInputs(bool & running)
         {
             running = false;
         }
+
+        if(e.type == SDL_MOUSEMOTION)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if (cur == SDL_DISABLE)
+            {
+                double mouseX = e.motion.xrel;
+                double mouseY= e.motion.yrel;
+
+                myCam.yaw -= mouseX * 0.02;
+                myCam.pitch += mouseY * 0.02;
+            }
+        }
+        if(e.type == SDL_MOUSEBUTTONDOWN)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if(cur == SDL_DISABLE)
+            {
+                SDL_ShowCursor(SDL_ENABLE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+            }
+            else
+            {
+                SDL_ShowCursor(SDL_DISABLE);
+                SDL_SetRelativeMouseMode(SDL_TRUE);                
+            }
+        }
+
+        // Translation
+        if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z += (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.x -= (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z -= (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.x += (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN))
+        {
+            myCam.x -= (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.z -= (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN))
+        {
+            myCam.x += (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.z += (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+
+
+        
+
     }
 }
 
@@ -288,7 +341,8 @@ int main()
 
         // Your code goes here
         // TestDrawFragments(frame);
-        TestVertexShader(frame);
+        // TestVertexShader(frame);
+        TestPipeline(frame);
 
         //GameOfLife(frame);
 

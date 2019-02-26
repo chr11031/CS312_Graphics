@@ -14,6 +14,18 @@
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
+// Everything needed for view/camera transforms
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
+};
+camControls myCam;
+
 
 /******************************************************
  * DEFINES:
@@ -340,6 +352,13 @@ class Attributes
         // Obligatory empty constructor
         Attributes() {numMembers = 0;}
 
+        Attributes(int numMembers){
+            this->numMembers = numMembers;
+            for(int i = 0; i < numMembers; i++){
+                insertDbl(0);
+            }
+        }
+
         Attributes(Vertex * colorTriangle, Vertex point)
         {
 
@@ -473,12 +492,10 @@ class FragmentShader
 
 Vertex operator*(Matrix lhs, Vertex rhs){
 
-    int size = 4;
+    double tempResult[] = {0,0,0,0};
 
-    double tempResult[size];
-
-    for(int i = 0; i < size; i++){
-        for(int j = 0; j < size; j++){
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
 
             double vectorValue;
             switch(j) {
@@ -501,26 +518,26 @@ Vertex operator*(Matrix lhs, Vertex rhs){
     return result;
 }
 
-void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     
-    double xScale = uniforms[0].d;
-    double yScale = uniforms[1].d; 
-    double zScale = uniforms[2].d; 
-    double xRotate = uniforms[3].d; 
-    double yRotate = uniforms[4].d; 
-    double zRotate = uniforms[5].d; 
-    double xTranslate = uniforms[6].d; 
-    double yTranslate = uniforms[7].d; 
-    double zTranslate = uniforms[8].d; 
+    Matrix transformation = *(Matrix*)uniforms[0].ptr;
 
-    Matrix scaleMatrix = createScaleMatrix(xScale,yScale,zScale);
-    Matrix rotationMatrix = createRotationMatrix(xRotate,yRotate,zRotate);
-    Matrix translateMatrix = createTranslationMatrix(xTranslate,yTranslate,zTranslate);
-    Matrix finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
-    vertOut = finalMatrix * vertIn;
+    vertOut = transformation * vertIn;
+
     attrOut = vertAttr;
 
+}
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    Matrix model = *(Matrix*)uniforms[1].ptr;
+    Matrix view = *(Matrix*)uniforms[2].ptr;
+
+    vertOut = view * model * vertIn;
+
+    attrOut = vertAttr;
 
 }
 

@@ -28,7 +28,7 @@ class Matrix {
                mat[i] = 0;
             }
         };
-        Matrix(double _rows, double _cols,double* matrix){
+        Matrix(double _rows, double _cols,double* matrixArray){
             rows = _rows;
             cols = _cols;
 
@@ -37,7 +37,7 @@ class Matrix {
             mat = new double[size];
 
             for(int i = 0; i < size; i++){
-                *(mat + i) = *(matrix + i);
+                *(mat + i) = *(matrixArray + i);
             };
 
         };

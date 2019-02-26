@@ -2,6 +2,7 @@
 #define MAT4
 
 #include <math.h>
+#include "matrix.h"
 
 #define PI 3.14159265
 
@@ -88,6 +89,47 @@ Matrix createRotationMatrix(double xRotation, double yRotation, double zRotation
     return
          (createXRotationMatrix(xRotation) * createYRotationMatrix(yRotation))
          * createZRotationMatrix(zRotation);
+}
+
+Matrix camera(const double &offx, const double & offy, const double & offz,
+                const double & yaw, const double & pitch, const double & roll)
+{
+    Matrix tr = Matrix(4,4);
+
+    Matrix trans = createTranslationMatrix(-offx, -offy, -offz);
+
+    Matrix rotX = createXRotationMatrix(pitch);
+    Matrix rotY = createXRotationMatrix(yaw);
+
+    tr = rotX * rotY * trans;
+
+    // rotX x, pitch
+    // rotY y, yaw
+
+    // rt = rotX * rotY * trans
+    
+}
+
+Matrix perspective(const double & fovy, const double & aspectRatio, const double & near, const double far)
+{
+    Matrix tr = Matrix(4,4);
+
+    double top = near * tan((fovy * PI) / 180.0) / 2.0;
+
+    double right = aspectRatio * top;
+
+    
+    tr.setElement(0,0,near / right);
+
+    tr.setElement(1,1,near / top);
+
+    tr.setElement(2,2,(far + near) / (far - near));
+    tr.setElement(2,3,(-2 * far * near) / (far - near));
+
+    tr.setElement(3,2,1);
+
+    return tr;
+
 }
 
 #endif
