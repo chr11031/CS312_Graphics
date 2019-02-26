@@ -334,10 +334,10 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-         processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-         clearScreen(frame);
+        clearScreen(frame);
 
         // Your code goes here
         // TestDrawFragments(frame);

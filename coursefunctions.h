@@ -572,14 +572,10 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         imageUniforms.insertPtr((void*)&view);        
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
         fragImg.FragShader = ImageFragShader;
 
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
         vertImg.VertShader = SimpleVertexShader2;
                 
         // Draw image triangle 

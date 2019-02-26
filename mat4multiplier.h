@@ -94,41 +94,36 @@ Matrix createRotationMatrix(double xRotation, double yRotation, double zRotation
 Matrix camera(const double &offx, const double & offy, const double & offz,
                 const double & yaw, const double & pitch, const double & roll)
 {
-    Matrix tr = Matrix(4,4);
 
     Matrix trans = createTranslationMatrix(-offx, -offy, -offz);
-
     Matrix rotX = createXRotationMatrix(pitch);
-    Matrix rotY = createXRotationMatrix(yaw);
+    Matrix rotY = createYRotationMatrix(yaw);
 
-    tr = rotX * rotY * trans;
+    Matrix rt = rotX * rotY * trans;
 
-    // rotX x, pitch
-    // rotY y, yaw
+    return rt;
 
-    // rt = rotX * rotY * trans
     
 }
 
 Matrix perspective(const double & fovy, const double & aspectRatio, const double & near, const double far)
 {
-    Matrix tr = Matrix(4,4);
+    Matrix rt = Matrix(4,4);
 
     double top = near * tan((fovy * PI) / 180.0) / 2.0;
-
     double right = aspectRatio * top;
 
     
-    tr.setElement(0,0,near / right);
+    rt.setElement(0,0,near / right);
 
-    tr.setElement(1,1,near / top);
+    rt.setElement(1,1,near / top);
 
-    tr.setElement(2,2,(far + near) / (far - near));
-    tr.setElement(2,3,(-2 * far * near) / (far - near));
+    rt.setElement(2,2,(far + near) / (far - near));
+    rt.setElement(2,3,(-2 * far * near) / (far - near));
 
-    tr.setElement(3,2,1);
+    rt.setElement(3,2,1);
 
-    return tr;
+    return rt;
 
 }
 
