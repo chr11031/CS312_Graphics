@@ -35,6 +35,9 @@ enum PRIMITIVES
     POINT
 };
 
+/****************************************************
+ * ENUM SO THAT ROTATION IS EASIER
+ ****************************************************/
 enum AXIS_ROTATION
 {
     X,
@@ -62,12 +65,29 @@ struct camControls
     double y = 0;
     double z = 0;
     double pitch = 0;
-    double yaw = 0;
-    double roll = 0;
+    double yaw   = 0;
+    double roll  = 0;
 };
 
 // Global var
 camControls myCam;
+
+struct bmpRGB
+{
+    unsigned char b;
+    unsigned char g;
+    unsigned char r;
+};
+
+struct bmpLayout
+{
+    int offset;
+    int headerSize;
+    int width;
+    int height;
+    unsigned short colorPlanes;
+    unsigned short bpp;
+};
 
 /****************************************************
  * This is the matrix class which holds the number of
@@ -77,9 +97,9 @@ camControls myCam;
 class Matrix
 {
     public:
-        int numRows;
-        int numCols;
-        bool isInit;
+        int    numRows;
+        int    numCols;
+        bool   isInit;
         double matrixData[4][4]; // row col
 
 
@@ -111,10 +131,10 @@ class Matrix
          * OVERLOADED OPERATORS
          * *************************************************/
 
-        double* operator [] (const int &index) { return (double*)matrixData[index]; }
+              double* operator [] (const int &index)       { return (double*)matrixData[index]; }
         const double* operator [] (const int &index) const { return (double*)matrixData[index]; }
         void operator *= (const Matrix & rhs);
-        void operator = (const Matrix & rhs)
+        void operator =  (const Matrix & rhs)
         {
             this->numRows = rhs.numRows;
             this->numCols = rhs.numCols;
@@ -154,7 +174,7 @@ Vertex operator * (const Matrix & lhs, const Vertex & rhs)
     if (lhs.numCols > 4 || lhs.numCols < 1)
         throw "ERROR: Cannot multiply matrices of invalid sizes.";
 
-    double tempVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
+    double tempVerts[4]    = {rhs.x, rhs.y, rhs.z, rhs.w};
     double currentVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
 
     for (int i = 0; i < lhs.numRows; i++)
@@ -365,36 +385,39 @@ Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const do
     double top = nearPlane * tan((fovYDeg * M_PI) / 180) / 2.0;
     double right = aspectRatio * top;
 
-    // tr[0][0] = nearPlane / rightPlane;
-    // tr[0][1] = 0;
-    // tr[0][2] = 0;
-    // tr[0][3] = 0;
+    tr[0][0] = nearPlane / farPlane;
+    tr[0][1] = 0;
+    tr[0][2] = 0;
+    tr[0][3] = 0;
 
-    // tr[1][0] = 0;
-    // tr[1][1] = nearPlane / rightPlane;
-    // tr[1][2] = 0;
-    // tr[1][3] = 0;
-    // tr[1][4] = 0;
+    tr[1][0] = 0;
+    tr[1][1] = nearPlane / farPlane;
+    tr[1][2] = 0;
+    tr[1][3] = 0;
+    tr[1][4] = 0;
 
-    // tr[2][0] = 0;
-    // tr[2][1] = 0;
-    // tr[2][2] = (farPlane + nearPlane) / (farPlane - nearPlane);
-    // tr[2][3] = (-2 * farPlane * nearPlane) / (farPlane - nearPlane);
+    tr[2][0] = 0;
+    tr[2][1] = 0;
+    tr[2][2] = (farPlane + nearPlane) / (farPlane - nearPlane);
+    tr[2][3] = (-2 * farPlane * nearPlane) / (farPlane - nearPlane);
 
-    // tr[3][0] = 0;
-    // tr[3][1] = 0;
-    // tr[3][2] = 1;
-    // tr[3][3] - 0;
+    tr[3][0] = 0;
+    tr[3][1] = 0;
+    tr[3][2] = 1;
+    tr[3][3] - 0;
 }
 
 Matrix camera4x4(const double & offX, const double &offY, const double &offZ, const double &yaw, const double &pitch, const double &roll)
 {
-    // Matrix trans = translate4x4(-offX, -offY, -offZ);
+    Matrix trans;
+    trans.addTranslate(-offX, -offY, -offZ);
 
-    // Matrix rotX = rotate4x4(x, pitch);
-    // Matrix rotY = rotate4x4(y, yaw);
+    Matrix rotX;
+    Matrix rotY;
+    rotX.addRotate(X, pitch);
+    rotY.addRotate(Y, yaw);
 
-    // Matrix rt = rotX * rotY * trans;
+    Matrix rt = rotX * rotY * trans;
     Matrix rt;
     return rt;
 }
@@ -499,7 +522,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+        bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
 
         // Private intialization setup
         void setupInternal()
@@ -518,10 +542,82 @@ class BufferImage : public Buffer2D<PIXEL>
             }
         }
 
+    private:
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] =    0xff000000 + 
+                                    ((pixelPtr->r) << 16) +
+                                    ((pixelPtr->g) << 8) +
+                                    ((pixelPtr->b));
+                                    ++pixelPtr;
+                }
+            }
+
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
+
     public:
         // Free dynamic memory
         ~BufferImage()
         {
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+                for(int y = 0; y < h; y++)
+                {
+                    free(grid[y]);
+                }
+            }
+
             // De-Allocate pointers for column references
             free(grid);
 
@@ -559,14 +655,16 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            setupInternal();
+            ourSurfaceInstance = false;
+            if(!readBMP(path))
+                return;
         }
+};
+
+union attrib
+{
+    double d;
+    void* ptr;
 };
 
 /***************************************************
@@ -580,26 +678,21 @@ class Attributes
 
     public:
 
-        // Public member variables
-        PIXEL color; 
-        int numValues; // number of values to interpolate (3 for rgb, 2 for UV, etc.)
-        void* pointerImg; // address -> pointer without a base type
-        double attrValues[5]; // according to the slides, we will likely have at most 5 attribute values
+        /*******************************************************
+         * PUBLIC MEMBER VARIABLES
+         * ****************************************************/
+        PIXEL  color; 
+        attrib attrValues[16];
+        int    numValues; // number of values to interpolate (3 for rgb, 2 for UV, etc.)
+        void*  pointerImg; // address -> pointer without a base type kept because of DEPRECATED CODE!!!
+        // double attrValues[5]; // according to the slides, we will likely have at most 5 attribute values
 
         Matrix matrix;
-        // For Matrix Multiplication
-        // int numRows;
-        // int numCols;
 
-        // Obligatory empty constructor
-        Attributes() : numValues(0), pointerImg(NULL) {}
-
-        // // Non default const
-        // Attributes(const int & numRows, const int & numCols) : numValues(0), pointerImg(NULL)
-        // {
-        //     this->numRows = numRows;
-        //     this->numCols = numCols;
-        // }
+        /*******************************************************
+         * CONSTRUCTORS
+         * ****************************************************/
+        Attributes() : numValues(0), pointerImg(NULL) {} // Obligatory empty constructor
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
@@ -607,6 +700,9 @@ class Attributes
             // Your code goes here when clipping is implemented
         }
 
+        /*******************************************************
+         * MEMBER FUNCTIONS
+         * ****************************************************/
         void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
         {
             double w1 = det1 / area;
@@ -615,21 +711,17 @@ class Attributes
 
             for (int i = 0; i < numValues; i++)
             {
-                attrValues[i] = vertAttrs[0].attrValues[i] * w2 +
-                                vertAttrs[1].attrValues[i] * w3 +
-                                vertAttrs[2].attrValues[i] * w1;
+                attrValues[i].d = vertAttrs[0].attrValues[i].d * w2 +
+                                  vertAttrs[1].attrValues[i].d * w3 +
+                                  vertAttrs[2].attrValues[i].d * w1;
             }
         }
 
+        void concatMatrices    (const Matrix & transform) throw (const char *) { this->matrix *= transform; }
         void correctPerspective(double z)
         {
             for (int i = 0; i < numValues; i++)
-                attrValues[i] *= z;
-        }
-
-        void concatMatrices(const Matrix & transform) throw (const char *)
-        {
-            this->matrix *= transform;
+                attrValues[i].d *= z;
         }
 
         void setMatrix(double newData[][4], int numRows, int numCols)
@@ -643,6 +735,16 @@ class Attributes
                     matrix.matrixData[i][j] = newData[i][j];
             }
         }
+
+        void insertDbl(const double & d) { attrValues[numValues++].d =   d;   }
+        void insertPtr(void * ptr      ) { attrValues[numValues++].ptr = ptr; }
+
+        /*******************************************************
+         * OVERLOADED OPERATORS
+         * ****************************************************/
+
+              attrib & operator[](const int & i)       { return attrValues[i]; }
+        const attrib & operator[](const int & i) const { return attrValues[i]; }
 };	
 
 // Example of a fragment shader
@@ -657,7 +759,7 @@ void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attribu
     PIXEL avgChannel = ((vertAttr.color >> 16) && 0xff) + ((vertAttr.color >> 8) && 0xff) + ((vertAttr.color) && 0xff);
     
     avgChannel /= 3;
-    fragment = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
+    fragment    = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
 }
 
 /*******************************************************

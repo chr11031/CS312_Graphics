@@ -301,19 +301,19 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         
         // chanign colors to floats
-        colorAttributes[0].attrValues[0] = 1.0;
-        colorAttributes[0].attrValues[1] = 0.0;
-        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].attrValues[0].d = 1.0;
+        colorAttributes[0].attrValues[1].d = 0.0;
+        colorAttributes[0].attrValues[2].d = 0.0;
         colorAttributes[0].numValues = 3;
 
-        colorAttributes[1].attrValues[0] = 0.0;
-        colorAttributes[1].attrValues[1] = 1.0;
-        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].attrValues[1].d = 1.0;
+        colorAttributes[1].attrValues[0].d = 0.0;
+        colorAttributes[1].attrValues[2].d = 0.0;
         colorAttributes[1].numValues = 3;
 
-        colorAttributes[2].attrValues[0] = 0.0;
-        colorAttributes[2].attrValues[1] = 0.0;
-        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[2].attrValues[0].d = 0.0;
+        colorAttributes[2].attrValues[1].d = 0.0;
+        colorAttributes[2].attrValues[2].d = 1.0;
         colorAttributes[2].numValues = 3;
 
         FragmentShader myColorFragShader;
@@ -339,16 +339,16 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
 
         // texture coordinates
-        imageAttributes[0].attrValues[0] = 1;
-        imageAttributes[0].attrValues[1] = 0;
+        imageAttributes[0].attrValues[0].d = 1;
+        imageAttributes[0].attrValues[1].d = 0;
         imageAttributes[0].numValues = 2;
 
-        imageAttributes[1].attrValues[0] = 1;
-        imageAttributes[1].attrValues[1] = 1;
+        imageAttributes[1].attrValues[0].d = 1;
+        imageAttributes[1].attrValues[1].d = 1;
         imageAttributes[1].numValues = 2;
 
-        imageAttributes[2].attrValues[0] = 0;
-        imageAttributes[2].attrValues[1] = 1;
+        imageAttributes[2].attrValues[0].d = 0;
+        imageAttributes[2].attrValues[1].d = 1;
         imageAttributes[2].numValues = 2;
 
         static BufferImage myImage("checker.bmp"); // comment out deconstructor if there are issues
@@ -395,20 +395,20 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         
         // ImageAttributes A
-        imageAttributesA[0].attrValues[0] = coordinates[0][0]; // first point u
-        imageAttributesA[0].attrValues[1] = coordinates[0][1]; // first point v
-        imageAttributesA[1].attrValues[0] = coordinates[1][0]; // second point u
-        imageAttributesA[1].attrValues[1] = coordinates[1][1]; // second point v
-        imageAttributesA[2].attrValues[0] = coordinates[2][0]; // third point u
-        imageAttributesA[2].attrValues[1] = coordinates[2][1]; // third point v
+        imageAttributesA[0].attrValues[0].d = coordinates[0][0]; // first point u
+        imageAttributesA[0].attrValues[1].d = coordinates[0][1]; // first point v
+        imageAttributesA[1].attrValues[0].d = coordinates[1][0]; // second point u
+        imageAttributesA[1].attrValues[1].d = coordinates[1][1]; // second point v
+        imageAttributesA[2].attrValues[0].d = coordinates[2][0]; // third point u
+        imageAttributesA[2].attrValues[1].d = coordinates[2][1]; // third point v
 
         // ImageAttributes B
-        imageAttributesB[0].attrValues[0] = coordinates[2][0];
-        imageAttributesB[0].attrValues[1] = coordinates[2][1];
-        imageAttributesB[1].attrValues[0] = coordinates[3][0];
-        imageAttributesB[1].attrValues[1] = coordinates[3][1];
-        imageAttributesB[2].attrValues[0] = coordinates[0][0];
-        imageAttributesB[2].attrValues[1] = coordinates[0][1];
+        imageAttributesB[0].attrValues[0].d = coordinates[2][0];
+        imageAttributesB[0].attrValues[1].d = coordinates[2][1];
+        imageAttributesB[1].attrValues[0].d = coordinates[3][0];
+        imageAttributesB[1].attrValues[1].d = coordinates[3][1];
+        imageAttributesB[2].attrValues[0].d = coordinates[0][0];
+        imageAttributesB[2].attrValues[1].d = coordinates[0][1];
 
         // Set numValues to 2 (UV coordinates)
         imageAttributesA[0].numValues = 2;
@@ -449,19 +449,19 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
-        colorAttributes[0].attrValues[0] = 1.0;
-        colorAttributes[0].attrValues[1] = 0.0;
-        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].attrValues[0].d = 1.0;
+        colorAttributes[0].attrValues[1].d = 0.0;
+        colorAttributes[0].attrValues[2].d = 0.0;
         colorAttributes[0].numValues = 3;
 
-        colorAttributes[1].attrValues[0] = 0.0;
-        colorAttributes[1].attrValues[1] = 1.0;
-        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].attrValues[0].d = 0.0;
+        colorAttributes[1].attrValues[1].d = 1.0;
+        colorAttributes[1].attrValues[2].d = 0.0;
         colorAttributes[1].numValues = 3;
 
-        colorAttributes[2].attrValues[0] = 0.0;
-        colorAttributes[2].attrValues[1] = 0.0;
-        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[2].attrValues[0].d = 0.0;
+        colorAttributes[2].attrValues[1].d = 0.0;
+        colorAttributes[2].attrValues[2].d = 1.0;
         colorAttributes[2].numValues = 3;
 
         FragmentShader myColorFragShader;
@@ -511,7 +511,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix allMatrix = rotate * translate * scale;
         colorUniforms.matrix = allMatrix;
-        
+
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
@@ -564,36 +564,36 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        imageAttributesA[0].attrValues[0] = coordinates[0][0];
-        imageAttributesA[0].attrValues[1] = coordinates[0][1];
+        imageAttributesA[0].attrValues[0].d = coordinates[0][0];
+        imageAttributesA[0].attrValues[1].d = coordinates[0][1];
         imageAttributesA[0].numValues = 2;
 
-        imageAttributesA[1].attrValues[0] = coordinates[1][0];
-        imageAttributesA[1].attrValues[1] = coordinates[1][1];
+        imageAttributesA[1].attrValues[0].d = coordinates[1][0];
+        imageAttributesA[1].attrValues[1].d = coordinates[1][1];
         imageAttributesA[1].numValues = 2;
 
-        imageAttributesA[2].attrValues[0] = coordinates[2][0];
-        imageAttributesA[2].attrValues[1] = coordinates[2][1];
+        imageAttributesA[2].attrValues[0].d = coordinates[2][0];
+        imageAttributesA[2].attrValues[1].d = coordinates[2][1];
         imageAttributesA[2].numValues = 2;
 
-        imageAttributesA[3].attrValues[0] = coordinates[3][0];
-        imageAttributesA[3].attrValues[1] = coordinates[3][1];
+        imageAttributesA[3].attrValues[0].d = coordinates[3][0];
+        imageAttributesA[3].attrValues[1].d = coordinates[3][1];
         imageAttributesA[3].numValues = 2;
 
-        imageAttributesB[0].attrValues[0] = coordinates[0][0];
-        imageAttributesB[0].attrValues[1] = coordinates[0][1];
+        imageAttributesB[0].attrValues[0].d = coordinates[0][0];
+        imageAttributesB[0].attrValues[1].d = coordinates[0][1];
         imageAttributesB[0].numValues = 2;
 
-        imageAttributesB[1].attrValues[0] = coordinates[1][0];
-        imageAttributesB[1].attrValues[1] = coordinates[1][1];
+        imageAttributesB[1].attrValues[0].d = coordinates[1][0];
+        imageAttributesB[1].attrValues[1].d = coordinates[1][1];
         imageAttributesB[1].numValues = 2;
 
-        imageAttributesB[2].attrValues[0] = coordinates[2][0];
-        imageAttributesB[2].attrValues[1] = coordinates[2][1];
+        imageAttributesB[2].attrValues[0].d = coordinates[2][0];
+        imageAttributesB[2].attrValues[1].d = coordinates[2][1];
         imageAttributesB[2].numValues = 2;
 
-        imageAttributesB[3].attrValues[0] = coordinates[3][0];
-        imageAttributesB[3].attrValues[1] = coordinates[3][1];
+        imageAttributesB[3].attrValues[0].d = coordinates[3][0];
+        imageAttributesB[3].attrValues[1].d = coordinates[3][1];
         imageAttributesB[3].numValues = 2;
 
         BufferImage myImage("checker.bmp");
@@ -605,8 +605,9 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // [1] -> Model transform
         // [2] -> View transform
         Attributes imageUniforms;
-        // Matrix model = translate4x4(0, 0, 0);
-        // Transform view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix model;
+        model.addTranslate(0, 0, 0);
+        Matrix view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
 
         double modelMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
         double viewMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
@@ -615,8 +616,8 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         Matrix view(viewMatrix, 4, 4);
 
         imageUniforms.pointerImg = &myImage;
-        // imageUniforms.insertPtr((void*)&model);
-        // imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
 
         FragmentShader fragImg;
         fragImg.FragShader = imageFragShader;
