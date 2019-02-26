@@ -119,9 +119,15 @@ class MatrixTransform
 
         void rotate(double rotateFactorX, double rotateFactorY)
         {
-            double sinOp = (sin(rotateFactorY * (M_PI / 180.0)));
-            cout << sinOp << endl;
-            double rotateMatrix[4][4] = {{(cos(rotateFactorX * M_PI / 180.0)),-(sin(rotateFactorX * (M_PI / 180.0))),0,0},{sinOp,(cos(rotateFactorY * (M_PI / 180.0))),0,0},{0,0,1,0},{0,0,0,1}};
+            rotateFactorX = rotateFactorX * M_PI / 180.0;
+            rotateFactorY = rotateFactorY * M_PI / 180.0;
+
+            double cosX = cos(rotateFactorX);
+            double cosY = cos(rotateFactorY);
+            double sineX = sin(rotateFactorX);
+            double sineY = sin(rotateFactorY);
+
+            double rotateMatrix[4][4] = {{cosX,-sineX,0,0},{sineY,cosY,0,0},{0,0,1,0},{0,0,0,1}};
             // this->multiply(this->vector, transformationMatrix);
             multiplyMatrices(this->matrix, rotateMatrix);
             // this->matrix[0][0] *= cos((rotateFactorX * M_PI) / 180);
