@@ -47,6 +47,38 @@ enum PRIMITIVES
     POINT
 };
 
+enum AXISROTATION
+{
+    X,
+    Y,
+    Z
+};
+
+union attrib
+{
+    double d;
+    void* ptr;
+};
+
+// Struct used for reading in RGB values from a bitmap file
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+ // The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -56,6 +88,19 @@ struct Vertex
     double y;
     double z;
     double w;
+};
+
+/*******************************************************
+*  Everything needed for the view/camera transform
+********************************************************/
+struct camControls
+{
+    double x;
+    double y;
+    double z;
+    double yaw;
+    double roll;
+    double pitch;
 };
 
 /******************************************************
@@ -156,7 +201,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+    	bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
 
         // Private intialization setup
         void setupInternal()
@@ -174,6 +220,70 @@ class BufferImage : public Buffer2D<PIXEL>
                 row -= w;                    
             }
         }
+
+private:
+
+    // Non-SDL2 24BPP, 2^N dimensions BMP reader
+    bool readBMP(const char* fileName)
+    {
+        // Read in Header - check signature
+        FILE * fp = fopen(fileName, "rb");	    
+        char signature[2];
+        fread(signature, 1, 2, fp);
+        if(!(signature[0] == 'B' && signature[1] == 'M'))
+        {
+            printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+            return 1;
+        }
+
+            // Read in BMP formatting - verify type constraints
+        bmpLayout layout;
+        fseek(fp, 8, SEEK_CUR);
+        fread(&layout, sizeof(layout), 1, fp);
+        if(layout.width % 2 != 0 || layout.width <= 4)
+        {
+            printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+            return false;		
+        }
+        if(layout.bpp != 24)
+        {
+            printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+            return false;
+        }
+
+            // Copy W+H information
+        w = layout.width;
+        h = layout.height;
+
+            // Initialize internal pointers/memory
+        grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+        for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+        bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+        fseek(fp, layout.offset, SEEK_SET);  	
+        fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+        bmpRGB* pixelPtr = pixel;
+        PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+        for(int y = 0; y < h; y++)
+        {
+            for(int x = 0; x < w; x++)
+            {
+                grid[y][x] =    0xff000000 + 
+                                ((pixelPtr->r) << 16) +
+                                ((pixelPtr->g) << 8) +
+                                ((pixelPtr->b));
+                                ++pixelPtr;
+            }
+        }
+
+            // Release 24-Bit buffer, release file
+        free(pixel);
+        fclose(fp); 
+        return true;
+    }
 
     public:
         // Free dynamic memory
@@ -216,27 +326,27 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            setupInternal();
+            ourSurfaceInstance = false;
+            if (!readBMP(path))
+                return;
         }
 };
 
 class Matrix
 {
-    public:
-    double data[4][4];
-    int numRows;
-    int numCols;
+public:
 
-    Matrix() : numRows(0), numCols(0) {}
+    Matrix () : numRows(0), numCols(0), isInit(false) { }
 
 
-    Matrix(double newData[][4], int numRows, int numCols) : numRows(numRows), numCols(numCols)
+    Matrix (double newData[][4], int numRows, int numCols) : numRows(numRows), numCols(numCols), isInit(true)
+    {
+        for (int i = 0; i < numRows; i++)
+            for (int j = 0; j < numCols; j++)
+                data[i][j] = newData[i][j];
+    }
+
+    void setData (const double newData[0][4], int numRows, int numCols)
     {
         for (int i = 0; i < numRows; i++)
             for (int j = 0; j < numCols; j++)
@@ -244,19 +354,10 @@ class Matrix
 
         this->numRows = numRows;
         this->numCols = numCols;
+        this->isInit = true;
     }
 
-    void setData(const double newData[0][4], int numRows, int numCols)
-    {
-        for (int i = 0; i < numRows; i++)
-            for (int j = 0; j < numCols; j++)
-                data[i][j] = newData[i][j];
-
-        this->numRows = numRows;
-        this->numCols = numCols;
-    }
-
-    void operator =(const Matrix & rhs) throw (const char*)
+    void operator= (const Matrix & rhs) throw (const char*)
     {
         for (int i = 0; i < rhs.numRows; i++)
             for (int j = 0; j < rhs.numCols; j++)
@@ -264,8 +365,25 @@ class Matrix
 
         this->numRows = rhs.numRows;
         this->numCols = rhs.numCols;
+        this->isInit = true;
     }
+
     void operator *=(const Matrix & rhs) throw (const char *);
+    friend Vertex operator* (const Matrix & lhs, const Vertex & rhs) throw (const char *);
+    friend Matrix operator* (const Matrix & lhs, const Matrix & rhs) throw (const char *);
+
+    void addTrans(const double & x, const double & y, const double & z);
+    void addRot  (AXISROTATION rot, const double & degree);
+    void addScale(const double & x, const double & y, const double & z);
+
+    double*       operator[](const int & index)        { return (double*)data[index]; }
+    const double* operator[](const int & index) const  { return (double*)data[index];}
+
+private:
+    double data[4][4];
+    bool isInit;
+    int numRows;
+    int numCols;
 };
 
 /***************************************************
@@ -277,8 +395,20 @@ class Matrix
 class Attributes
 {      
     public:
+
+        // Attribute information
+        PIXEL color; // Still here for depricated code
+        //double attrValues[15]; // Still here for legacy code DEPRECATED
+        int valuesToInterpolate; // Still here for legacy code DEPRECATED
+        void* ptrImage; // Still here for legacy code DEPRECATED
+        attrib attribs[20];
+        int numMembers;
+
+        // Matrix information for transformations
+        Matrix matrix;
+
         // Obligatory empty constructor
-        Attributes() : valuesToInterpolate(0), ptrImage(NULL) {}
+        Attributes() : valuesToInterpolate(0), ptrImage(NULL), numMembers(0) {}
 
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -293,19 +423,19 @@ class Attributes
             double w2 = d2 / area;
             double w3 = 1 - w1 - w2;
 
-            for (int i = 0; i < valuesToInterpolate; i++)
+            for (int i = 0; i < this->numMembers; i++)
             {
-                attrValues[i] = vertAttrs[0].attrValues[i] * w2 +
-                                vertAttrs[1].attrValues[i] * w3 +
-                                vertAttrs[2].attrValues[i] * w1;
+                attribs[i].d = vertAttrs[0].attribs[i].d * w2 +
+                                vertAttrs[1].attribs[i].d * w3 +
+                                vertAttrs[2].attribs[i].d * w1;
             }
         }
 
         void correctPerspective(double correctedZ)
         {
-            for (int i = 0; i < valuesToInterpolate; i++)
+            for (int i = 0; i < this->numMembers; i++)
             {
-                attrValues[i] *= correctedZ;
+                attribs[i].d *= correctedZ;
             }
         }
 
@@ -319,16 +449,127 @@ class Attributes
             this->matrix.setData(data, numRows, numCols);
         }
 
+        inline void insertDbl(const double & d) { attribs[numMembers++].d = d; }
+        inline void insertPtr(void* ptr)        { attribs[numMembers++].ptr = ptr; }
 
-        // Attribute information
-        PIXEL color; // Still here for depricated code
-        double attrValues[15];
-        int valuesToInterpolate;
-        void* ptrImage;
-
-        // Matrix information for transformations
-        Matrix matrix;
+        attrib       & operator[] (const int & i)        { return attribs[i]; }
+        const attrib & operator[] (const int & i) const  { return attribs[i]; }
 }; 
+
+void Matrix::addTrans(const double & x = 0, const double & y = 0, const double & z = 0)
+{
+    Matrix temp;
+    temp.numCols = 4;
+    temp.numRows = 4;
+    temp.data[0][0] = 1;
+    temp.data[0][1] = 0;
+    temp.data[0][2] = 0;
+    temp.data[0][3] = x;
+    temp.data[1][0] = 0;
+    temp.data[1][1] = 1;
+    temp.data[1][2] = 0;
+    temp.data[1][3] = y;
+    temp.data[2][0] = 0;
+    temp.data[2][1] = 0;
+    temp.data[2][2] = 1;
+    temp.data[2][3] = z;
+    temp.data[3][0] = 0;
+    temp.data[3][1] = 0;
+    temp.data[3][2] = 0;
+    temp.data[3][3] = 1;
+
+    if(this->isInit)
+        *this *= temp;
+    else
+        *this = temp;
+
+}
+
+void Matrix::addScale(const double & x = 1, const double & y = 1, const double & z = 1)
+{
+    Matrix temp;
+    temp.numCols = 4;
+    temp.numRows = 4;
+    temp.data[0][0] = x;
+    temp.data[0][1] = 0;
+    temp.data[0][2] = 0;
+    temp.data[0][3] = 0;
+    temp.data[1][0] = 0;
+    temp.data[1][1] = y;
+    temp.data[1][2] = 0;
+    temp.data[1][3] = 0;
+    temp.data[2][0] = 0;
+    temp.data[2][1] = 0;
+    temp.data[2][2] = z;
+    temp.data[2][3] = 0;
+    temp.data[3][0] = 0;
+    temp.data[3][1] = 0;
+    temp.data[3][2] = 0;
+    temp.data[3][3] = 1;
+
+    if (this->isInit)
+        *this *= temp;
+    else
+        *this = temp;
+
+}
+
+void Matrix::addRot(AXISROTATION rot, const double & degrees)
+{
+    Matrix temp;
+    temp.numCols = 4;
+    temp.numRows = 4;
+
+    double rads = degrees * M_PI / 180.0;
+    double cosRot = cos(rads);
+    double sinRot = sin(rads);
+
+
+    temp.data[0][0] = 1;
+    temp.data[0][1] = 0;
+    temp.data[0][2] = 0;
+    temp.data[0][3] = 0;
+    temp.data[1][0] = 0;
+    temp.data[1][1] = 1;
+    temp.data[1][2] = 0;
+    temp.data[1][3] = 0;
+    temp.data[2][0] = 0;
+    temp.data[2][1] = 0;
+    temp.data[2][2] = 1;
+    temp.data[2][3] = 0;
+    temp.data[3][0] = 0;
+    temp.data[3][1] = 0;
+    temp.data[3][2] = 0;
+    temp.data[3][3] = 1;
+
+    switch (rot)
+    {
+        case X:
+            temp.data[1][1] = cosRot;
+            temp.data[2][2] = cosRot;
+            temp.data[1][2] = -sinRot;
+            temp.data[2][1] = sinRot;
+            break;
+        case Y:
+            temp.data[0][0] = cosRot;
+            temp.data[0][2] = sinRot;
+            temp.data[2][0] = -sinRot;
+            temp.data[2][2] = cosRot;
+            break;
+        case Z:
+            temp.data[0][0] = cosRot;
+            temp.data[0][1] = -sinRot;
+            temp.data[1][0] = sinRot;
+            temp.data[1][1] = cosRot;
+            break;
+        
+    }
+
+    if (this->isInit)
+        *this *= temp;
+    else 
+        *this = temp;
+}
 
 
 /**********************************************************************
@@ -336,59 +577,140 @@ class Attributes
  **********************************************************************/
 void Matrix::operator*=(const Matrix & rhs) throw (const char *)
 {
-    // For all intents and purposes we have flipped the matrix order
-    // in order to make the order of operations correct while maintaining
-    // code readability for this function.
+    Matrix tempMatrix;
+    if (this->isInit)
+    {
+        tempMatrix = *this * rhs;
 
-    if (rhs.numCols != this->numRows)
+        // Make sure this matrix knows it has changed
+        this->numCols = rhs.numCols;
+
+        // Overwrite the old matrix with the new one
+        for (int i = 0; i < this->numRows ; i++)
+            for (int j = 0; j < this->numCols; j++)
+                this->data[i][j] = tempMatrix[i][j];
+    }
+    else
+        *this = rhs;
+
+    return;
+}
+
+Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
+                      const double & far)
+{
+    // Matrix tr;
+
+    // double top = near * tan((fovYDegree * M_PI) / 180.0) / 2.0;
+    // double right = aspectRatio * top;
+
+    // tr.data[0][0] = near / right;
+    // tr.data[0][1] = 0;
+    // tr.data[0][2] = 0;
+    // tr.data[0][3] = 0;
+
+    // tr.data[1][0] = 0;
+    // tr.data[1][1] = near / top;
+    // tr.data[1][2] = 0;
+    // tr.data[1][3] = 0;
+
+    // tr.data[2][0] = 0;
+    // tr.data[2][1] = 0;
+    // tr.data[2][2] = (far + near ) / (far - near);
+    // tr.data[2][3] = (-2 * far * near) / (far - near);
+
+    // tr.data[3][0] = 0;
+    // tr.data[3][1] = 0;
+    // tr.data[3][2] = 1;
+    // tr.data[3][3] = 0;
+}
+
+Matrix camera4x4(const double & offX, const double & offY, const double & offZ, 
+                 const double & yaw, const double & pitch, const double & roll)
+{
+    Matrix mx;
+
+    double translate[4][4] = 
+    {
+        {1, 0, 0, -offX},
+        {0, 1, 0, -offY},
+        {0, 0, 1, -offZ},
+        {0, 0, 0, 1}
+    };
+
+    Matrix trans(translate, 4, 4);
+
+
+    double pitchRad = (pitch / 180.0) * M_PI;
+    double yawRad = (yaw / 180.0) * M_PI;
+    double pitchData[4][4] = 
+    {
+        {cos(pitchRad), -sin(pitchRad), 0, 0},
+        {sin(pitchRad), cos(pitchRad),  0, 0},
+        {0,             0,              1, 0},
+        {0,             0,              0, 1}
+    };
+
+    Matrix rotX(pitchData, 4, 4);
+
+    double yawData[4][4] = 
+    {
+        {cos(yawRad), -sin(yawRad), 0, 0},
+        {sin(yawRad), cos(yawRad),  0, 0},
+        {0,           0,            1, 0},
+        {0,           0,            0, 1}
+    };
+
+    Matrix rotY(yawData, 4, 4);
+}
+
+Matrix operator* (const Matrix & lhs, const Matrix & rhs) throw (const char *)
+{
+    if (rhs.numRows != lhs.numCols)
         throw "ERROR: Invalid matrix sizes for concatenate\n";
 
     // Temp matrix to hold results so we don't mess up data during
     // matrix multiplication
-    double tempMatrix[4][4];
+    Matrix tempMatrix;
     
     // Loop through the number of rows in the RHS
-    for (int i = 0; i < rhs.numRows; i++)
+    for (int i = 0; i < lhs.numRows; i++)
     {
         // Loop through the number of cols in LHS
-        for (int j = 0; j < this->numCols; j++)
+        for (int j = 0; j < rhs.numCols; j++)
         {
             double colToRow[4];
 
             //Flatten the LHS cols into a row for maths
-            for (int k = 0; k < this->numRows; k++)
+            for (int k = 0; k < rhs.numRows; k++)
             {
-                colToRow[k] = this->data[k][j];
+                colToRow[k] = rhs.data[k][j];
             }
 
             // Do maths on RHS row and LHS col and assign
-            tempMatrix[i][j] = multiplyRowAndCol(rhs.data[i], colToRow, rhs.numCols);
+            tempMatrix.data[i][j] = multiplyRowAndCol(lhs.data[i], colToRow, lhs.numCols);
         }
     }
 
-    // Make sure this matrix knows it has changed
-    this->numRows = rhs.numRows;
-
-    // Overwrite the old matrix with the new one
-    for (int i = 0; i < this->numRows ; i++)
-        for (int j = 0; j < this->numCols; j++)
-            this->data[i][j] = tempMatrix[i][j];
+    tempMatrix.numRows = lhs.numRows;
+    tempMatrix.numCols = rhs.numCols;
+    return tempMatrix;
 }
 
 /******************************************************
  * MATRIX MULT OVERLOADED OPERATOR
  * Multiplies the two matricies together
  *****************************************************/ 
-Vertex operator * (const Vertex & lhs, const Matrix & rhs) throw (const char *)
+Vertex operator * (const Matrix & lhs, const Vertex & rhs) throw (const char *)
 {
-    if (rhs.numCols < 1 || rhs.numCols > 4)
+    if (lhs.numCols < 1 || lhs.numCols > 4)
         throw "ERROR: Invalid matrices sizes, cannot do multiplication";
 
-    double newVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
-    double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
+    double newVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
+    double currentVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
     
-    for (int i = 0; i < rhs.numRows; i++)
-        newVerts[i] = multiplyRowAndCol(rhs.data[i], currentVerts, rhs.numCols);
+    for (int i = 0; i < lhs.numRows; i++)
+        newVerts[i] = multiplyRowAndCol(lhs.data[i], currentVerts, lhs.numCols);
 
     Vertex temp = {newVerts[0], newVerts[1], newVerts[2], newVerts[3]};
     return temp;

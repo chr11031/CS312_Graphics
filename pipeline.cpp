@@ -75,6 +75,59 @@ void processUserInputs(bool & running)
         {
             running = false;
         }
+
+        if(e.type == SDL_MOUSEMOTION)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if (cur == SDL_DISABLE)
+            {
+                double mouseX = e.motion.xrel;
+                double mourseY = e.motion.yrel;
+
+                myCam.yaw -= mouseX * 0.02;
+                myCam.pitch += mouseY * 0.02;
+            }
+
+        }
+
+        if(e.type == SDL_MOUSEBUTTONDOWN)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if (cur == SDL_DISABLE)
+            {
+                SDL_ShowCursor(SDL_ENABLE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+            }
+            else
+            {
+                SDL_ShowCursor(SDL_DISABLE);
+                SDL_SetRelativeMouseMode(SDL_TRUE);
+            }
+        }
+
+        if (e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
+        {
+            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+        }
+
+        if (e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
+        {
+            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+        }
+
+        if (e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
+        {
+            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+        }
+
+        if (e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
+        {
+            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+        }
     }
 }
 
@@ -158,7 +211,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 double correctedZ = 0.0;
                 Attributes interpolatedAttrs;
-                interpolatedAttrs.valuesToInterpolate = attrs[0].valuesToInterpolate;
+                interpolatedAttrs.numMembers = attrs[0].numMembers;
 
                 correctedZ = interpolateZ(area, det1, det2, det3, triangle);
                 interpolatedAttrs.interpolateValues(area, det1, det2, det3, attrs);

@@ -5,6 +5,8 @@
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
+camControls myCam;
+
 /***************************************************
  * Team Activity for week #1.
  * When working on this activity be sure to 
@@ -323,21 +325,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].attrValues[0] = 1.0;
-        colorAttributes[0].attrValues[1] = 0.0;
-        colorAttributes[0].attrValues[2] = 0.0;
-        colorAttributes[0].valuesToInterpolate = 3;
+        colorAttributes[0].insertDbl(1.0);
+        colorAttributes[0].insertDbl(0.0);
+        colorAttributes[0].insertDbl(0.0);
 
-        colorAttributes[1].attrValues[0] = 0.0;
-        colorAttributes[1].attrValues[1] = 1.0;
-        colorAttributes[1].attrValues[2] = 0.0;
-        colorAttributes[1].valuesToInterpolate = 3;
+        colorAttributes[1].insertDbl(0.0);
+        colorAttributes[1].insertDbl(1.0);
+        colorAttributes[1].insertDbl(0.0);
 
-        colorAttributes[2].attrValues[0] = 0.0;
-        colorAttributes[2].attrValues[1] = 0.0;
-        colorAttributes[2].attrValues[2] = 1.0;
-        colorAttributes[3].valuesToInterpolate = 3;
-
+        colorAttributes[2].insertDbl(0.0);
+        colorAttributes[2].insertDbl(0.0);
+        colorAttributes[2].insertDbl(1.0);
 
         FragmentShader myColorFragShader;
         myColorFragShader.setShader(baryInterpolationShader);
@@ -358,18 +356,14 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].attrValues[0] = 1;
-        imageAttributes[0].attrValues[1] = 0;
-        imageAttributes[0].valuesToInterpolate = 2;
+        imageAttributes[0].insertDbl(1.0);
+        imageAttributes[0].insertDbl(0.0);
 
-        imageAttributes[1].attrValues[0] = 1;
-        imageAttributes[1].attrValues[1] = 1;
-        imageAttributes[1].valuesToInterpolate = 2;
+        imageAttributes[1].insertDbl(1.0);
+        imageAttributes[1].insertDbl(1.0);
 
-        imageAttributes[2].attrValues[0] = 0;
-        imageAttributes[2].attrValues[1] = 1;
-        imageAttributes[2].valuesToInterpolate = 2;
-
+        imageAttributes[2].insertDbl(0.0);
+        imageAttributes[2].insertDbl(1.0);
 
         static BufferImage myImage("c.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
@@ -416,25 +410,23 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
-        imageAttributesA[0].attrValues[0] = coordinates[0][0];
-        imageAttributesA[0].attrValues[1] = coordinates[0][1];
-        imageAttributesA[0].valuesToInterpolate = 2;
-        imageAttributesA[1].attrValues[0] = coordinates[1][0];
-        imageAttributesA[1].attrValues[1] = coordinates[1][1];
-        imageAttributesA[1].valuesToInterpolate = 2;
-        imageAttributesA[2].attrValues[0] = coordinates[2][0];
-        imageAttributesA[2].attrValues[1] = coordinates[2][1];
-        imageAttributesA[2].valuesToInterpolate = 2;
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
 
-        imageAttributesB[0].attrValues[0] = coordinates[2][0];
-        imageAttributesB[0].attrValues[1] = coordinates[2][1];
-        imageAttributesB[0].valuesToInterpolate = 2;
-        imageAttributesB[1].attrValues[0] = coordinates[3][0];
-        imageAttributesB[1].attrValues[1] = coordinates[3][1];
-        imageAttributesB[1].valuesToInterpolate = 2;
-        imageAttributesB[2].attrValues[0] = coordinates[0][0];
-        imageAttributesB[2].attrValues[1] = coordinates[0][1];
-        imageAttributesB[2].valuesToInterpolate = 2;
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
@@ -470,20 +462,17 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
-        colorAttributes[0].attrValues[0] = 1.0;
-        colorAttributes[0].attrValues[1] = 0.0;
-        colorAttributes[0].attrValues[2] = 0.0;
-        colorAttributes[0].valuesToInterpolate = 3;
+        colorAttributes[0].insertDbl(1.0);
+        colorAttributes[0].insertDbl(0.0);
+        colorAttributes[0].insertDbl(0.0);
 
-        colorAttributes[1].attrValues[0] = 0.0;
-        colorAttributes[1].attrValues[1] = 1.0;
-        colorAttributes[1].attrValues[2] = 0.0;
-        colorAttributes[1].valuesToInterpolate = 3;
+        colorAttributes[1].insertDbl(0.0);
+        colorAttributes[1].insertDbl(1.0);
+        colorAttributes[1].insertDbl(0.0);
 
-        colorAttributes[2].attrValues[0] = 0.0;
-        colorAttributes[2].attrValues[1] = 0.0;
-        colorAttributes[2].attrValues[2] = 1.0;
-        colorAttributes[2].valuesToInterpolate = 3;
+        colorAttributes[2].insertDbl(0.0);
+        colorAttributes[2].insertDbl(0.0);
+        colorAttributes[2].insertDbl(1.0);
 
         FragmentShader myColorFragShader;
         myColorFragShader.setShader(baryInterpolationShader);
@@ -499,14 +488,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double translateData[4][4] = 
-        {
-                {1, 0, 100, 0},
-                {0, 1, 50,  0},
-                {0, 0, 1,   0},
-                {0, 0, 0,   0}
-        };
-        Matrix transMatrix(translateData, 3, 3);
+        Matrix transMatrix;
+        transMatrix.addTrans(100, 50, 1);
         colorUniforms.matrix = transMatrix;
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
@@ -515,14 +498,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double scaleData[4][4] =
-        {
-                {.5, 0, 0, 0},
-                {0, .5, 0, 0},
-                {0, 0, 1, 0},
-                {0, 0, 0, 0}
-        };
-        Matrix scaleMatrix(scaleData, 3, 3);
+        Matrix scaleMatrix;
+        scaleMatrix.addScale(0.5, 0.5, 0.5);
         colorUniforms.matrix = scaleMatrix;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
@@ -531,15 +508,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double radians = 30 * M_PI / 180;
-        double rotData[4][4] =
-        {
-                {cos(radians), -sin(radians), 0, 0},
-                {sin(radians),  cos(radians), 0 , 0},
-                {0, 0, 1, 0},
-                {0, 0, 0, 0}
-        };
-        Matrix rotMatrix(rotData, 3, 3);
+        Matrix rotMatrix;
+        rotMatrix.addRot(Z, 30);
         colorUniforms.matrix = rotMatrix;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
@@ -549,16 +519,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
         //Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        Matrix scaleTransRot(scaleData, 3, 3);
-        scaleTransRot *= transMatrix;
-        scaleTransRot *= rotMatrix;
+        Matrix combined = rotMatrix * transMatrix * scaleMatrix;
 
-        // Scale * Trans * Rot
-
-        // Rot * Trans * Scale
-
-
-        colorUniforms.matrix = scaleTransRot;3
+        colorUniforms.matrix = combined;
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
@@ -586,49 +549,98 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         //              vi)  camZ
         //      To incorporate a view transform (add movement)
         
-        static Buffer2D<double> zBuf(target.width(), target.height());
+        //static Buffer2D<double> zBuf(target.width(), target.height());
         // Will need to be cleared every frame, like the screen
 
         /**************************************************
         * 1. Image quad (2 TRIs) Code (texture interpolated)
         **************************************************/
-        Vertex quad[] = { {-20,-20, 50, 1},
-                          {20, -20, 50, 1},
-                          {20, 20, 50, 1},
-                          {-20,20, 50, 1}};
+        // Vertex quad[] = { {-20,-20, 50, 1},
+        //                   {20, -20, 50, 1},
+        //                   {20, 20, 50, 1},
+        //                   {-20,20, 50, 1}};
 
-        Vertex verticesImgA[3];
-        Attributes imageAttributesA[3];
-        verticesImgA[0] = quad[0];
-        verticesImgA[1] = quad[1];
-        verticesImgA[2] = quad[2];
+        // Vertex verticesImgA[3];
+        // Attributes imageAttributesA[3];
+        // verticesImgA[0] = quad[0];
+        // verticesImgA[1] = quad[1];
+        // verticesImgA[2] = quad[2];
 
-        Vertex verticesImgB[3];        
-        Attributes imageAttributesB[3];
-        verticesImgB[0] = quad[2];
-        verticesImgB[1] = quad[3];
-        verticesImgB[2] = quad[0];
+        // Vertex verticesImgB[3];        
+        // Attributes imageAttributesB[3];
+        // verticesImgB[0] = quad[2];
+        // verticesImgB[1] = quad[3];
+        // verticesImgB[2] = quad[0];
 
-        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        // double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        // //First group of attributes
+        // imageAttributesA[0].attrValues[0] = coordinates[0][0];
+        // imageAttributesA[0].attrValues[1] = coordinates[0][1];
+        // imageAttributesA[0].valuesToInterpolate = 2;
 
-        BufferImage myImage("checker.bmp");
+        // imageAttributesA[1].attrValues[0] = coordinates[1][0];
+        // imageAttributesA[1].attrValues[1] = coordinates[1][1];
+        // imageAttributesA[1].valuesToInterpolate = 2;
+
+        // imageAttributesA[2].attrValues[0] = coordinates[2][0];
+        // imageAttributesA[2].attrValues[1] = coordinates[2][1];
+        // imageAttributesA[2].valuesToInterpolate = 2;
+
+        // // Second group of attributes
+        // imageAttributesB[0].attrValues[0] = coordinates[2][0];
+        // imageAttributesB[0].attrValues[1] = coordinates[2][1];
+        // imageAttributesB[0].valuesToInterpolate = 2;
+
+        // imageAttributesB[1].attrValues[0] = coordinates[3][0];
+        // imageAttributesB[1].attrValues[1] = coordinates[3][1];
+        // imageAttributesB[1].valuesToInterpolate = 2;
+
+        // imageAttributesB[2].attrValues[0] = coordinates[0][0];
+        // imageAttributesB[2].attrValues[1] = coordinates[0][1];
+        // imageAttributesB[2].valuesToInterpolate = 2;
+
+
+        // BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
-        Attributes imageUniforms;
-        // Your code for the uniform goes here
+        // Attributes imageUniforms;
 
-        FragmentShader fragImg;
+        // Your code for the uniform goes here
+        // imageUniforms.ptrImage = &myImage;
+
+        /*
+        Uniforms
+        [0] -> Image reference
+        [1] -> Model transform
+        [2] -> View transform
+        */
+
+//        double model[4][4] = 
+//        {
+//                {0, 0, 0, 0},
+//                {0, 0, 0, 0},
+//                {0, 0, 0, 0},
+//                {0, 0, 0, 0}
+//        };
+       //Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
+        //                       myCam.yaw, myCam.pitch, myCam.roll);
+        
+
+        // FragmentShader fragImg;
+        // fragImg.setShader(imageFragShader);
         // Your code for the image fragment shader goes here
 
-        VertexShader vertImg;
+        // VertexShader vertImg;
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
+        // vertImg.setShader(SimpleVertexShader2);
                 
         // Draw image triangle 
-        DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
-        DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        // DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        // DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
