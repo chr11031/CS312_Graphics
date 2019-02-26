@@ -27,8 +27,20 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
 void vertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    vertOut = vertIn * uniforms.matrix;
+    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix* model = (Matrix*)uniforms.pointerImg;
+//    Matrix* view = (Matrix*)uniforms[2].ptr;
+
+    // vertOut = (*view) * (*model) * vertIn;
+
+    // pass through attributes
+    attrOut = vertAttr;
+}
+
 
 #endif

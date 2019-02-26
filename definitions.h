@@ -35,6 +35,13 @@ enum PRIMITIVES
     POINT
 };
 
+enum AXIS_ROTATION
+{
+    X,
+    Y,
+    Z
+};
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -47,6 +54,22 @@ struct Vertex
 };
 
 /****************************************************
+ * Everything needed for the view/transform
+ ****************************************************/
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double pitch = 0;
+    double yaw = 0;
+    double roll = 0;
+};
+
+// Global var
+camControls myCam;
+
+/****************************************************
  * This is the matrix class which holds the number of
  * rows, the number of columns, and the data in a 2D
  * double array. It has an overloaded *= operator.
@@ -56,14 +79,16 @@ class Matrix
     public:
         int numRows;
         int numCols;
+        bool isInit;
         double matrixData[4][4]; // row col
 
 
-        // default
-        Matrix() : numRows(0), numCols(0) {}
+        /****************************************************
+         * CONSTRUCTORS
+         * *************************************************/
 
-        // non default
-        Matrix(double newData[][4], int newRows, int newCols)
+        Matrix() : numRows(0), numCols(0), isInit(false) {} // default
+        Matrix(double newData[][4], int newRows, int newCols) : isInit(true) // non-default
         {
             this->numRows = newRows;
             this->numCols = newCols;
@@ -75,21 +100,303 @@ class Matrix
             }
         }
 
-        void operator *= (const Matrix & rhs);
-        void operator = (const Matrix & rhs) throw (const char *);
+        /****************************************************
+         * MEMBER FUNCTIONS
+         * *************************************************/
+        void addTranslate(const double &x, const double &y, const double &z);
+        void addRotate(AXIS_ROTATION rot, const double &degrees);
+        void addScale(const double &x = 1, const double &y = 1, const double &z = 1);
 
+        /****************************************************
+         * OVERLOADED OPERATORS
+         * *************************************************/
+
+        double* operator [] (const int &index) { return (double*)matrixData[index]; }
+        const double* operator [] (const int &index) const { return (double*)matrixData[index]; }
+        void operator *= (const Matrix & rhs);
+        void operator = (const Matrix & rhs)
+        {
+            this->numRows = rhs.numRows;
+            this->numCols = rhs.numCols;
+
+            for (int i = 0; i < numRows; i++)
+            {
+                for (int j = 0; j < numCols; j++)
+                    matrixData[i][j] = rhs.matrixData[i][j];
+            }
+        }
+
+        /****************************************************
+         * FRIEND OPERATORS
+         * *************************************************/
+        friend Vertex operator * (const Matrix &lhs, const Vertex &rhs);
+        friend Matrix operator * (const Matrix &lhs, const Matrix &rhs);
 };
 
-void Matrix::operator=(const Matrix & rhs) throw (const char *)
+/******************************************************
+ * Helper function for the overloaded multiply operation
+ *****************************************************/
+double multRowCol(const double row[], const double col[], const int & size)
 {
-    this->numRows = rhs.numRows;
-    this->numCols = rhs.numCols;
+    double result = 0;
 
-    for (int i = 0; i < numRows; i++)
+    for (int i = 0; i < size; i++)
+        result += row[i] * col[i];
+
+    return result;
+}
+
+/******************************************************
+ * Overloading the * operator - Friend to Matrix
+ *****************************************************/
+Vertex operator * (const Matrix & lhs, const Vertex & rhs)
+{
+    if (lhs.numCols > 4 || lhs.numCols < 1)
+        throw "ERROR: Cannot multiply matrices of invalid sizes.";
+
+    double tempVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
+    double currentVerts[4] = {rhs.x, rhs.y, rhs.z, rhs.w};
+
+    for (int i = 0; i < lhs.numRows; i++)
+        tempVerts[i] = multRowCol(lhs.matrixData[i], currentVerts, lhs.numCols);
+
+    Vertex resultVerts = {tempVerts[0], tempVerts[1], tempVerts[2], tempVerts[3]};
+    return resultVerts;
+}
+
+/********************************************************************
+ * Overloading the * operator for matrix x matrix - Friend to Matrix
+ * *****************************************************************/
+Matrix operator * (const Matrix &lhs, const Matrix &rhs)
+{
+    // check to see if the "lhs" rows is equal to the "rhs" cols
+    if (lhs.numCols != rhs.numRows)
+        throw "ERROR: Cannot multiple matrices of invalid sizes.";
+
+    // we need a matrix that we can change without messing up the multiplaction
+    Matrix tempMatrix;
+
+    // this loop goes through the rows of the "rhs"
+    for (int i = 0; i < lhs.numRows; i++)
     {
-        for (int j = 0; j < numCols; j++)
-            matrixData[i][j] = rhs.matrixData[i][j];
+        // this loop goes through the cols of the "lhs"
+        for (int j = 0; j < rhs.numCols; j++)
+        {
+            // this is a 1x4 "matrix" which is pretty much just the column turned sideways to resemble a row
+            double colToRow[4];
+
+            // loop through the rows of the specified column and put it into our 1x4 matrix
+            for (int k = 0; k < rhs.numRows; k++)
+                colToRow[k] = rhs.matrixData[k][j];
+
+            // use helper funciton to multiply and add the current rows and columns
+            tempMatrix.matrixData[i][j] = multRowCol(lhs.matrixData[i], colToRow, lhs.numCols);
+        }
     }
+
+    tempMatrix.numRows = lhs.numRows;
+    tempMatrix.numCols = rhs.numCols;
+    return tempMatrix;
+}
+
+/******************************************************
+ * Helper function for the overloaded multiply equals operation
+ * * * IMPORTANT NOTE:
+ * * For the purposes of making things more comprehensible,
+ * * we have flipped the rhs and lhs from what it actually is
+ * * in a matrix. For example, when multiplying matrices A B and C
+ * * matrix multiplication says that we must first multiply C, 
+ * * then B, then A, so we have flipped rhs and lhs in our function
+ * * so that in order to multiple A B and C, we can simply put
+ * * C * B * A in the CORRECT order that they must be multiplied.
+ *****************************************************/
+void Matrix::operator*=(const Matrix & rhs)
+{
+    if (this->isInit)
+    {
+        // Take advantage of the * operator    
+        Matrix tempMatrix = *this * rhs;
+
+        // make sure we update the rows
+        this->numCols = rhs.numCols;
+        
+        // loop through the matrix and overwrite it with the new matrix
+        for (int i = 0; i < this->numRows; i++)
+        {
+            for (int j = 0; j < this->numCols; j++)
+                this->matrixData[i][j] = tempMatrix[i][j];
+        }
+    }
+    else
+        *this = rhs;
+    
+    return;
+}
+
+void Matrix::addTranslate(const double &x, const double &y, const double &z)
+{
+    Matrix identityTrans;
+    identityTrans.matrixData[0][0] = 1;
+    identityTrans.matrixData[0][1] = 0;
+    identityTrans.matrixData[0][2] = 0;
+    identityTrans.matrixData[0][3] = x;
+
+    identityTrans.matrixData[1][0] = 0;
+    identityTrans.matrixData[1][1] = 1;
+    identityTrans.matrixData[1][2] = 0;
+    identityTrans.matrixData[1][3] = y;
+
+    identityTrans.matrixData[2][0] = 0;
+    identityTrans.matrixData[2][1] = 0;
+    identityTrans.matrixData[2][2] = 1;
+    identityTrans.matrixData[2][3] = z;
+
+    identityTrans.matrixData[3][0] = 0;
+    identityTrans.matrixData[3][1] = 0;
+    identityTrans.matrixData[3][2] = 0;
+    identityTrans.matrixData[3][3] = 1;
+
+    identityTrans.numRows = 4;
+    identityTrans.numCols = 4;
+
+    if (this->isInit)
+        *this *= identityTrans;
+    else
+        *this = identityTrans;
+}
+
+void Matrix::addRotate(AXIS_ROTATION rot, const double &degrees)
+{
+    Matrix identityRot;
+    double rads = (degrees * M_PI / 180.0);
+    double cosRot = cos(rads);
+    double sinRot = sin(rads);
+
+    identityRot.matrixData[0][0] = 1;
+    identityRot.matrixData[0][1] = 0;
+    identityRot.matrixData[0][2] = 0;
+    identityRot.matrixData[0][3] = 0;
+
+    identityRot.matrixData[1][0] = 0;
+    identityRot.matrixData[1][1] = 1;
+    identityRot.matrixData[1][2] = 0;
+    identityRot.matrixData[1][3] = 0;
+
+    identityRot.matrixData[2][0] = 0;
+    identityRot.matrixData[2][1] = 0;
+    identityRot.matrixData[2][2] = 1;
+    identityRot.matrixData[2][3] = 0;
+
+    identityRot.matrixData[3][0] = 0;
+    identityRot.matrixData[3][1] = 0;
+    identityRot.matrixData[3][2] = 0;
+    identityRot.matrixData[3][3] = 1;
+
+    identityRot.numRows = 4;
+    identityRot.numCols = 4;
+
+    switch(rot)
+    {
+        case X:
+            identityRot.matrixData[1][1] = cosRot;
+            identityRot.matrixData[2][2] = cosRot;
+            identityRot.matrixData[1][2] = -sinRot;
+            identityRot.matrixData[2][1] = sinRot;
+            break;
+        case Y:
+            identityRot.matrixData[0][0] = cosRot;
+            identityRot.matrixData[2][2] = cosRot;
+            identityRot.matrixData[0][2] = sinRot;
+            identityRot.matrixData[2][0] = -sinRot;
+            break;
+        case Z:
+            identityRot.matrixData[0][0] = cosRot;
+            identityRot.matrixData[1][1] = cosRot;
+            identityRot.matrixData[0][1] = -sinRot;
+            identityRot.matrixData[1][0] = sinRot;
+            break;
+    }
+
+    if (this->isInit)
+        *this *= identityRot;
+    else
+        *this = identityRot;
+}
+
+void Matrix::addScale(const double &x, const double &y, const double &z)
+{
+    Matrix identityScale;
+    identityScale.matrixData[0][0] = x;
+    identityScale.matrixData[0][1] = 0;
+    identityScale.matrixData[0][2] = 0;
+    identityScale.matrixData[0][3] = 0;
+
+    identityScale.matrixData[1][0] = 0;
+    identityScale.matrixData[1][1] = y;
+    identityScale.matrixData[1][2] = 0;
+    identityScale.matrixData[1][3] = 0;
+
+    identityScale.matrixData[2][0] = 0;
+    identityScale.matrixData[2][1] = 0;
+    identityScale.matrixData[2][2] = z;
+    identityScale.matrixData[2][3] = 0;
+
+    identityScale.matrixData[3][0] = 0;
+    identityScale.matrixData[3][1] = 0;
+    identityScale.matrixData[3][2] = 0;
+    identityScale.matrixData[3][3] = 1;
+    
+    identityScale.numRows = 4;
+    identityScale.numCols = 4;
+
+    if (this->isInit)
+        *this *= identityScale;
+    else
+        *this = identityScale;
+}
+
+/*****************************************
+ * Matrix helper functions
+ * **************************************/
+Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const double &nearPlane, const double &farPlane)
+{
+    Matrix tr;
+
+    double top = nearPlane * tan((fovYDeg * M_PI) / 180) / 2.0;
+    double right = aspectRatio * top;
+
+    // tr[0][0] = nearPlane / rightPlane;
+    // tr[0][1] = 0;
+    // tr[0][2] = 0;
+    // tr[0][3] = 0;
+
+    // tr[1][0] = 0;
+    // tr[1][1] = nearPlane / rightPlane;
+    // tr[1][2] = 0;
+    // tr[1][3] = 0;
+    // tr[1][4] = 0;
+
+    // tr[2][0] = 0;
+    // tr[2][1] = 0;
+    // tr[2][2] = (farPlane + nearPlane) / (farPlane - nearPlane);
+    // tr[2][3] = (-2 * farPlane * nearPlane) / (farPlane - nearPlane);
+
+    // tr[3][0] = 0;
+    // tr[3][1] = 0;
+    // tr[3][2] = 1;
+    // tr[3][3] - 0;
+}
+
+Matrix camera4x4(const double & offX, const double &offY, const double &offZ, const double &yaw, const double &pitch, const double &roll)
+{
+    // Matrix trans = translate4x4(-offX, -offY, -offZ);
+
+    // Matrix rotX = rotate4x4(x, pitch);
+    // Matrix rotY = rotate4x4(y, yaw);
+
+    // Matrix rt = rotX * rotY * trans;
+    Matrix rt;
+    return rt;
 }
 
 /******************************************************
@@ -337,88 +644,6 @@ class Attributes
             }
         }
 };	
-
-/******************************************************
- * Helper function for the overloaded multiply operation
- *****************************************************/
-double multRowCol(const double row[], const double col[], const int & size)
-{
-    double result = 0;
-
-    for (int i = 0; i < size; i++)
-        result += row[i] * col[i];
-
-    return result;
-}
-
-/******************************************************
- * Helper function for the overloaded multiply equals operation
- * * * IMPORTANT NOTE:
- * * For the purposes of making things more comprehensible,
- * * we have flipped the rhs and lhs from what it actually is
- * * in a matrix. For example, when multiplying matrices A B and C
- * * matrix multiplication says that we must first multiply C, 
- * * then B, then A, so we have flipped rhs and lhs in our function
- * * so that in order to multiple A B and C, we can simply put
- * * C * B * A in the CORRECT order that they must be multiplied.
- *****************************************************/
-void Matrix::operator*=(const Matrix & rhs)
-{
-    // check to see if the "lhs" rows is equal to the "rhs" cols
-    if (this->numRows != rhs.numCols)
-        throw "ERROR: Cannot multiple matrices of invalid sizes.";
-
-    // we need a matrix that we can change without messing up the multiplaction
-    double tempMatrix[4][4];
-
-    // this loop goes through the rows of the "rhs"
-    for (int i = 0; i < rhs.numRows; i++)
-    {
-        // this loop goes through the cols of the "lhs"
-        for (int j = 0; j < this->numCols; j++)
-        {
-            // this is a 1x4 "matrix" which is pretty much just the column turned sideways to resemble a row
-            double colToRow[4];
-
-            // loop through the rows of the specified column and put it into our 1x4 matrix
-            for (int k = 0; k < this->numRows; k++)
-                colToRow[k] = this->matrixData[k][j];
-
-            // use helper funciton to multiply and add the current rows and columns
-            tempMatrix[i][j] = multRowCol(rhs.matrixData[i], colToRow, rhs.numCols);
-        }
-    }
-
-    // make sure we update the rows
-    this->numRows = rhs.numRows;
-    
-    // loop through the matrix and overwrite it with the new matrix
-    for (int i = 0; i < this->numRows; i++)
-    {
-        for (int j = 0; j < this->numCols; j++)
-            this->matrixData[i][j] = tempMatrix[i][j];
-    }
-    return;
-}
-
-/******************************************************
- * Overloading the * operator
- *****************************************************/
-Vertex operator * (const Vertex & lhs, const Matrix & rhs)
-{
-    // lhs = a, rhs = b -> rhs is matrix
-    if (rhs.numCols >= 4 && rhs.numCols <= 1)
-        throw "ERROR: Cannot multiply matrices of invalid sizes.";
-
-    double tempVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
-    double currentVerts[4] = {lhs.x, lhs.y, lhs.z, lhs.w};
-
-    for (int i = 0; i < rhs.numRows; i++)
-        tempVerts[i] = multRowCol(rhs.matrixData[i], currentVerts, rhs.numCols);
-
-    Vertex resultVerts = (Vertex){tempVerts[0], tempVerts[1], tempVerts[2], tempVerts[3]};
-    return resultVerts;
-}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

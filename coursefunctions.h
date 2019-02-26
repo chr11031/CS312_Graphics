@@ -478,10 +478,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double translateMatrix[4][4] = {{1, 0, 100, 0}, {0, 1, 50, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
-        Matrix translate(translateMatrix, 3, 3);
-
-        colorUniforms.setMatrix(translateMatrix, 3, 3);
+        Matrix translate;
+        translate.addTranslate(100, 50, 1);
+        colorUniforms.matrix = translate;
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -489,9 +488,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double scaleMatrix[4][4] =  {{0.5, 0, 0, 0}, {0, 0.5, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
-        Matrix scale(scaleMatrix, 3, 3);
-        colorUniforms.setMatrix(scaleMatrix, 3, 3);
+        Matrix scale;
+        scale.addScale(0.5, 0.5, 0.5);
+        colorUniforms.matrix = scale;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -499,9 +498,9 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        double rotateMatrix[4][4] = {{cos(M_PI / 6), -sin(M_PI / 6), 0, 0}, {sin(M_PI / 6), cos(M_PI / 6), 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
-        Matrix rotate(rotateMatrix, 3, 3);
-        colorUniforms.setMatrix(rotateMatrix, 3, 3);
+        Matrix rotate;
+        rotate.addRotate(Z, 30);
+        colorUniforms.matrix = rotate;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -509,14 +508,10 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-        // rst, rts, str, srt, trs, tsr
 	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-	Matrix allMatrix(scaleMatrix, 3, 3);
-        allMatrix *= translate;
-        allMatrix *= rotate;
+        Matrix allMatrix = rotate * translate * scale;
+        colorUniforms.matrix = allMatrix;
         
-        colorUniforms.setMatrix(allMatrix.matrixData, 3, 3);
-
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
@@ -569,16 +564,67 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
+        imageAttributesA[0].attrValues[0] = coordinates[0][0];
+        imageAttributesA[0].attrValues[1] = coordinates[0][1];
+        imageAttributesA[0].numValues = 2;
+
+        imageAttributesA[1].attrValues[0] = coordinates[1][0];
+        imageAttributesA[1].attrValues[1] = coordinates[1][1];
+        imageAttributesA[1].numValues = 2;
+
+        imageAttributesA[2].attrValues[0] = coordinates[2][0];
+        imageAttributesA[2].attrValues[1] = coordinates[2][1];
+        imageAttributesA[2].numValues = 2;
+
+        imageAttributesA[3].attrValues[0] = coordinates[3][0];
+        imageAttributesA[3].attrValues[1] = coordinates[3][1];
+        imageAttributesA[3].numValues = 2;
+
+        imageAttributesB[0].attrValues[0] = coordinates[0][0];
+        imageAttributesB[0].attrValues[1] = coordinates[0][1];
+        imageAttributesB[0].numValues = 2;
+
+        imageAttributesB[1].attrValues[0] = coordinates[1][0];
+        imageAttributesB[1].attrValues[1] = coordinates[1][1];
+        imageAttributesB[1].numValues = 2;
+
+        imageAttributesB[2].attrValues[0] = coordinates[2][0];
+        imageAttributesB[2].attrValues[1] = coordinates[2][1];
+        imageAttributesB[2].numValues = 2;
+
+        imageAttributesB[3].attrValues[0] = coordinates[3][0];
+        imageAttributesB[3].attrValues[1] = coordinates[3][1];
+        imageAttributesB[3].numValues = 2;
+
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
-
-        Attributes imageUniforms;
+        
         // Your code for the uniform goes here
+        // Uniforms -- add these to attributes as member variables
+        // [0] -> Image reference
+        // [1] -> Model transform
+        // [2] -> View transform
+        Attributes imageUniforms;
+        // Matrix model = translate4x4(0, 0, 0);
+        // Transform view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+
+        double modelMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
+        double viewMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
+
+        Matrix model(modelMatrix, 4, 4);
+        Matrix view(viewMatrix, 4, 4);
+
+        imageUniforms.pointerImg = &myImage;
+        // imageUniforms.insertPtr((void*)&model);
+        // imageUniforms.insertPtr((void*)&view);
 
         FragmentShader fragImg;
+        fragImg.FragShader = imageFragShader;
         // Your code for the image fragment shader goes here
 
         VertexShader vertImg;
+        vertImg.VertShader = SimpleVertexShader2; // copy of vert shader
+
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
