@@ -555,60 +555,54 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         /**************************************************
         * 1. Image quad (2 TRIs) Code (texture interpolated)
         **************************************************/
-        // Vertex quad[] = { {-20,-20, 50, 1},
-        //                   {20, -20, 50, 1},
-        //                   {20, 20, 50, 1},
-        //                   {-20,20, 50, 1}};
+        Vertex quad[] = { {-20,-20, 50, 1},
+                          {20, -20, 50, 1},
+                          {20, 20, 50, 1},
+                          {-20,20, 50, 1}};
 
-        // Vertex verticesImgA[3];
-        // Attributes imageAttributesA[3];
-        // verticesImgA[0] = quad[0];
-        // verticesImgA[1] = quad[1];
-        // verticesImgA[2] = quad[2];
+        Vertex verticesImgA[3];
+        Attributes imageAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
 
-        // Vertex verticesImgB[3];        
-        // Attributes imageAttributesB[3];
-        // verticesImgB[0] = quad[2];
-        // verticesImgB[1] = quad[3];
-        // verticesImgB[2] = quad[0];
+        Vertex verticesImgB[3];        
+        Attributes imageAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
 
-        // double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
         
-        // //First group of attributes
-        // imageAttributesA[0].attrValues[0] = coordinates[0][0];
-        // imageAttributesA[0].attrValues[1] = coordinates[0][1];
-        // imageAttributesA[0].valuesToInterpolate = 2;
+        //First group of attributes
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
 
-        // imageAttributesA[1].attrValues[0] = coordinates[1][0];
-        // imageAttributesA[1].attrValues[1] = coordinates[1][1];
-        // imageAttributesA[1].valuesToInterpolate = 2;
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
 
-        // imageAttributesA[2].attrValues[0] = coordinates[2][0];
-        // imageAttributesA[2].attrValues[1] = coordinates[2][1];
-        // imageAttributesA[2].valuesToInterpolate = 2;
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
 
-        // // Second group of attributes
-        // imageAttributesB[0].attrValues[0] = coordinates[2][0];
-        // imageAttributesB[0].attrValues[1] = coordinates[2][1];
-        // imageAttributesB[0].valuesToInterpolate = 2;
+        // Second group of attributes
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
 
-        // imageAttributesB[1].attrValues[0] = coordinates[3][0];
-        // imageAttributesB[1].attrValues[1] = coordinates[3][1];
-        // imageAttributesB[1].valuesToInterpolate = 2;
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
 
-        // imageAttributesB[2].attrValues[0] = coordinates[0][0];
-        // imageAttributesB[2].attrValues[1] = coordinates[0][1];
-        // imageAttributesB[2].valuesToInterpolate = 2;
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
 
-        // BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        BufferImage myImage("checker.bmp");
+        //Ensure the checkboard image is in this directory, you can use another image though
 
-        // Attributes imageUniforms;
+        Attributes imageUniforms;
 
-        // Your code for the uniform goes here
-        // imageUniforms.ptrImage = &myImage;
+        //Your code for the uniform goes here
+        imageUniforms.ptrImage = &myImage;
 
         /*
         Uniforms
@@ -617,30 +611,29 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         [2] -> View transform
         */
 
-//        double model[4][4] = 
-//        {
-//                {0, 0, 0, 0},
-//                {0, 0, 0, 0},
-//                {0, 0, 0, 0},
-//                {0, 0, 0, 0}
-//        };
-       //Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
-        //                       myCam.yaw, myCam.pitch, myCam.roll);
+       Matrix model;
+       model.addTrans(0, 0, 0);
+       Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
+                               myCam.yaw, myCam.pitch, myCam.roll);
+
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
         
 
-        // FragmentShader fragImg;
-        // fragImg.setShader(imageFragShader);
+        FragmentShader fragImg;
+        fragImg.setShader(imageFragShader);
         // Your code for the image fragment shader goes here
 
-        // VertexShader vertImg;
+        VertexShader vertImg;
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
-        // vertImg.setShader(SimpleVertexShader2);
+        vertImg.setShader(SimpleVertexShader2);
                 
         // Draw image triangle 
-        // DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
-        // DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        //DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        //DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }

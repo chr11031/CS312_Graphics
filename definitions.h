@@ -183,6 +183,8 @@ class Buffer2D
         // Width, height
         const int & width()  { return w; }
         const int & height() { return h; }
+        const int & width()  const  { return w; }
+        const int & height() const { return h; }
 
         // The frequented operator for grabbing pixels
         inline T* & operator[] (int i)
@@ -412,9 +414,13 @@ class Attributes
 
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for (int i = 0; i < this->numMembers; i++)
+            {
+                attribs[i].d = first[i].d + ((second[i].d - first[i].d) * along);
+            }
         }
 
         void interpolateValues(const double &area, const double &d1, const double &d2, const double &d3, Attributes* vertAttrs)
@@ -599,30 +605,30 @@ void Matrix::operator*=(const Matrix & rhs) throw (const char *)
 Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
                       const double & far)
 {
-    // Matrix tr;
+    Matrix rt;
 
-    // double top = near * tan((fovYDegree * M_PI) / 180.0) / 2.0;
-    // double right = aspectRatio * top;
+    double top = near * tan((fovYDegree * M_PI) / 180.0) / 2.0;
+    double right = aspectRatio * top;
 
-    // tr.data[0][0] = near / right;
-    // tr.data[0][1] = 0;
-    // tr.data[0][2] = 0;
-    // tr.data[0][3] = 0;
+    rt[0][0] = near / right;
+    rt[0][1] = 0;
+    rt[0][2] = 0;
+    rt[0][3] = 0;
 
-    // tr.data[1][0] = 0;
-    // tr.data[1][1] = near / top;
-    // tr.data[1][2] = 0;
-    // tr.data[1][3] = 0;
+    rt[1][0] = 0;
+    rt[1][1] = near / top;
+    rt[1][2] = 0;
+    rt[1][3] = 0;
 
-    // tr.data[2][0] = 0;
-    // tr.data[2][1] = 0;
-    // tr.data[2][2] = (far + near ) / (far - near);
-    // tr.data[2][3] = (-2 * far * near) / (far - near);
+    rt[2][0] = 0;
+    rt[2][1] = 0;
+    rt[2][2] = (far + near ) / (far - near);
+    rt[2][3] = (-2 * far * near) / (far - near);
 
-    // tr.data[3][0] = 0;
-    // tr.data[3][1] = 0;
-    // tr.data[3][2] = 1;
-    // tr.data[3][3] = 0;
+    rt[3][0] = 0;
+    rt[3][1] = 0;
+    rt[3][2] = 1;
+    rt[3][3] = 0;
 }
 
 Matrix camera4x4(const double & offX, const double & offY, const double & offZ, 
