@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "shaders.h"
+#include "matrix.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
