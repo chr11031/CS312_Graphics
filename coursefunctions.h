@@ -385,24 +385,24 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
-        colorUniforms.matrix.clear();
-        translateMatrix(colorUniforms, {100, 50, 0, 0});
+        Matrix trans = translateMatrix(100, 50, 0);
+        colorUniforms.insertPtr(&trans);
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
-        colorUniforms.matrix.clear();
-        scaleMatrix(colorUniforms, {0.5, 0.5, 1.0, 1.0});
+        Matrix scale = scaleMatrix(0.5);
+        colorUniforms[0].ptr = &scale;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
-        colorUniforms.matrix.clear();
-        rotateZMatrix(colorUniforms, 30);
+        Matrix rot = rotateMatrix(Z, 30.0 * M_PI / 180.0);
+        colorUniforms[0].ptr = &rot;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -410,8 +410,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-        colorUniforms.matrix.clear();
-        STRMatrix(colorUniforms, {0.5, 0.5, 1.0, 1.0}, {100, 50, 0, 0}, 30);
+        Matrix allTransforms = rot * trans * scale;
+        colorUniforms[0].ptr = &allTransforms;
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
@@ -464,20 +464,49 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        //imageUniforms.insertPtr(&myImage); see below
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = &ImageFragShader;
 
         VertexShader vertImg;
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
+        vertImg.VertShader = &VertexShaderV2;
+
+        // Uniforms
+        // [0] Image reference
+        // [1] Model transformation
+        // [2] View transformation
+
+        //translateMatrix(imageUniforms, {0, 0, 0, 0});
+        Matrix model; // nop (line above)
+        Matrix view;  // camera view transform (myCam.x, myCam.y, myCam.z,
+                      //                        myCam.yaw, myCam.pitch, myCam.roll);
+
+        imageUniforms.insertPtr(&myImage);
+        imageUniforms.insertPtr(&model);
+        imageUniforms.insertPtr(&view);
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);

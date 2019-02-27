@@ -37,7 +37,17 @@ void StaticShader(PIXEL & fragment, const Attributes & vertAttr, const Attribute
 // Vertex shader that supports transformations of a set of verticies
 void TransformVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    vertOut = uniforms.matrix * vertIn;
+    vertOut = *(Matrix*)uniforms[0].ptr * vertIn;
+    attrOut = vertAttr;
+}
+
+// Another vertex shader
+void VertexShaderV2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix* model = (Matrix*)uniforms[1].ptr;
+    Matrix* view = (Matrix*)uniforms[2].ptr;
+
+    vertOut = (*view) * (*model) * vertIn;
     attrOut = vertAttr;
 }
 

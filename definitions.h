@@ -42,6 +42,12 @@ enum PRIMITIVES
     POINT
 };
 
+enum AXIS {
+    X,
+    Y,
+    Z
+};
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -52,6 +58,18 @@ struct Vertex
     double z;
     double w;
 };
+
+// Needed for View transforms
+struct camControls {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double pitch = 0;
+    double yaw = 0;
+    double roll = 0;
+};
+
+camControls myCam;
 
 /******************************************************
  * BUFFER_2D:
@@ -260,8 +278,6 @@ class Attributes
     	int numMembers = 0;
         attrib arr[16];
 
-        Matrix matrix;
-
         // Obligatory empty constructor
         Attributes() {numMembers = 0;}
 
@@ -385,69 +401,86 @@ Matrix operator* (const Matrix& lhs, const Matrix& rhs) {
  * Matrix transformation functions - return a
  * matrix that has the specified transformation
  **************************************************/
-void translateMatrix(Attributes& attr, Vertex v) {
-    attr.matrix[3]  = v.x;
-    attr.matrix[7]  = v.y;
-    attr.matrix[11] = v.z;
+Matrix translateMatrix(const double& x, const double& y, const double& z) {
+    Matrix matrix;
+    matrix[3]  = x;
+    matrix[7]  = y;
+    matrix[11] = z;
+    return matrix;
 }
 
-void scaleMatrix(Attributes& attr, Vertex v) {
-    attr.matrix[0]  = v.x;
-    attr.matrix[5]  = v.y;
-    attr.matrix[10] = v.z;
+Matrix scaleMatrix(const double& scale) {
+    Matrix matrix;
+    matrix[0]  = scale;
+    matrix[5]  = scale;
+    matrix[10] = scale;
+    return matrix;
 }
 
-// This function takes an angle in degrees and converts it to radians
-void rotateZMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
+// Takes an angle in radians and the axis to rotate around
+Matrix rotateMatrix(AXIS axis, const double& angle) {
+    Matrix matrix;
     double sinangle = sin(angle);
     double cosangle = cos(angle);
-
-    attr.matrix[0] = cosangle;
-    attr.matrix[1] = -sinangle;
-    attr.matrix[4] = sinangle;
-    attr.matrix[5] = cosangle;
+    switch (axis) {
+        case X:
+        matrix[5]  = cosangle;
+        matrix[6]  = -sinangle;
+        matrix[9]  = sinangle;
+        matrix[10] = cosangle;
+        break;
+        case Y:
+        matrix[0]  = cosangle;
+        matrix[2]  = sinangle;
+        matrix[8]  = -sinangle;
+        matrix[10] = cosangle;
+        break;
+        case Z:
+        matrix[0]  = cosangle;
+        matrix[1]  = -sinangle;
+        matrix[4]  = sinangle;
+        matrix[5]  = cosangle;
+        break;
+    }
+    return matrix;
 }
 
-// These functions are not used in the week05 project, but they are still here
-void rotateXMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
-    double sinangle = sin(angle);
-    double cosangle = cos(angle);
+/*
+// View Transform
+Matrix viewTransform(const double& offX, const double& offY, const double& offZ,
+                     const double& yaw, const double& pitch, const double& roll) {
+    // x = pitch
+    // y = yaw
+    // z = roll
+    Matrix matrix;
 
-    attr.matrix[5]  = cosangle;
-    attr.matrix[6]  = -sinangle;
-    attr.matrix[9]  = sinangle;
-    attr.matrix[10] = cosangle;
+    Matrix translate = translateMatrix(-offX, -offY, -offZ);
+    // First do pitch, then yaw (roll is optional)
+    double pitchRad = pitch * M_PI / 180.0;
+    double yawRad   = yaw   * M_PI / 180.0;
+    Matrix rotX = rotateXMatrix(pitchRad);
+    Matrix rotY = rotateYMatrix(yawRad);
+
+    matrix = rotX * rotY * translate;
+    return matrix;
 }
+*/
 
-void rotateYMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
-    double sinangle = sin(angle);
-    double cosangle = cos(angle);
+Matrix perspectiveTransform(const double& fovYDegrees, const double& aspectRatio,
+                            const double& near, const double& far)
+{
+    Matrix matrix;
 
-    attr.matrix[0]  = cosangle;
-    attr.matrix[2]  = sinangle;
-    attr.matrix[8]  = -sinangle;
-    attr.matrix[10] = cosangle;
-}
+    double top = near * tan(fovYDegrees * M_PI / 180.0) / 2.0;
+    double right = aspectRatio * top;
+    matrix[0]  = near / right;
+    matrix[5]  = near / top;
+    matrix[10] = (far + near) / (far - near);
+    matrix[11] = (-2 * far * near) / (far - near);
+    matrix[14] = 1;
+    matrix[15] = 0;
 
-// Does all three previous operations at once in right to left order
-void STRMatrix(Attributes& attr, Vertex s, Vertex t, double r) {
-    Attributes sAttr;
-    sAttr.matrix.clear();
-    scaleMatrix(sAttr, s);
-    Attributes tAttr;
-    tAttr.matrix.clear();
-    translateMatrix(tAttr, t);
-    Attributes rAttr;
-    rAttr.matrix.clear();
-    rotateZMatrix(rAttr, r);
-
-    attr.matrix = rAttr.matrix * tAttr.matrix * sAttr.matrix;
+    return matrix;
 }
 
 /***************************************************
