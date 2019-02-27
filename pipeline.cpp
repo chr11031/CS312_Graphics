@@ -341,8 +341,8 @@ int main()
 
         // Your code goes here
         // TestDrawFragments(frame);
-        // TestVertexShader(frame);
-        TestPipeline(frame);
+        TestVertexShader(frame);
+        // TestPipeline(frame);
 
         //GameOfLife(frame);
 
