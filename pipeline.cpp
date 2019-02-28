@@ -256,6 +256,178 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
     }
 }
 
+void intersectAgainstYLimit(double & along, 
+							const double & yLimit, 
+							const double & segStartY,
+							const double & segEndY)
+{
+	along = -1;
+	
+	double segDiffY = (segEndY - segStartY);
+	if(segDiffY == 0)
+	{
+		return;
+	}
+	
+	along = (yLimit - segStartY) / segDiffY;
+}
+
+void intersectAtPositiveLine(	double & along, 
+								const double & segStartX, 
+								const double & segStartY,
+								const double & segEndX, 
+								const double & segEndY)								
+{
+	along = -1;
+	double segDiffX = (segEndX - segStartX);
+	double segDiffY = (segEndY - segStartY);
+	
+	if(segDiffX == segDiffY)
+	{
+		return ;
+	}
+	
+	along = (segStartY - segStartX) / (segDiffX - segDiffY);
+}
+
+void intersectAtNegativeLine(	double & along, 
+								const double & segStartX, 
+								const double & segStartY,
+								const double & segEndX, 
+								const double & segEndY)								
+{
+	along = -1;
+	double segDiffX = (segEndX - segStartX);
+	double segDiffY = (segEndY - segStartY);
+	
+	if(segDiffX == segDiffY)
+	{
+		return ;
+	}
+	
+	along = (segStartY + segStartX) / (-segDiffX - segDiffY);
+}
+
+Vertex VertexBetweenVerts(const Vertex & vertA, const Vertex & vertB, const double & along)
+{
+	Vertex rv;
+	rv.x = (vertA.x) + ((vertB.x-vertA.x) * along);
+	rv.y = (vertA.y) + ((vertB.y-vertA.y) * along);
+	rv.z = (vertA.z) + ((vertB.z-vertA.z) * along);
+	rv.w = (vertA.w) + ((vertB.w-vertA.w) * along);
+	return rv;
+} 
+
+void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], 
+				const int & numIn, 
+				Vertex clippedVertices[], Attributes clippedAttrs[], int & numClipped)
+{
+		// TMP Clip buffers 
+		int num;
+		int numOut;
+		bool inBounds[MAX_VERTICES];
+		Vertex tmpVertA[MAX_VERTICES];
+		Vertex tmpVertB[MAX_VERTICES];
+		Attributes tmpAttrA[MAX_VERTICES];
+		Attributes tmpAttrB[MAX_VERTICES];
+		
+		Vertex const * srcVerts;
+		Vertex* sinkVerts;
+		Attributes const * srcAttrs;
+		Attributes* sinkAttrs;
+
+		
+		// Setup Pointers for the first round of clipping 
+		srcVerts = transformedVerts;
+		srcAttrs = transformedAttrs;
+		sinkVerts = tmpVertA;
+		sinkAttrs = tmpAttrA;
+		num = numIn;
+		numOut = 0;
+				
+		double wLimit = 0.001;
+		for(int i = 0; i < num; i++)
+		{
+			inBounds[i] = (srcVerts[i].w > wLimit);
+		}
+		for(int i = 0; i < num; i++)
+		{
+			int cur = i;
+			int next = (i+1) % num;
+			bool curVertexIn = inBounds[cur];
+			bool nextVertexIn = inBounds[next];
+			
+			if(curVertexIn && nextVertexIn)
+			{
+				sinkVerts[numOut] = srcVerts[next];
+				sinkAttrs[numOut++] = srcAttrs[next];
+			}
+			else if(curVertexIn && !nextVertexIn)
+			{
+				double along;
+				intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
+				sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+				sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+				
+			}
+		}
+		
+
+		
+	
+	
+}
+
+void normalizeVertices(	Vertex clippedVertices[], 
+						Attributes clippedAttrs[], 
+						const int & numClipped)
+{
+	for(int i = 0; i < numClipped; i++)
+	{
+		// Normalize X,Y,Z components of homogeneous coordinates
+		clippedVertices[i].x /= clippedVertices[i].w;
+		clippedVertices[i].y /= clippedVertices[i].w;
+		clippedVertices[i].z /= clippedVertices[i].w;
+		
+		// Setup W value for depth interpolation 
+		double zValue = clippedVertices[i].w;
+		clippedVertices[i].w = 1.0 / zValue;
+			
+		// Setup Attributes 
+		for(int j = 0; j < clippedAttrs[i].numMembers; j++)
+		{
+			clippedAttrs[i][j].d /= zValue;
+		}		
+	}
+	
+}
+
+void viewportTransform( Buffer2D<PIXEL>& target, 
+						Vertex clippedVertices[], 
+						const int & numClipped)
+{
+	// Move from -1 -> 1 space in X,Y to screen coordinates 
+	int w = target.width();
+	int h = target.height();
+	
+	for(int i = 0; i < numClipped; i++)
+	{
+		clippedVertices[i].x = (round (clippedVertices[i].x + 1) / 2.0 * w);
+		clippedVertices[i].y = (round (clippedVertices[i].y + 1) / 2.0 * h);
+		
+		/*	Let's say we have clipped, normalized vertex (-0.5, -1)		
+		*	Our Box is from -1 to 1 in X,Y 
+		*
+		*	For screen X,Y positions 
+		*	SX = (-0.5 + 1) / 2 * W = 0.25 * Width 
+		*	SY = (-1 + 1) / 2 * H = 0.0 * Height 
+		*/ 
+		
+		
+	}
+	
+}
+
 /***************************************************************************
  * DRAW_PRIMITIVE
  * Processes the indicated PRIMITIVES type through pipeline stages of:
@@ -293,6 +465,21 @@ void DrawPrimitive(PRIMITIVES prim,
     Vertex transformedVerts[MAX_VERTICES];
     Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
+
+
+    // Clipping
+    Vertex clippedVertices[MAX_VERTICES];
+    Attributes clippedAttrs[MAX_VERTICES];
+	int numClipped;
+	clipVertices(transformedVerts, transformedAttrs, numIn, 
+				clippedVertices, clippedAttrs, numClipped);
+
+    // Normalize 
+    normalizeVertices(clippedVertices, clippedAttrs, numClipped);
+
+    // Adapt to viewport 
+    viewportTransform(target, clippedVertices, numClipped);
+
 
     // Vertex Interpolation & Fragment Drawing
     switch(prim)

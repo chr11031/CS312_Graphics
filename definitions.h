@@ -365,9 +365,14 @@ class Attributes
         }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+
+            for(int i = 0; i < numMembers; i++){
+                arr[i].d = first[i].d + ((second[i].d - first[i].d) * along);
+            }
+
         }
 
         // Const Return operator
