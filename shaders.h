@@ -63,12 +63,12 @@ void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex 
 
 void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    //Matrix* model = (Matrix)uniforms[1].ptr;
-    //Matrix* view = (Matrix)unifroms[2].ptr;
+    Matrix* model = (Matrix*)uniforms[1].ptr;
+    Matrix* view = (Matrix*)uniforms[2].ptr;
+    Matrix* proj = (Matrix*)uniforms[3].ptr;
 
-    //vertOut = (*view) * (*model) * vertIn;
+    vertOut = (*proj) * (*view) * (*model) * vertIn;
 
-    vertOut = vertIn; //vertIn * uniforms.matrix;
     attrOut = vertAttr;
 }
 
