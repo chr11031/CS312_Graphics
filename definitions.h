@@ -373,6 +373,10 @@ public:
     void operator *=(const Matrix & rhs) throw (const char *);
     friend Vertex operator* (const Matrix & lhs, const Vertex & rhs) throw (const char *);
     friend Matrix operator* (const Matrix & lhs, const Matrix & rhs) throw (const char *);
+    friend Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
+                      const double & far);
+    friend Matrix camera4x4(const double & offX, const double & offY, const double & offZ, 
+                 const double & yaw, const double & pitch, const double & roll);
 
     void addTrans(const double & x, const double & y, const double & z);
     void addRot  (AXISROTATION rot, const double & degree);
@@ -629,45 +633,31 @@ Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, con
     rt[3][1] = 0;
     rt[3][2] = 1;
     rt[3][3] = 0;
+
+    rt.numCols = 4;
+    rt.numRows = 4;
+
+    return rt;
 }
 
 Matrix camera4x4(const double & offX, const double & offY, const double & offZ, 
                  const double & yaw, const double & pitch, const double & roll)
 {
-    Matrix mx;
+    Matrix trans;
 
-    double translate[4][4] = 
-    {
-        {1, 0, 0, -offX},
-        {0, 1, 0, -offY},
-        {0, 0, 1, -offZ},
-        {0, 0, 0, 1}
-    };
+    trans.addTrans(-offX, -offY, -offZ);
 
-    Matrix trans(translate, 4, 4);
+    Matrix rotX;
 
+    rotX.addRot(X, -pitch);
 
-    double pitchRad = (pitch / 180.0) * M_PI;
-    double yawRad = (yaw / 180.0) * M_PI;
-    double pitchData[4][4] = 
-    {
-        {cos(pitchRad), -sin(pitchRad), 0, 0},
-        {sin(pitchRad), cos(pitchRad),  0, 0},
-        {0,             0,              1, 0},
-        {0,             0,              0, 1}
-    };
+    Matrix rotY;
 
-    Matrix rotX(pitchData, 4, 4);
+    rotY.addRot(Y, -yaw);
 
-    double yawData[4][4] = 
-    {
-        {cos(yawRad), -sin(yawRad), 0, 0},
-        {sin(yawRad), cos(yawRad),  0, 0},
-        {0,           0,            1, 0},
-        {0,           0,            0, 1}
-    };
+    Matrix rt = rotX * rotY * trans;
 
-    Matrix rotY(yawData, 4, 4);
+    return rt;
 }
 
 Matrix operator* (const Matrix & lhs, const Matrix & rhs) throw (const char *)

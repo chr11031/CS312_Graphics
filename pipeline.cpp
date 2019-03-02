@@ -82,7 +82,7 @@ void processUserInputs(bool & running)
             if (cur == SDL_DISABLE)
             {
                 double mouseX = e.motion.xrel;
-                double mourseY = e.motion.yrel;
+                double mouseY = e.motion.yrel;
 
                 myCam.yaw -= mouseX * 0.02;
                 myCam.pitch += mouseY * 0.02;
@@ -239,6 +239,7 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+        return;
     }
     else
     {
@@ -263,7 +264,7 @@ viewportTransform(const Buffer2D<PIXEL>& target,
     for (int i = 0; i < numClipped; i++)
     {
         clippedVerts[i].x = round( (( (clippedVerts[i].x + 1) / 2.0 * w)));
-        clippedVerts[i].x = round( (( (clippedVerts[i].x + 1) / 2.0 * h)));
+        clippedVerts[i].x = round( (( (clippedVerts[i].y + 1) / 2.0 * h)));
     }
 }
 
@@ -286,7 +287,7 @@ normalizeVerticies(Vertex clippedVerts[], Attributes clippedAttrs[], const int &
         // Setup Attributes
         for (int j = 0; j < clippedAttrs[j].numMembers; j++)
         {
-             clippedAttrs[i][j].d /= zValue;
+            clippedAttrs[i][j].d /= zValue;
         }
     }
 }
@@ -302,7 +303,7 @@ void intersectAgainstYLimit(double & along,
     if (segDiffY == 0)
         return;
     
-    along = (yLimit -segStartY) / segDiffY;
+    along = (yLimit - segStartY) / segDiffY;
 }
 
 void intersectAtPositiveLine(double & along,
@@ -579,7 +580,7 @@ void clipVerticies(Vertex const transformedVerts[], Attributes const transformed
     // CLip against -Y=W (5th Pass)
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (srcVerts[i].y < srcVerts[i].w);
+        inBounds[i] = (-srcVerts[i].y < srcVerts[i].w);
     }
     for(int i = 0; i < num; i++)
     {
@@ -715,6 +716,8 @@ void clipVerticies(Vertex const transformedVerts[], Attributes const transformed
             ;// Do nothing
         }
     }
+
+    numClipped = numOut;
 
 }
 

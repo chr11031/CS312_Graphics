@@ -549,7 +549,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         //              vi)  camZ
         //      To incorporate a view transform (add movement)
         
-        //static Buffer2D<double> zBuf(target.width(), target.height());
+        static Buffer2D<double> zBuf(target.width(), target.height());
         // Will need to be cleared every frame, like the screen
 
         /**************************************************
@@ -602,7 +602,6 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         Attributes imageUniforms;
 
         //Your code for the uniform goes here
-        imageUniforms.ptrImage = &myImage;
 
         /*
         Uniforms
@@ -615,7 +614,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         model.addTrans(0, 0, 0);
         Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
                                myCam.yaw, myCam.pitch, myCam.roll);
-        Matrix proj = perspective4x4(60.0, 1, 1, 200); // FOV, Aspect, Near, Far
+        Matrix proj = perspective4x4(60, 1.0, 1, 200); // FOV, Aspect, Near, Far
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
@@ -635,8 +634,8 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         vertImg.setShader(SimpleVertexShader2);
                 
         // Draw image triangle 
-        //DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
-        //DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
