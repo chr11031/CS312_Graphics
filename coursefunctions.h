@@ -489,7 +489,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix transMatrix;
-        transMatrix.addTrans(100, 50, 1);
+        transMatrix.addTrans(100, 50, 0);
         colorUniforms.matrix = transMatrix;
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);

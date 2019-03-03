@@ -95,12 +95,12 @@ struct Vertex
 ********************************************************/
 struct camControls
 {
-    double x;
-    double y;
-    double z;
-    double yaw;
-    double roll;
-    double pitch;
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
 };
 
 /******************************************************
@@ -420,7 +420,7 @@ class Attributes
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            numMembers = first.numMembers;
+            this->numMembers = first.numMembers;
             for (int i = 0; i < this->numMembers; i++)
             {
                 attribs[i].d = first[i].d + ((second[i].d - first[i].d) * along);
@@ -491,8 +491,10 @@ void Matrix::addTrans(const double & x = 0, const double & y = 0, const double &
     if(this->isInit)
         *this *= temp;
     else
+    {
         *this = temp;
-
+        this->isInit = true;
+    }
 }
 
 void Matrix::addScale(const double & x = 1, const double & y = 1, const double & z = 1)
@@ -520,7 +522,10 @@ void Matrix::addScale(const double & x = 1, const double & y = 1, const double &
     if (this->isInit)
         *this *= temp;
     else
+    {
         *this = temp;
+        this->isInit = true;
+    }
 
 }
 
@@ -578,7 +583,10 @@ void Matrix::addRot(AXISROTATION rot, const double & degrees)
     if (this->isInit)
         *this *= temp;
     else 
+    {
         *this = temp;
+        this->isInit = true;
+    }
 }
 
 
@@ -601,7 +609,10 @@ void Matrix::operator*=(const Matrix & rhs) throw (const char *)
                 this->data[i][j] = tempMatrix[i][j];
     }
     else
+    {
         *this = rhs;
+        this->isInit = true;
+    }
 
     return;
 }
@@ -636,6 +647,7 @@ Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, con
 
     rt.numCols = 4;
     rt.numRows = 4;
+    rt.isInit = true;
 
     return rt;
 }
@@ -690,6 +702,7 @@ Matrix operator* (const Matrix & lhs, const Matrix & rhs) throw (const char *)
 
     tempMatrix.numRows = lhs.numRows;
     tempMatrix.numCols = rhs.numCols;
+    tempMatrix.isInit = true;
     return tempMatrix;
 }
 

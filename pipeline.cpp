@@ -206,6 +206,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             pointVector = {x - triangle[2].x, y - triangle[2].y};
             det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
+            if (x == 475 && y == 162)
+            {
+                std::cout << "somestuff\n";
+            }
 
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
@@ -355,7 +359,7 @@ Vertex vertBetweenVerts(const Vertex & vertA, const Vertex & vertB, const double
 /***************************************************************************
  *  CLIP VERTICIES
  * ************************************************************************/
-void clipVerticies(Vertex const transformedVerts[], Attributes const transformedAttrs[], const int & numIn, 
+void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], const int & numIn, 
                    Vertex clippedVerts[], Attributes clippedAttrs[], int & numClipped)
 {
     // TMP CLip buffers
@@ -519,7 +523,6 @@ void clipVerticies(Vertex const transformedVerts[], Attributes const transformed
         }
     }
 
-
     // Clip against Y
     srcVerts = tmpVertA;
     srcAttrs = tmpAttrA;
@@ -617,7 +620,6 @@ void clipVerticies(Vertex const transformedVerts[], Attributes const transformed
             ;// Do nothing
         }
     }
-
 
     // Clip against Z
     srcVerts = tmpVertA;
@@ -764,7 +766,7 @@ void DrawPrimitive(PRIMITIVES prim,
     Vertex clippedVerts[MAX_VERTICES];
     Attributes clippedAttrs[MAX_VERTICES];
     int numClipped;
-    clipVerticies(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
+    clipVertices(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
 
     // Stub this out for now
     // Normalization
