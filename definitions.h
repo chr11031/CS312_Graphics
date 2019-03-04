@@ -1,3 +1,5 @@
+//#include "shaders.h"
+
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
 #include "stdlib.h"
@@ -45,6 +47,18 @@ struct Vertex
     double z;
     double w;
 };
+
+// Everything needed for the view/camera transform
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
+};
+//camControls myCam;
 
 /******************************************************
  * BUFFER_2D:
@@ -225,7 +239,23 @@ class Attributes
     public:
 
         PIXEL color;
+
+        //from teacher.
+        double r; //Red
+        double g; //Green
+        double b; //Blue
+        double u; //X-axis
+        double v; //Y-axis
+        void* ptrImg;
+        //end of from teacher.
         
+        //Attributes for Transformation
+        double scale;
+        double translateX;
+        double translateY;
+        double translateZ;
+        double angle;
+
         // Obligatory empty constructor
         Attributes() {}
 
@@ -233,6 +263,41 @@ class Attributes
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
+        }
+
+        // Attributes(const Attributes &_color)
+        // {
+        //     color = _color;
+        // }
+};	
+
+/***************************************************
+ * Matrixx ()
+ * The attributes associated with transformation 
+ * It has 2 x to avoid touching anything with a similar name.
+ **************************************************/
+class Matrixx 
+{      
+    public:
+        double m[4][4]; //For the transformations which are matrices of 4x4.
+        double n[4]; //For the vertices which are matrices of 4x1.
+
+        // Obligatory empty constructor
+        Matrixx() {}
+
+        //Multiplication
+        Matrixx operator*(const Matrixx& b) {
+            Matrixx maOut;
+            double v[4][4];
+            for (int i = 0; i<4; i++){
+                for (int j = 0; j<4; j++){
+                v[i][j] = this->m[i][j] * b.n[j];
+                }
+            }
+            for (int k = 0; k<4; k++){
+                maOut.n[k] = v[k][0] + v[k][1] + v[k][2] + v[k][3];
+            }
+            return maOut;
         }
 };	
 
@@ -278,6 +343,7 @@ class FragmentShader
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
+
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
     attrOut = vertAttr;
