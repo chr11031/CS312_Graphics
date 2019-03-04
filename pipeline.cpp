@@ -84,7 +84,7 @@ void processUserInputs(bool & running)
                 double mouseX = e.motion.xrel;
                 double mouseY = e.motion.yrel;
 
-                myCam.yaw -= mouseX * 0.02;
+                myCam.yaw += mouseX * 0.02;
                 myCam.pitch += mouseY * 0.02;
             }
 
@@ -107,26 +107,26 @@ void processUserInputs(bool & running)
 
         if (e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
         {
-            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.05;
-            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
         }
 
         if (e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
         {
-            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.05;
-            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
         }
 
         if (e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
         {
-            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.05;
-            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
         }
 
         if (e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
         {
-            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.05;
-            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.05;
+            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
         }
     }
 }
@@ -206,10 +206,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             pointVector = {x - triangle[2].x, y - triangle[2].y};
             det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
-            if (x == 475 && y == 162)
-            {
-                std::cout << "somestuff\n";
-            }
 
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
@@ -268,7 +264,7 @@ viewportTransform(const Buffer2D<PIXEL>& target,
     for (int i = 0; i < numClipped; i++)
     {
         clippedVerts[i].x = round( (( (clippedVerts[i].x + 1) / 2.0 * w)));
-        clippedVerts[i].x = round( (( (clippedVerts[i].y + 1) / 2.0 * h)));
+        clippedVerts[i].y = round( (( (clippedVerts[i].y + 1) / 2.0 * h)));
     }
 }
 
@@ -289,7 +285,7 @@ normalizeVerticies(Vertex clippedVerts[], Attributes clippedAttrs[], const int &
         clippedVerts[i].w = 1.0 / zValue;
 
         // Setup Attributes
-        for (int j = 0; j < clippedAttrs[j].numMembers; j++)
+        for (int j = 0; j < clippedAttrs[i].numMembers; j++)
         {
             clippedAttrs[i][j].d /= zValue;
         }
@@ -349,9 +345,9 @@ Vertex vertBetweenVerts(const Vertex & vertA, const Vertex & vertB, const double
 {
     Vertex rv;
     rv.x = vertA.x + ((vertB.x - vertA.x) * along);
-    rv.x = vertA.y + ((vertB.y - vertA.y) * along);
-    rv.x = vertA.z + ((vertB.z - vertA.z) * along);
-    rv.x = vertA.w + ((vertB.w - vertA.w) * along);
+    rv.y = vertA.y + ((vertB.y - vertA.y) * along);
+    rv.z = vertA.z + ((vertB.z - vertA.z) * along);
+    rv.w = vertA.w + ((vertB.w - vertA.w) * along);
     return rv;
 }
 
@@ -788,6 +784,7 @@ void DrawPrimitive(PRIMITIVES prim,
         case TRIANGLE:
             Vertex tri[3];
             Attributes vAttr[3];
+            std::cout << numClipped << "\n";
             for(int i = 2; i < numClipped; i++)
             {
                 tri[0] = clippedVerts[0];
@@ -838,7 +835,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestPipeline(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -113,6 +113,7 @@ template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -126,6 +127,7 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+            baseAllocated = true;
         }
 
         // Empty Constructor
@@ -137,11 +139,14 @@ class Buffer2D
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
+            if(baseAllocated)
             {
-                free(grid[r]);
+                for(int r = 0; r < h; r++)
+                {
+                    free(grid[r]);
+                }
+                free(grid);
             }
-            free(grid);
         }
 
         // Size-Specified constructor, no data
@@ -291,10 +296,17 @@ private:
         // Free dynamic memory
         ~BufferImage()
         {
+           // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+                free(grid);
+                return;
+            }
+
             // De-Allocate pointers for column references
             free(grid);
 
-            // De-Allocate this image plane if necessary
+            // De-Allocate this image plane is necessary
             if(ourSurfaceInstance)
             {
                 SDL_FreeSurface(img);
@@ -331,6 +343,7 @@ private:
             ourSurfaceInstance = false;
             if (!readBMP(path))
                 return;
+            ourBufferData = true;
         }
 };
 
@@ -622,7 +635,7 @@ Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, con
 {
     Matrix rt;
 
-    double top = near * tan((fovYDegree * M_PI) / 180.0) / 2.0;
+    double top = near * tan((fovYDegree * M_PI) / 180.0 / 2.0);
     double right = aspectRatio * top;
 
     rt[0][0] = near / right;

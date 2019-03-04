@@ -55,13 +55,13 @@ void GrayScaleShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = 0xff000000 + (avgScale << 16) + (avgScale << 8) + avgScale;
 }
 
-void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
     vertOut = uniforms.matrix * vertIn;
-    attrOut = vertAttr;
+    attrOut = attrIn;
 }
 
-void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
     Matrix* model = (Matrix*)uniforms[1].ptr;
     Matrix* view = (Matrix*)uniforms[2].ptr;
@@ -69,7 +69,7 @@ void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & 
 
     vertOut = (*proj) * (*view) * (*model) * vertIn;
 
-    attrOut = vertAttr;
+    attrOut = attrIn;
 }
 
 #endif
