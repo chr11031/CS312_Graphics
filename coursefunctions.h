@@ -141,7 +141,7 @@ void CADView(Buffer2D<PIXEL> & target)
 
         // Your code goes here 
         // Feel free to copy from other test functions to get started!
-
+        // DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
         // Blit four panels to target
         int yStartSrc = 0;
@@ -555,12 +555,11 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
-
         Attributes imageUniforms;
 
         Matrix model = createTranslationMatrix(0,0,0);
         Matrix view = camera(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj = perspective(60, 1.0, 1, 200);
 
         //Uniforms
         //[0] Image reference
@@ -569,7 +568,9 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
-        imageUniforms.insertPtr((void*)&view);        
+        imageUniforms.insertPtr((void*)&view); 
+        imageUniforms.insertPtr((void*)&proj);  
+
 
         FragmentShader fragImg;
         fragImg.FragShader = ImageFragShader;

@@ -96,8 +96,8 @@ Matrix camera(const double &offx, const double & offy, const double & offz,
 {
 
     Matrix trans = createTranslationMatrix(-offx, -offy, -offz);
-    Matrix rotX = createXRotationMatrix(pitch);
-    Matrix rotY = createYRotationMatrix(yaw);
+    Matrix rotX = createXRotationMatrix(-pitch);
+    Matrix rotY = createYRotationMatrix(-yaw);
 
     Matrix rt = rotX * rotY * trans;
 
@@ -108,9 +108,11 @@ Matrix camera(const double &offx, const double & offy, const double & offz,
 
 Matrix perspective(const double & fovy, const double & aspectRatio, const double & near, const double far)
 {
+
+    // perspective(60, 1.0, 1, 200); 
     Matrix rt = Matrix(4,4);
 
-    double top = near * tan((fovy * PI) / 180.0) / 2.0;
+    double top = near * tan((fovy * PI) / 180.0 /2.0);
     double right = aspectRatio * top;
 
     

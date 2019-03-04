@@ -8,6 +8,9 @@
 
 #include "time.cpp"
 
+#include <iostream>
+#include <string>
+
 #define PI 3.14159265
 
 
@@ -79,6 +82,7 @@ template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -92,22 +96,25 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+            baseAllocated = true;
         }
 
         // Empty Constructor
-        Buffer2D()
-        {}
+        Buffer2D(){}
 
     public:
         // Free dynamic memory
         ~Buffer2D()
         {
-            // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
+            if(baseAllocated)
             {
-                free(grid[r]);
+                // De-Allocate pointers for column references
+                for(int r = 0; r < h; r++)
+                {
+                    free(grid[r]);
+                }
+                free(grid);
             }
-            free(grid);
         }
 
         // Size-Specified constructor, no data
@@ -277,14 +284,9 @@ class BufferImage : public Buffer2D<PIXEL>
             // De-Allocate non-SDL2 image data
             if(ourBufferData)
             {
-                for(int y = 0; y < h; y++)
-                {
-                    free(grid[y]);
-                }
+                free(grid);
+                return;
             }
-
-            // De-Allocate pointers for column references
-            free(grid);
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -320,11 +322,12 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-	  ourSurfaceInstance = false;
-	  if(!readBMP(path))
-	    {
-	      return;
-	    }	  
+            ourSurfaceInstance = false;
+            if(!readBMP(path))
+            {
+                 return;
+            }	 
+            ourBufferData = true; 
         }
 };
 
@@ -371,7 +374,9 @@ class Attributes
 
             for(int i = 0; i < numMembers; i++){
                 arr[i].d = first[i].d + ((second[i].d - first[i].d) * along);
-            }
+            } 
+
+
 
         }
 
@@ -450,8 +455,6 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int y = vertAttr[1].d * (bf->height()-1);
 
     fragment = (*bf)[y][x];
-    
-    
 
 
 };
@@ -534,15 +537,75 @@ void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & v
 
 }
 
-void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void matrix4by4DebuggerPassthrough(Matrix matrix, char text[]){
+
+    // perspective(60, 1.0, 1, 200); 
+
+
+
+
+    double oneOne = matrix.getElement(0,0);
+    double twoOne = matrix.getElement(1,0);
+    double threeOne = matrix.getElement(2,0);
+    double fourOne = matrix.getElement(3,0);
+
+    double oneTwo = matrix.getElement(0,1);
+    double twoTwo = matrix.getElement(1,1);
+    double threeTwo = matrix.getElement(2,1);
+    double fourTwo = matrix.getElement(3,1);
+
+    double oneThree = matrix.getElement(0,2);
+    double twoThree = matrix.getElement(1,2);
+    double threeThree = matrix.getElement(2,2);
+    double fourThree = matrix.getElement(3,2);
+
+    double oneFour = matrix.getElement(0,3);
+    double twoFour = matrix.getElement(1,3);
+    double threeFour = matrix.getElement(2,3);
+    double fourFour = matrix.getElement(3,3);
+
+    return;
+    
+}
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
 
+    // Before Vertex Shader
+    // Vertex 1 has X:-20.000000, Y:-20.000000, Z:50.000000 W:1.000000
+    // Attributes 1 has U:0.000000, V:0.000000
+    // Vertex 2 has X:20.000000, Y:-20.000000, Z:50.000000 W:1.000000
+    // Attributes 2 has U:1.000000, V:0.000000
+    // Vertex 3 has X:20.000000, Y:20.000000, Z:50.000000 W:1.000000
+    // Attributes 3 has U:1.000000, V:1.000000
+
     Matrix model = *(Matrix*)uniforms[1].ptr;
+
+    // matrix4by4DebuggerPassthrough(model, "model");
+
     Matrix view = *(Matrix*)uniforms[2].ptr;
 
-    vertOut = view * model * vertIn;
+    // matrix4by4DebuggerPassthrough(view, "view");
 
-    attrOut = vertAttr;
+    Matrix proj = *(Matrix*)uniforms[3].ptr;
+
+    // matrix4by4DebuggerPassthrough(proj, "proj");
+
+
+
+    Matrix finalMatrix = proj * view * model;
+    // Matrix finalMatrix = model * view * proj;
+    vertOut =  finalMatrix * vertIn;
+    attrOut = attrIn;
+
+    // After Vertex Shader
+    // Vertex 1 has X:-34.641016, Y:-34.641016, Z:48.492462 W:50.000000
+    // Attributes 1 has U:0.000000, V:0.000000
+    // Vertex 2 has X:34.641016, Y:-34.641016, Z:48.492462 W:50.000000
+    // Attributes 2 has U:1.000000, V:0.000000
+    // Vertex 3 has X:34.641016, Y:34.641016, Z:48.492462 W:50.000000
+    // Attributes 3 has U:1.000000, V:1.000000
+
 
 }
 
