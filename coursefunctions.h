@@ -549,13 +549,13 @@ void TestPipeline(Buffer2D<PIXEL> & target)
                           {20, 20, 50, 1},
                           {-20,20, 50, 1}};
 
-        Vertex verticesImgA[3];
+        Vertex     verticesImgA[3];
         Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
-        Vertex verticesImgB[3];        
+        Vertex     verticesImgB[3];        
         Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
@@ -576,40 +576,40 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         imageAttributesA[2].attrValues[1].d = coordinates[2][1];
         imageAttributesA[2].numValues = 2;
 
-        imageAttributesA[3].attrValues[0].d = coordinates[3][0];
-        imageAttributesA[3].attrValues[1].d = coordinates[3][1];
-        imageAttributesA[3].numValues = 2;
+        // Previous un commented
+        // imageAttributesA[3].attrValues[0].d = coordinates[3][0];
+        // imageAttributesA[3].attrValues[1].d = coordinates[3][1];
+        // imageAttributesA[3].numValues = 2;
 
-        imageAttributesB[0].attrValues[0].d = coordinates[0][0];
-        imageAttributesB[0].attrValues[1].d = coordinates[0][1];
+        imageAttributesB[0].attrValues[0].d = coordinates[2][0]; // 00
+        imageAttributesB[0].attrValues[1].d = coordinates[2][1]; // 01
         imageAttributesB[0].numValues = 2;
 
-        imageAttributesB[1].attrValues[0].d = coordinates[1][0];
-        imageAttributesB[1].attrValues[1].d = coordinates[1][1];
+        imageAttributesB[1].attrValues[0].d = coordinates[3][0]; // 10
+        imageAttributesB[1].attrValues[1].d = coordinates[3][1]; // 11
         imageAttributesB[1].numValues = 2;
 
-        imageAttributesB[2].attrValues[0].d = coordinates[2][0];
-        imageAttributesB[2].attrValues[1].d = coordinates[2][1];
+        imageAttributesB[2].attrValues[0].d = coordinates[0][0]; // 20
+        imageAttributesB[2].attrValues[1].d = coordinates[0][1]; // 21
         imageAttributesB[2].numValues = 2;
 
-        imageAttributesB[3].attrValues[0].d = coordinates[3][0];
-        imageAttributesB[3].attrValues[1].d = coordinates[3][1];
-        imageAttributesB[3].numValues = 2;
+        // Previous this was un commented
+        // imageAttributesB[3].attrValues[0].d = coordinates[3][0];
+        // imageAttributesB[3].attrValues[1].d = coordinates[3][1];
+        // imageAttributesB[3].numValues = 2;
 
-        // Ensure the checkboard image is in this directory, you can use another image though
+        BufferImage myImage("checker.bmp");
+        Attributes  imageUniforms;
+        Matrix      model;
         
-        // Your code for the uniform goes here
+        model.addTranslate(0, 0, 0);
+        Matrix view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj = perspective4x4(60, 1.0, 1, 200); // FOV, aspect ratio, near, far
+
         // Uniforms -- add these to attributes as member variables
         // [0] -> Image reference
         // [1] -> Model transform
         // [2] -> View transform
-        
-        BufferImage myImage("checker.bmp");
-        Attributes imageUniforms;
-        Matrix model;
-        model.addTranslate(0, 0, 0);
-        Matrix view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
-        Matrix proj = perspective4x4(60.0, 1, 1, 200); // FOV, aspect ratio, near, far
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
@@ -618,15 +618,10 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         FragmentShader fragImg;
         fragImg.FragShader = imageFragShader;
-        // Your code for the image fragment shader goes here
 
         VertexShader vertImg;
         vertImg.VertShader = SimpleVertexShader2; // copy of vert shader
 
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
-                
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);

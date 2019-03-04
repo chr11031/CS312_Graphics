@@ -64,14 +64,17 @@ struct camControls
     double x = 0;
     double y = 0;
     double z = 0;
-    double pitch = 0;
     double yaw   = 0;
+    double pitch = 0;
     double roll  = 0;
 };
 
 // Global var
 camControls myCam;
 
+/****************************************************
+ * For the new Image Loader
+ ****************************************************/
 struct bmpRGB
 {
     unsigned char b;
@@ -79,6 +82,9 @@ struct bmpRGB
     unsigned char r;
 };
 
+/****************************************************
+ * For the new Image Loader
+ ****************************************************/
 struct bmpLayout
 {
     int offset;
@@ -221,14 +227,6 @@ Matrix operator * (const Matrix &lhs, const Matrix &rhs)
 
 /******************************************************
  * Helper function for the overloaded multiply equals operation
- * * * IMPORTANT NOTE:
- * * For the purposes of making things more comprehensible,
- * * we have flipped the rhs and lhs from what it actually is
- * * in a matrix. For example, when multiplying matrices A B and C
- * * matrix multiplication says that we must first multiply C, 
- * * then B, then A, so we have flipped rhs and lhs in our function
- * * so that in order to multiple A B and C, we can simply put
- * * C * B * A in the CORRECT order that they must be multiplied.
  *****************************************************/
 void Matrix::operator*=(const Matrix & rhs)
 {
@@ -253,6 +251,10 @@ void Matrix::operator*=(const Matrix & rhs)
     return;
 }
 
+/*****************************************
+ * ADD TRANSLATE
+ * Adds a translation matrix
+ * **************************************/
 void Matrix::addTranslate(const double &x, const double &y, const double &z)
 {
     Matrix identityTrans;
@@ -285,6 +287,10 @@ void Matrix::addTranslate(const double &x, const double &y, const double &z)
         *this = identityTrans;
 }
 
+/*****************************************
+ * ADD ROTATE
+ * Adds a rotation matrix
+ * **************************************/
 void Matrix::addRotate(AXIS_ROTATION rot, const double &degrees)
 {
     Matrix identityRot;
@@ -343,6 +349,10 @@ void Matrix::addRotate(AXIS_ROTATION rot, const double &degrees)
         *this = identityRot;
 }
 
+/*****************************************
+ * ADD SCALE
+ * Adds a scaling matrix
+ * **************************************/
 void Matrix::addScale(const double &x, const double &y, const double &z)
 {
     Matrix identityScale;
@@ -384,7 +394,7 @@ Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const do
     rt.numRows = 4;
     rt.numCols = 4;
 
-    double top = near * tan((fovYDeg * M_PI) / 180) / 2.0;
+    double top   = near * tan((fovYDeg * M_PI) / 180 / 2.0); // previous parenthesis after 180
     double right = aspectRatio * top;
 
     rt[0][0] = near / right;
@@ -396,7 +406,7 @@ Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const do
     rt[1][1] = near / top;
     rt[1][2] = 0;
     rt[1][3] = 0;
-    rt[1][4] = 0;
+    // rt[1][4] = 0; // previously un commented
 
     rt[2][0] = 0;
     rt[2][1] = 0;
@@ -411,6 +421,9 @@ Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const do
     return rt;
 }
 
+/*****************************************
+ * Matrix helper functions
+ * **************************************/
 Matrix camera4x4(const double & offX, const double &offY, const double &offZ, const double &yaw, const double &pitch, const double &roll)
 {
     Matrix trans;
@@ -418,8 +431,8 @@ Matrix camera4x4(const double & offX, const double &offY, const double &offZ, co
 
     Matrix rotX;
     Matrix rotY;
-    rotX.addRotate(X, pitch); // 4x4 from add rotate
-    rotY.addRotate(Y, yaw);   // 4x4 from add rotate
+    rotX.addRotate(X, -pitch); // 4x4 from add rotate // previous positive pitch
+    rotY.addRotate(Y, -yaw);   // 4x4 from add rotate // previous positive yaw
 
     Matrix rt = rotX * rotY * trans;
 
@@ -666,6 +679,9 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/****************************************************
+ * Combine two datatypes into one
+ ***************************************************/
 union attrib
 {
     double d;
