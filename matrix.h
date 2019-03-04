@@ -129,7 +129,6 @@ Matrix rotateMatrix(AXIS axis, const double& angle) {
     return matrix;
 }
 
-/*
 // View Transform
 Matrix viewTransform(const double& offX, const double& offY, const double& offZ,
                      const double& yaw, const double& pitch, const double& roll) {
@@ -142,13 +141,12 @@ Matrix viewTransform(const double& offX, const double& offY, const double& offZ,
     // First do pitch, then yaw (roll is optional)
     double pitchRad = pitch * M_PI / 180.0;
     double yawRad   = yaw   * M_PI / 180.0;
-    Matrix rotX = rotateXMatrix(pitchRad);
-    Matrix rotY = rotateYMatrix(yawRad);
+    Matrix rotX = rotateMatrix(X, pitchRad);
+    Matrix rotY = rotateMatrix(Y, yawRad);
 
     matrix = rotX * rotY * translate;
     return matrix;
 }
-*/
 
 Matrix perspectiveTransform(const double& fovYDegrees, const double& aspectRatio,
                             const double& near, const double& far)

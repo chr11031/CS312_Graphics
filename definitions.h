@@ -239,6 +239,23 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/***************************************************
+ * LERP = Find the value between two doubles that
+ * is some specific amount in between
+ **************************************************/
+inline double lerp(double a, double b, double amount) {
+    return a + (b - a) * amount;
+}
+
+/***************************************************
+ * INTERP - Function used to interpolate values,
+ * taking advantage of the determinant's relationship
+ * to the area of the triangle
+ **************************************************/
+inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
+    return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
+}
+
 union attrib
 {
     double d;
@@ -263,6 +280,7 @@ class Attributes
         Attributes() {numMembers = 0;}
 
         // Interpolation Constructor
+        /*
         Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
                     const Attributes & first, const Attributes & secnd, const Attributes & third, const double interpZ)
         {
@@ -275,11 +293,26 @@ class Attributes
                 numMembers += 1;
             }
         }
+        */
+       Attributes(const double& areaTriangle, const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third,
+		    const double & correctZ)
+        {
+            while(numMembers < first.numMembers)
+            {
+	         arr[numMembers].d = interp(areaTriangle, firstWgt, secndWgt, thirdWgt, first.arr[numMembers].d, secnd[numMembers].d, third.arr[numMembers].d);
+			 arr[numMembers].d = arr[numMembers].d * correctZ;
+			 numMembers += 1;
+            }
+}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for (int i = 0; i < numMembers; i++)
+                //arr[i].d = first[i].d + (second[i].d - first[i].d) * along;
+                arr[i].d = lerp(first[i].d, second[i].d, along);
         }
 
         // Const Return operator
@@ -308,23 +341,6 @@ class Attributes
             numMembers += 1;
         }
 }; 
-
-/***************************************************
- * LERP = Find the value between two doubles that
- * is some specific amount in between
- **************************************************/
-inline double lerp(double a, double b, double amount) {
-    return a + (b - a) * amount;
-}
-
-/***************************************************
- * INTERP - Function used to interpolate values,
- * taking advantage of the determinant's relationship
- * to the area of the triangle
- **************************************************/
-inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
-    return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
-}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

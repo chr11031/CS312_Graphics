@@ -51,8 +51,10 @@ void VertexShaderV2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertI
 {
     Matrix* model = (Matrix*)uniforms[1].ptr;
     Matrix* view = (Matrix*)uniforms[2].ptr;
+    Matrix* proj = (Matrix*)uniforms[3].ptr;
 
-    vertOut = (*view) * (*model) * vertIn;
+    vertOut = (*proj) * (*view) * (*model) * vertIn;
+
     attrOut = vertAttr;
 }
 

@@ -483,31 +483,29 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
         //imageUniforms.insertPtr(&myImage); see below
 
         FragmentShader fragImg;
         fragImg.FragShader = &ImageFragShader;
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
         vertImg.VertShader = &VertexShaderV2;
 
         // Uniforms
         // [0] Image reference
         // [1] Model transformation
         // [2] View transformation
+        // [3] Perspective transform
 
-        //translateMatrix(imageUniforms, {0, 0, 0, 0});
-        Matrix model; // nop (line above)
-        Matrix view;  // camera view transform (myCam.x, myCam.y, myCam.z,
-                      //                        myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix model = translateMatrix(0, 0, 0);
+        Matrix view  = viewTransform(myCam.x, myCam.y, myCam.z,
+                                     myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj  = perspectiveTransform(60.0, 1.0, 1, 200); // FOV, Aspect ratio, Near, Far
 
         imageUniforms.insertPtr(&myImage);
         imageUniforms.insertPtr(&model);
         imageUniforms.insertPtr(&view);
+        imageUniforms.insertPtr(&proj);
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
