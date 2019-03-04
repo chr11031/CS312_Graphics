@@ -258,8 +258,8 @@ viewportTransform(const Buffer2D<PIXEL>& target,
                   const int & numClipped)
 {
     // Move from -1 > 1 space in X,Y to screen coordinates
-    int w = target.width();
-    int h = target.height();
+    int w = target.width()-1;
+    int h = target.height()-1;
 
     for (int i = 0; i < numClipped; i++)
     {
@@ -784,7 +784,6 @@ void DrawPrimitive(PRIMITIVES prim,
         case TRIANGLE:
             Vertex tri[3];
             Attributes vAttr[3];
-            std::cout << numClipped << "\n";
             for(int i = 2; i < numClipped; i++)
             {
                 tri[0] = clippedVerts[0];
@@ -835,7 +834,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestVertexShader(frame);
+        TestPipeline(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

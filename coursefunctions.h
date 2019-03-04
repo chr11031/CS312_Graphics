@@ -596,7 +596,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         imageAttributesB[2].insertDbl(coordinates[0][1]);
 
 
-        BufferImage myImage("checker.bmp");
+        static BufferImage myImage("checker.bmp");
         //Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
