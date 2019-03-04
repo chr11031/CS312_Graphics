@@ -191,7 +191,7 @@ Matrix operator * (const Matrix &lhs, const Matrix &rhs)
 {
     // check to see if the "lhs" rows is equal to the "rhs" cols
     if (lhs.numCols != rhs.numRows)
-        throw "ERROR: Cannot multiple matrices of invalid sizes.";
+        throw "ERROR: Cannot multiply matrices of invalid sizes.";
 
     // we need a matrix that we can change without messing up the multiplaction
     Matrix tempMatrix;
@@ -378,47 +378,52 @@ void Matrix::addScale(const double &x, const double &y, const double &z)
 /*****************************************
  * Matrix helper functions
  * **************************************/
-Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const double &nearPlane, const double &farPlane)
+Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const double &near, const double &far)
 {
-    Matrix tr;
+    Matrix rt;
+    rt.numRows = 4;
+    rt.numCols = 4;
 
-    double top = nearPlane * tan((fovYDeg * M_PI) / 180) / 2.0;
+    double top = near * tan((fovYDeg * M_PI) / 180) / 2.0;
     double right = aspectRatio * top;
 
-    tr[0][0] = nearPlane / farPlane;
-    tr[0][1] = 0;
-    tr[0][2] = 0;
-    tr[0][3] = 0;
+    rt[0][0] = near / right;
+    rt[0][1] = 0;
+    rt[0][2] = 0;
+    rt[0][3] = 0;
 
-    tr[1][0] = 0;
-    tr[1][1] = nearPlane / farPlane;
-    tr[1][2] = 0;
-    tr[1][3] = 0;
-    tr[1][4] = 0;
+    rt[1][0] = 0;
+    rt[1][1] = near / top;
+    rt[1][2] = 0;
+    rt[1][3] = 0;
+    rt[1][4] = 0;
 
-    tr[2][0] = 0;
-    tr[2][1] = 0;
-    tr[2][2] = (farPlane + nearPlane) / (farPlane - nearPlane);
-    tr[2][3] = (-2 * farPlane * nearPlane) / (farPlane - nearPlane);
+    rt[2][0] = 0;
+    rt[2][1] = 0;
+    rt[2][2] = (far + near) / (far - near);
+    rt[2][3] = (-2 * far * near) / (far - near);
 
-    tr[3][0] = 0;
-    tr[3][1] = 0;
-    tr[3][2] = 1;
-    tr[3][3] - 0;
+    rt[3][0] = 0;
+    rt[3][1] = 0;
+    rt[3][2] = 1;
+    rt[3][3] - 0;
+
+    return rt;
 }
 
 Matrix camera4x4(const double & offX, const double &offY, const double &offZ, const double &yaw, const double &pitch, const double &roll)
 {
     Matrix trans;
-    trans.addTranslate(-offX, -offY, -offZ);
+    trans.addTranslate(-offX, -offY, -offZ); // 4x4 from add translate
 
     Matrix rotX;
     Matrix rotY;
-    rotX.addRotate(X, pitch);
-    rotY.addRotate(Y, yaw);
+    rotX.addRotate(X, pitch); // 4x4 from add rotate
+    rotY.addRotate(Y, yaw);   // 4x4 from add rotate
 
     Matrix rt = rotX * rotY * trans;
-    Matrix rt;
+
+    // Matrix rt;
     return rt;
 }
 
@@ -695,9 +700,13 @@ class Attributes
         Attributes() : numValues(0), pointerImg(NULL) {} // Obligatory empty constructor
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
             // Your code goes here when clipping is implemented
+            numValues = first.numValues;
+
+            for (int i = 0; i < this->numValues; i++)
+                attrValues[i].d = (first[i].d) + ((second[i].d - first[i].d) * along);
         }
 
         /*******************************************************

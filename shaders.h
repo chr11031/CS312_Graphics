@@ -31,12 +31,21 @@ void vertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, c
     attrOut = vertAttr;
 }
 
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix* trans = (Matrix*)uniforms[0].ptr;
+    vertOut = (*trans) * vertIn;
+
+    attrOut = vertAttr;
+}
+
 void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     Matrix* model = (Matrix*)uniforms[1].ptr;
     Matrix* view  = (Matrix*)uniforms[2].ptr;
+    Matrix* proj  = (Matrix*)uniforms[3].ptr;
 
-    vertOut = (*view) * (*model) * vertIn;
+    vertOut = (*proj) * (*view) * (*model) * vertIn;
     attrOut = vertAttr;
 }
 

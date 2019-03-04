@@ -596,7 +596,6 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         imageAttributesB[3].attrValues[1].d = coordinates[3][1];
         imageAttributesB[3].numValues = 2;
 
-        BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
         
         // Your code for the uniform goes here
@@ -604,20 +603,18 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // [0] -> Image reference
         // [1] -> Model transform
         // [2] -> View transform
+        
+        BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
         Matrix model;
         model.addTranslate(0, 0, 0);
         Matrix view = camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj = perspective4x4(60.0, 1, 1, 200); // FOV, aspect ratio, near, far
 
-        double modelMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
-        double viewMatrix[4][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 0}};
-
-        Matrix model(modelMatrix, 4, 4);
-        Matrix view(viewMatrix, 4, 4);
-
-        imageUniforms.pointerImg = &myImage;
+        imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
         imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&proj);
 
         FragmentShader fragImg;
         fragImg.FragShader = imageFragShader;
