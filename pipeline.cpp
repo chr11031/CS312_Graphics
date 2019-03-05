@@ -211,8 +211,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 // 2) Lerp as normal
                 // 3) Divide by the corrected z
 
-                // TODO: Do I even need this Perspective Correction here with the new perspective matrix?
-
                 double interpolatedW = interp(x,y,triangle,triangle[0].w,triangle[1].w,triangle[2].w);
 
                 for(int i = 0; i < attrs[0].numMembers; i++){
@@ -734,43 +732,17 @@ void viewportTransform( Buffer2D<PIXEL>& target,
 						const int & numClipped)
 {
 
-
-    // After Normalization
-    // Vertex 1 has X:0.692820, Y:-0.692820, Z:0.969849 W:0.020000
-    // Attributes 1 has U:0.020000, V:0.000000
-    // Vertex 2 has X:0.692820, Y:0.692820, Z:0.969849 W:0.020000
-    // Attributes 2 has U:0.020000, V:0.020000
-    // Vertex 3 has X:-0.692820, Y:-0.692820, Z:0.969849 W:0.020000
-    // Attributes 3 has U:0.000000, V:0.000000
-
-
 	// Move from -1 -> 1 space in X,Y to screen coordinates 
-	int w = target.width();
-	int h = target.height();
+	int w = target.width() -1;
+	int h = target.height() -1;
 	
 	for(int i = 0; i < numClipped; i++)
 	{
 		clippedVertices[i].x = (round( (( (clippedVertices[i].x + 1) / 2.0 * w))));
 		clippedVertices[i].y = (round( (( (clippedVertices[i].y + 1) / 2.0 * h))));
 		
-		/*	Let's say we have clipped, normalized vertex (-0.5, -1)		
-		*	Our Box is from -1 to 1 in X,Y 
-		*
-		*	For screen X,Y positions 
-		*	SX = (-0.5 + 1) / 2 * W = 0.25 * Width 
-		*	SY = (-1 + 1) / 2 * H = 0.0 * Height 
-		*/ 
-		
 		
 	}
-
-    // After Viewport Transform
-    // Vertex 1 has X:433.000000, Y:79.000000, Z:0.969849 W:0.020000
-    // Attributes 1 has U:0.020000, V:0.000000
-    // Vertex 2 has X:433.000000, Y:433.000000, Z:0.969849 W:0.020000
-    // Attributes 2 has U:0.020000, V:0.020000
-    // Vertex 3 has X:79.000000, Y:79.000000, Z:0.969849 W:0.020000
-    // Attributes 3 has U:0.000000, V:0.000000
 	
 }
 
@@ -817,26 +789,9 @@ void DrawPrimitive(PRIMITIVES prim,
 	int numClipped;
 	clipVertices(transformedVerts, transformedAttrs, numIn, 
 				clippedVertices, clippedAttrs, numClipped);
-
-    // After Clipping
-    // Vertex 1 has X:34.641016, Y:-34.641016, Z:48.492462 W:50.000000
-    // Attributes 1 has U:1.000000, V:0.000000
-    // Vertex 2 has X:34.641016, Y:34.641016, Z:48.492462 W:50.000000
-    // Attributes 2 has U:1.000000, V:1.000000
-    // Vertex 3 has X:-34.641016, Y:-34.641016, Z:48.492462 W:50.000000
-    // Attributes 3 has U:0.000000, V:0.000000
 		
     // Normalize 
     normalizeVertices(clippedVertices, clippedAttrs, numClipped);
-
-    // After Normalization
-    // Vertex 1 has X:0.692820, Y:-0.692820, Z:0.969849 W:0.020000
-    // Attributes 1 has U:0.020000, V:0.000000
-    // Vertex 2 has X:0.692820, Y:0.692820, Z:0.969849 W:0.020000
-    // Attributes 2 has U:0.020000, V:0.020000
-    // Vertex 3 has X:-0.692820, Y:-0.692820, Z:0.969849 W:0.020000
-    // Attributes 3 has U:0.000000, V:0.000000
-
 
     // Adapt to viewport 
     viewportTransform(target, clippedVertices, numClipped);

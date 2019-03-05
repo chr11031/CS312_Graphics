@@ -539,11 +539,6 @@ void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & v
 
 void matrix4by4DebuggerPassthrough(Matrix matrix, char text[]){
 
-    // perspective(60, 1.0, 1, 200); 
-
-
-
-
     double oneOne = matrix.getElement(0,0);
     double twoOne = matrix.getElement(1,0);
     double threeOne = matrix.getElement(2,0);
@@ -571,41 +566,18 @@ void matrix4by4DebuggerPassthrough(Matrix matrix, char text[]){
 void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
 
-    // Before Vertex Shader
-    // Vertex 1 has X:-20.000000, Y:-20.000000, Z:50.000000 W:1.000000
-    // Attributes 1 has U:0.000000, V:0.000000
-    // Vertex 2 has X:20.000000, Y:-20.000000, Z:50.000000 W:1.000000
-    // Attributes 2 has U:1.000000, V:0.000000
-    // Vertex 3 has X:20.000000, Y:20.000000, Z:50.000000 W:1.000000
-    // Attributes 3 has U:1.000000, V:1.000000
-
     Matrix model = *(Matrix*)uniforms[1].ptr;
-
     // matrix4by4DebuggerPassthrough(model, "model");
-
     Matrix view = *(Matrix*)uniforms[2].ptr;
-
     // matrix4by4DebuggerPassthrough(view, "view");
-
     Matrix proj = *(Matrix*)uniforms[3].ptr;
-
     // matrix4by4DebuggerPassthrough(proj, "proj");
 
 
 
     Matrix finalMatrix = proj * view * model;
-    // Matrix finalMatrix = model * view * proj;
     vertOut =  finalMatrix * vertIn;
     attrOut = attrIn;
-
-    // After Vertex Shader
-    // Vertex 1 has X:-34.641016, Y:-34.641016, Z:48.492462 W:50.000000
-    // Attributes 1 has U:0.000000, V:0.000000
-    // Vertex 2 has X:34.641016, Y:-34.641016, Z:48.492462 W:50.000000
-    // Attributes 2 has U:1.000000, V:0.000000
-    // Vertex 3 has X:34.641016, Y:34.641016, Z:48.492462 W:50.000000
-    // Attributes 3 has U:1.000000, V:1.000000
-
 
 }
 
