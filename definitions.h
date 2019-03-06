@@ -390,6 +390,8 @@ public:
                       const double & far);
     friend Matrix camera4x4(const double & offX, const double & offY, const double & offZ, 
                  const double & yaw, const double & pitch, const double & roll);
+    friend Matrix orthographic4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
+                      const double & far);
 
     void addTrans(const double & x, const double & y, const double & z);
     void addRot  (AXISROTATION rot, const double & degree);
@@ -657,6 +659,41 @@ Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, con
     rt[3][1] = 0;
     rt[3][2] = 1;
     rt[3][3] = 0;
+
+    rt.numCols = 4;
+    rt.numRows = 4;
+    rt.isInit = true;
+
+    return rt;
+}
+
+Matrix orthographic4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
+                      const double & far)
+{
+    Matrix rt;
+
+    double top = near * tan((fovYDegree * M_PI) / 180.0 / 2.0);
+    double right = aspectRatio * top;
+
+    rt[0][0] = 1 / right;
+    rt[0][1] = 0;
+    rt[0][2] = 0;
+    rt[0][3] = 0;
+
+    rt[1][0] = 0;
+    rt[1][1] = 1 / top;
+    rt[1][2] = 0;
+    rt[1][3] = 0;
+
+    rt[2][0] = 0;
+    rt[2][1] = 0;
+    rt[2][2] = -(2 / (far - near));
+    rt[2][3] = -((far + near) / (far - near));
+
+    rt[3][0] = 0;
+    rt[3][1] = 0;
+    rt[3][2] = 0;
+    rt[3][3] = 1;
 
     rt.numCols = 4;
     rt.numRows = 4;

@@ -206,6 +206,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             pointVector = {x - triangle[2].x, y - triangle[2].y};
             det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
+            if (boxMin.y == 511)
+            {
+                std::cout << "You're dead \n";
+            }
 
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
@@ -263,8 +267,8 @@ viewportTransform(const Buffer2D<PIXEL>& target,
 
     for (int i = 0; i < numClipped; i++)
     {
-        clippedVerts[i].x = round( (( (clippedVerts[i].x + 1) / 2.0 * w)));
-        clippedVerts[i].y = round( (( (clippedVerts[i].y + 1) / 2.0 * h)));
+        clippedVerts[i].x = round((clippedVerts[i].x + 1) / 2.0 * w);
+        clippedVerts[i].y = round((clippedVerts[i].y + 1) / 2.0 * h);
     }
 }
 
