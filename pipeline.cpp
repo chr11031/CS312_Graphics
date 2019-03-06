@@ -62,7 +62,7 @@ void processUserInputs(bool & running)
                 double mouseY = e.motion.yrel;
 
                 myCam.yaw -= mouseX * 0.02;
-                myCam.pitch += mouseY * 0.02;
+                myCam.pitch -= mouseY * 0.02;
             }
         }
 
@@ -84,23 +84,23 @@ void processUserInputs(bool & running)
         // Translation
         if(e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
         {
-            myCam.z += (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-            myCam.x -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+            myCam.z += (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+            myCam.x -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
         }
         if(e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
         {
-            myCam.z -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-            myCam.x += (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+            myCam.z -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+            myCam.x += (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
         }
         if(e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
         {
-            myCam.x -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-            myCam.z -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+            myCam.x -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+            myCam.z -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
         }
         if(e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
         {
-            myCam.x += (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-            myCam.z += (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+            myCam.x += (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+            myCam.z += (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
         }
     }
 }
@@ -254,18 +254,15 @@ void intersectAtNegativeLine(double& along, const double& segStartX, const doubl
 }
 
 Vertex VertexBetweenVerts(const Vertex& vertA, const Vertex& vertB, const double& along) {
-    Vertex rv; /*
-    rv.x = vertA.x + (vertB.x - vertA.x) * along;
-    rv.y = vertA.y + (vertB.y - vertA.y) * along;
-    rv.z = vertA.z + (vertB.z - vertA.z) * along;
-    rv.w = vertA.w + (vertB.w - vertA.w) * along;
-    */
-   rv.x = lerp(vertA.x, vertB.x, along);
-   rv.y = lerp(vertA.y, vertB.y, along);
-   rv.z = lerp(vertA.z, vertB.z, along);
-   rv.w = lerp(vertA.w, vertB.w, along);
+    Vertex rv;
+
+    rv.x = lerp(vertA.x, vertB.x, along);
+    rv.y = lerp(vertA.y, vertB.y, along);
+    rv.z = lerp(vertA.z, vertB.z, along);
+    rv.w = lerp(vertA.w, vertB.w, along);
     return rv;
 }
+
 
 void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], const int& numIn,
                    Vertex clippedVertices[], Attributes clippedAttrs[], int& numClipped) {
@@ -577,7 +574,7 @@ void normalizeVertices(Vertex clippedVertices[], Attributes clippedAttrs[], cons
 
         // Set up W value for depth interpolation
         double zValue = clippedVertices[i].w;
-        clippedVertices[i].w = 1.0 / clippedVertices[i].w;
+        clippedVertices[i].w = 1.0 / zValue;
 
         // Set up Attributes
         for (int j = 0; j < clippedAttrs[i].numMembers; j++) {
@@ -668,9 +665,9 @@ void DrawPrimitive(PRIMITIVES prim,
                 vAttr[0] = clippedAttrs[0];
                 vAttr[1] = clippedAttrs[i - 1];
                 vAttr[2] = clippedAttrs[i];
-            }
 
-            DrawTriangle(target, tri, vAttr, uniforms, frag);
+                DrawTriangle(target, tri, vAttr, uniforms, frag);
+            }
     }
 }
 

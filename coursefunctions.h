@@ -489,7 +489,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         fragImg.FragShader = &ImageFragShader;
 
         VertexShader vertImg;
-        vertImg.VertShader = &VertexShaderV2;
+        vertImg.VertShader = &MVPVertexShader;
 
         // Uniforms
         // [0] Image reference

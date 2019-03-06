@@ -151,9 +151,9 @@ Matrix viewTransform(const double& offX, const double& offY, const double& offZ,
 Matrix perspectiveTransform(const double& fovYDegrees, const double& aspectRatio,
                             const double& near, const double& far)
 {
-    Matrix matrix;
+    Matrix matrix; // this starts off as an identity matrix
 
-    double top = near * tan(fovYDegrees * M_PI / 180.0) / 2.0;
+    double top = near * tan(fovYDegrees * M_PI / 180.0 / 2.0);
     double right = aspectRatio * top;
     matrix[0]  = near / right;
     matrix[5]  = near / top;

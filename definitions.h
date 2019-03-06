@@ -280,7 +280,7 @@ class Attributes
         Attributes() {numMembers = 0;}
 
         // Interpolation Constructor
-        /*
+        
         Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
                     const Attributes & first, const Attributes & secnd, const Attributes & third, const double interpZ)
         {
@@ -293,25 +293,12 @@ class Attributes
                 numMembers += 1;
             }
         }
-        */
-       Attributes(const double& areaTriangle, const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
-                    const Attributes & first, const Attributes & secnd, const Attributes & third,
-		    const double & correctZ)
-        {
-            while(numMembers < first.numMembers)
-            {
-	         arr[numMembers].d = interp(areaTriangle, firstWgt, secndWgt, thirdWgt, first.arr[numMembers].d, secnd[numMembers].d, third.arr[numMembers].d);
-			 arr[numMembers].d = arr[numMembers].d * correctZ;
-			 numMembers += 1;
-            }
-}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
             numMembers = first.numMembers;
             for (int i = 0; i < numMembers; i++)
-                //arr[i].d = first[i].d + (second[i].d - first[i].d) * along;
                 arr[i].d = lerp(first[i].d, second[i].d, along);
         }
 

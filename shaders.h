@@ -46,8 +46,8 @@ void TransformVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & 
     attrOut = vertAttr;
 }
 
-// Another vertex shader
-void VertexShaderV2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+// Vertex shader that performs model-view-projection calculations
+void MVPVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     Matrix* model = (Matrix*)uniforms[1].ptr;
     Matrix* view = (Matrix*)uniforms[2].ptr;
