@@ -203,7 +203,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        pointAttributes.argb[1] = 1; 
+        pointAttributes[1].d = 1; 
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -295,17 +295,17 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
 
-        colorAttributes[0].argb[1] = 1.0;
-        colorAttributes[0].argb[2] = 0.0;
-        colorAttributes[0].argb[3] = 0.0;
+        colorAttributes[0][1].d = 1.0;
+        colorAttributes[0][2].d = 0.0;
+        colorAttributes[0][3].d = 0.0;
         
-        colorAttributes[1].argb[1] = 0.0;
-        colorAttributes[1].argb[2] = 1.0;
-        colorAttributes[1].argb[3] = 0.0;
+        colorAttributes[1][1].d = 0.0;
+        colorAttributes[1][2].d = 1.0;
+        colorAttributes[1][3].d = 0.0;
         
-        colorAttributes[2].argb[1] = 0.0;
-        colorAttributes[2].argb[2] = 0.0;
-        colorAttributes[2].argb[3] = 1.0;
+        colorAttributes[2][1].d = 0.0;
+        colorAttributes[2][2].d = 0.0;
+        colorAttributes[2][3].d = 1.0;
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragmentShader;
@@ -324,19 +324,19 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         
-        imageAttributes[0].argb[0] = 1;
-        imageAttributes[0].argb[1] = 0;
+        imageAttributes[0][0].d = 1;
+        imageAttributes[0][1].d = 0;
 
-        imageAttributes[1].argb[0] = 1;
-        imageAttributes[1].argb[1] = 1;
+        imageAttributes[1][0].d = 1;
+        imageAttributes[1][1].d = 1;
 
-        imageAttributes[2].argb[0] = 0;
-        imageAttributes[2].argb[1] = 1;
+        imageAttributes[2][0].d = 0;
+        imageAttributes[2][1].d = 1;
 
         BufferImage myImage("checker.bmp");
 
         Attributes imageUniforms;
-        imageUniforms.ptr = &myImage;
+        imageUniforms[0].ptr = &myImage;
 
         FragmentShader myImageFragShader(ImageFragmentShader);
         myImageFragShader.FragShader = ImageFragmentShader;
@@ -375,24 +375,24 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         
-        imageAttributesA[0].argb[0] = coordinates[0][0]; 
-        imageAttributesA[0].argb[1] = coordinates[0][1];
-        imageAttributesA[1].argb[0] = coordinates[1][0];
-        imageAttributesA[1].argb[1] = coordinates[1][1];
-        imageAttributesA[2].argb[0] = coordinates[2][0];
-        imageAttributesA[2].argb[1] = coordinates[2][1];
+        imageAttributesA[0].addDouble(coordinates[0][0]); 
+        imageAttributesA[0].addDouble(coordinates[0][1]);
+        imageAttributesA[1].addDouble(coordinates[1][0]);
+        imageAttributesA[1].addDouble(coordinates[1][1]);
+        imageAttributesA[2].addDouble(coordinates[2][0]);
+        imageAttributesA[2].addDouble(coordinates[2][1]);
 
-        imageAttributesB[0].argb[0] = coordinates[2][0];
-        imageAttributesB[0].argb[1] = coordinates[2][1];
-        imageAttributesB[1].argb[0] = coordinates[3][0];
-        imageAttributesB[1].argb[1] = coordinates[3][1];
-        imageAttributesB[2].argb[0] = coordinates[0][0];
-        imageAttributesB[2].argb[1] = coordinates[0][1];
+        imageAttributesB[0].addDouble(coordinates[2][0]);
+        imageAttributesB[0].addDouble(coordinates[2][1]);
+        imageAttributesB[1].addDouble(coordinates[3][0]);
+        imageAttributesB[1].addDouble(coordinates[3][1]);
+        imageAttributesB[2].addDouble(coordinates[0][0]);
+        imageAttributesB[2].addDouble(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
 
         Attributes imageUniforms;
-        imageUniforms.ptr = &myImage;
+        imageUniforms.addPtr(&myImage);
 
         FragmentShader fragImg;
         fragImg.FragShader = ImageFragmentShader;
@@ -419,17 +419,19 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
 
-        colorAttributes[0].argb[1] = 1.0;
-        colorAttributes[0].argb[2] = 0.0;
-        colorAttributes[0].argb[3] = 0.0;
+        /*
+        colorAttributes[0].doubles[1] = 1.0;
+        colorAttributes[0].doubles[2] = 0.0;
+        colorAttributes[0].doubles[3] = 0.0;
         
-        colorAttributes[1].argb[1] = 0.0;
-        colorAttributes[1].argb[2] = 1.0;
-        colorAttributes[1].argb[3] = 0.0;
+        colorAttributes[1].doubles[1] = 0.0;
+        colorAttributes[1].doubles[2] = 1.0;
+        colorAttributes[1].doubles[3] = 0.0;
         
-        colorAttributes[2].argb[1] = 0.0;
-        colorAttributes[2].argb[2] = 0.0;
-        colorAttributes[2].argb[3] = 1.0;
+        colorAttributes[2].doubles[1] = 0.0;
+        colorAttributes[2].doubles[2] = 0.0;
+        colorAttributes[2].doubles[3] = 1.0;        
+*/
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragmentShader;
@@ -443,7 +445,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	* TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         TransformationMatrix* translate = new TransformationMatrix(TRANSLATE, 100, 50, 0);
-        colorUniforms.matrix = translate;
+        //colorUniforms.ptrs[0] = (void*)translate;
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -451,7 +453,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         TransformationMatrix* scale = new TransformationMatrix(SCALE, 0.5, 0.5, 0.5);
-        colorUniforms.matrix = scale;
+        //colorUniforms.ptrs[0] = (void*)scale;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -459,7 +461,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
         TransformationMatrix* rotate = new TransformationMatrix(ROTATE, 0, 0, 30);
-        colorUniforms.matrix = rotate;
+        //colorUniforms.ptrs[0] = (void*)rotate;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -470,9 +472,10 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 	TransformationMatrix* all = new TransformationMatrix();
         // Multiply in wanted order for final result
         (*all) = (*rotate) * (*translate) * (*scale);
-        colorUniforms.matrix = all;
+        //colorUniforms.ptrs[0] = (void*)all;
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
+      
 }
 
 /********************************************
@@ -522,21 +525,40 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        imageAttributesA[0].addDouble(coordinates[0][0]);
+        imageAttributesA[0].addDouble(coordinates[0][1]);
+        imageAttributesA[1].addDouble(coordinates[1][0]);
+        imageAttributesA[1].addDouble(coordinates[1][1]);
+        imageAttributesA[2].addDouble(coordinates[2][0]);
+        imageAttributesA[2].addDouble(coordinates[2][1]);
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        imageAttributesB[0].addDouble(coordinates[2][0]);
+        imageAttributesB[0].addDouble(coordinates[2][1]);
+        imageAttributesB[1].addDouble(coordinates[3][0]);
+        imageAttributesB[1].addDouble(coordinates[3][1]);
+        imageAttributesB[2].addDouble(coordinates[0][0]);
+        imageAttributesB[2].addDouble(coordinates[0][1]);
 
+        static BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+
+        TransformationMatrix model;
+        TransformationMatrix view;  
+        view.toCameraMatrix(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        TransformationMatrix proj;  
+        proj.toPerspectiveMatrix(60.0, 1.0, 1, 200); //FOV, AspectRatio, Near, Far
+
+        imageUniforms.addPtr((void*)&myImage);
+        imageUniforms.addPtr((void*)&model);
+        imageUniforms.addPtr((void*)&view);
+        imageUniforms.addPtr((void*)&proj);
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragmentShader;
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+        vertImg.VertShader = SimpleVertShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);

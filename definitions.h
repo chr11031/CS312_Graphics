@@ -5,6 +5,8 @@
 #include "math.h"
 #include "shaders.h"
 
+#include <iostream>
+
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
@@ -23,6 +25,9 @@
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 
+// Getting size of any array
+#define ARRAY_SIZE(array) (sizeof((array))/sizeof((array[0])))
+
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
@@ -30,6 +35,20 @@
 #define ROTATE 0
 #define SCALE 1
 #define TRANSLATE 2
+
+/******************************************************
+ * Camera Struct
+ *****************************************************/
+struct CameraControls {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
+};
+
+CameraControls myCam;
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -51,6 +70,22 @@ struct Vertex
     double z;
     double w;
 };
+
+
+/**************************************************************
+ * INTERP
+ * Interpolates the attributes.
+ *************************************************************/
+double interp(double area, double det1, double det2, double det3, double attr1, double attr2, double attr3) 
+{
+    // Calculate the weights of each point (percentage)
+    double weight1 = det1 / area;
+    double weight2 = det2 / area;
+    double weight3 = 1 - weight1 - weight2;
+    
+    // Apply the weights and return the final value
+    return ((weight2 * attr1) + (weight3 * attr2) + (weight1 * attr3));
+}
 
 /****************************************************
  * A matrix used for 3D transformations
@@ -135,7 +170,9 @@ class TransformationMatrix
             (zMat).base[1][1] = cos(z * M_PI / 180.0);
             (zMat).base[2][2] = 1;
 
-            *this = (zMat) * (yMat) * (xMat);
+            // Yaw -y Pitch -x Roll -z
+            // Pitch, then Yaw, then Roll
+            *this = (xMat) * (yMat) * (zMat);
         }
 
     public:
@@ -248,6 +285,45 @@ class TransformationMatrix
             temp.z = multiplyRowVertex(base[2], vert);
             temp.w = multiplyRowVertex(base[3], vert);
             return temp;
+        }
+
+        void toPerspectiveMatrix(const double &fovYDeg, const double &aspectRatio,
+                        const double &near, const double &far)
+        {
+            double top = near * tan((fovYDeg * M_PI) / 180.0 / 2.0);
+            double right = aspectRatio * top;
+
+            base[0][0] = near/right;
+            base[0][1] = 0;
+            base[0][2] = 0;
+            base[0][3] = 0;
+            
+            base[1][0] = 0;
+            base[1][1] = near/top;
+            base[1][2] = 0;
+            base[1][3] = 0;
+            
+            base[2][0] = 0;
+            base[2][1] = 0;
+            base[2][2] = (far + near) / (far - near);
+            base[2][3] = (-2 * far * near) / (far - near);
+            
+            base[3][0] = 0;
+            base[3][1] = 0;
+            base[3][2] = 1;
+            base[3][3] = 0;
+            }
+
+
+        void toCameraMatrix(const double &offx, const double &offy, const double &offz,
+                            const double &yaw, const double &pitch, const double &roll)
+        {
+            TransformationMatrix rt;
+            TransformationMatrix trans(TRANSLATE, -offx, -offy, -offz);
+            TransformationMatrix rotation(ROTATE, -pitch, -yaw, -roll);
+
+            rt = rotation * trans;
+            *this = rt;
         }
 
 };
@@ -420,6 +496,13 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Union of two types of attributes used in Attributes
+union attribute
+{
+    double d;
+    void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -429,21 +512,62 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        // The Matrix used for transformations
-        TransformationMatrix* matrix;
-        // Used for the color of the point or u=a v=r
-        double argb[4];
-        // For now points to the image, but can later point to other assets
-        void* ptr;
+        int numMembers = 0;
+        attribute attr[16];
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() { numMembers = 0; }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for(int i = 0; i < numMembers; i++)
+            {
+                attr[i].d = (first[i].d) + ((second[i].d - first[i].d) * along);
+            }
         }
+
+        // interpolate all doubles
+        Attributes(const double & firstDet, const double & secondDet, const double & thirdDet, 
+                   const Attributes & first, const Attributes & secnd, const Attributes & third,
+                   const double & correctZ, const double& area)
+        {
+            numMembers = 0;
+            while(numMembers < first.numMembers)
+            {
+                attr[numMembers].d = interp(area, firstDet, secondDet, thirdDet, first[numMembers].d, secnd[numMembers].d, third[numMembers].d);
+                attr[numMembers].d = attr[numMembers].d * correctZ;
+                numMembers += 1;
+            }
+        }
+
+        // Const return operator
+        const attribute & operator[](const int & i) const
+        {
+            return attr[i];
+        }
+
+        // Return operator
+        attribute & operator[](const int & i) 
+        {
+            return attr[i];
+        }
+
+        // Add Double
+        void addDouble(const double & d)
+        {
+            attr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Add Pointer
+        void addPtr(void * ptr)
+        {
+            attr[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+
 };	
 
 // Example of a fragment shader
