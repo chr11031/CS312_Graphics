@@ -598,7 +598,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // imageAttributesB[3].attrValues[1].d = coordinates[3][1];
         // imageAttributesB[3].numValues = 2;
 
-        BufferImage myImage("checker.bmp");
+        static BufferImage myImage("checker.bmp");
         Attributes  imageUniforms;
         Matrix      model;
         

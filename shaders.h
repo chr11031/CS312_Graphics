@@ -19,8 +19,14 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 {
     // previous BufferImage* myPointer = (BufferImage*)uniforms.pointerImg;
     BufferImage* myPointer = (BufferImage*)uniforms[0].ptr;
-    int x = vertAttr.attrValues[0].d * (myPointer->width() - 1);
-    int y = vertAttr.attrValues[1].d * (myPointer->height() - 1);
+    int x = vertAttr[0].d * (myPointer->width() - 1);
+    int y = vertAttr[1].d * (myPointer->height() - 1);
+
+    if(x > 2000 || x < 0)
+    {
+        fragment = 0xff00ff00;
+        return;
+    }
 
     fragment = (*myPointer)[y][x];
 }

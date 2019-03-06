@@ -676,8 +676,8 @@ void normalizeVertices(Vertex clippedVertices[], Attributes clippedAttrs[], cons
  *************************************************************/
 void  viewportTransform(Buffer2D<PIXEL> &target, Vertex clippedVertices[], const int &numClipped) // previously vertx, int ,buffer
 {
-    int w = target.width();
-    int h = target.height();
+    int w = target.width() - 1;
+    int h = target.height() - 1;
 
     // move from -1 to 1 space in X,Y to screen coordinates
     for (int i  = 0; i < numClipped; i++)
@@ -808,7 +808,8 @@ int main()
         // Test Draw
         // GameOfLife(frame); // to run this, comment out other draw functions, clearscreen, and processuserinputs
         // TestVertexShader(frame);
-        TestPipeline(frame);
+        // TestPipeline(frame);
+        CADView(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

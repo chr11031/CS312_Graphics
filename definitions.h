@@ -424,6 +424,42 @@ Matrix perspective4x4(const double &fovYDeg, const double &aspectRatio, const do
 /*****************************************
  * Matrix helper functions
  * **************************************/
+Matrix orthogonal4x4(const double &fovYDeg, const double &aspectRatio, const double &near, const double &far)
+{
+    Matrix rt;
+    rt.numRows = 4;
+    rt.numCols = 4;
+
+    double top   = near * tan((fovYDeg * M_PI) / 180 / 2.0); // previous parenthesis after 180
+    double right = aspectRatio * top;
+
+    rt[0][0] = 1 / right;
+    rt[0][1] = 0;
+    rt[0][2] = 0;
+    rt[0][3] = 0;
+
+    rt[1][0] = 0;
+    rt[1][1] = 1 / top;
+    rt[1][2] = 0;
+    rt[1][3] = 0;
+    // rt[1][4] = 0; // previously un commented
+
+    rt[2][0] = 0;
+    rt[2][1] = 0;
+    rt[2][2] = (-2) / (far - near);
+    rt[2][3] = - (far + near) / (far - near);
+
+    rt[3][0] = 0;
+    rt[3][1] = 0;
+    rt[3][2] = 1;
+    rt[3][3] - 0;
+
+    return rt;
+}
+
+/*****************************************
+ * Matrix helper functions
+ * **************************************/
 Matrix camera4x4(const double & offX, const double &offY, const double &offZ, const double &yaw, const double &pitch, const double &roll)
 {
     Matrix trans;
@@ -450,6 +486,7 @@ template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -463,6 +500,7 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+            baseAllocated = true;
         }
 
         // Empty Constructor
@@ -471,17 +509,18 @@ class Buffer2D
 
     public:
         // Free dynamic memory
-        /*
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
+            if (baseAllocated)
             {
-                free(grid[r]);
+                for(int r = 0; r < h; r++)
+                {
+                    free(grid[r]);
+                }
+                free(grid);
             }
-            free(grid);
         }
-        */
 
         // Size-Specified constructor, no data
         Buffer2D(const int & wid, const int & hgt)
@@ -630,14 +669,16 @@ class BufferImage : public Buffer2D<PIXEL>
             // De-Allocate non-SDL2 image data
             if(ourBufferData)
             {
-                for(int y = 0; y < h; y++)
-                {
-                    free(grid[y]);
-                }
+                // for(int y = 0; y < h; y++)
+                // {
+                //     free(grid[y]);
+                // }
+                free(grid);
+                return;
             }
 
-            // De-Allocate pointers for column references
-            free(grid);
+            // // De-Allocate pointers for column references
+            // free(grid);
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -676,6 +717,8 @@ class BufferImage : public Buffer2D<PIXEL>
             ourSurfaceInstance = false;
             if(!readBMP(path))
                 return;
+
+            ourBufferData = true;
         }
 };
 
@@ -739,6 +782,7 @@ class Attributes
                 attrValues[i].d = vertAttrs[0].attrValues[i].d * w2 +
                                   vertAttrs[1].attrValues[i].d * w3 +
                                   vertAttrs[2].attrValues[i].d * w1;
+                
             }
         }
 
