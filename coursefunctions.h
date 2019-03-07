@@ -5,8 +5,6 @@
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
-camControls myCam;
-
 /***************************************************
  * Team Activity for week #1.
  * When working on this activity be sure to 
@@ -175,10 +173,166 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
+        botRight.zeroOut();
+        botLeft.zeroOut();
+        topRight.zeroOut();
+        topLeft.zeroOut();
 
 
         // Your code goes here 
         // Feel free to copy from other test functions to get started!
+
+        static Buffer2D<double> zBuf(target.width(), target.height());
+        // Will need to be cleared every frame, like the screen
+
+        /**************************************************
+        * 1. Image quad (2 TRIs) Code (texture interpolated)
+        **************************************************/
+        Vertex quad[] = { {-20,-20, 50, 1},  //0
+                          {20, -20, 50, 1},  //1
+                          {20, 20, 50, 1},   //2
+                          {-20, 20, 50, 1},  //3
+                          {-20,-20, 90, 1},  //4
+                          {20, -20, 90, 1},  //5
+                          {20, 20, 90, 1},   //6
+                          {-20, 20, 90, 1}}; //7
+
+        Vertex verticesImgA[3];
+        Attributes imageAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
+
+        Vertex verticesImgB[3];        
+        Attributes imageAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
+
+        Vertex verticesImgC[3];
+        Attributes imageAttributesC[3];
+        verticesImgC[0] = quad[2];
+        verticesImgC[1] = quad[6];
+        verticesImgC[2] = quad[7];
+
+        Vertex verticesImgD[3];
+        Attributes imageAttributesD[3];
+        verticesImgD[0] = quad[2];
+        verticesImgD[1] = quad[7];
+        verticesImgD[2] = quad[3];
+
+        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        //First group of attributes
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        // Second group of attributes
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+
+        // Third group of attributes
+        imageAttributesC[0].insertDbl(coordinates[1][0]);
+        imageAttributesC[0].insertDbl(coordinates[1][1]);
+
+        imageAttributesC[1].insertDbl(coordinates[2][0]);
+        imageAttributesC[1].insertDbl(coordinates[2][1]);
+
+        imageAttributesC[2].insertDbl(coordinates[3][0]);
+        imageAttributesC[2].insertDbl(coordinates[3][1]);
+
+        // Fourth group of attributes
+        imageAttributesD[0].insertDbl(coordinates[1][0]);
+        imageAttributesD[0].insertDbl(coordinates[1][1]);
+
+        imageAttributesD[1].insertDbl(coordinates[3][0]);
+        imageAttributesD[1].insertDbl(coordinates[3][1]);
+
+        imageAttributesD[2].insertDbl(coordinates[0][0]);
+        imageAttributesD[2].insertDbl(coordinates[0][1]);
+
+        static BufferImage myImage("images/doggie.bmp");
+        //Ensure the checkboard image is in this directory, you can use another image though
+
+        Attributes imageUniforms;
+
+        //Your code for the uniform goes here
+        Matrix model;
+        model.addTrans(0, 0, 0);
+        Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
+                               myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj = perspective4x4(60, 1.0, 1, 200); // FOV, Aspect, Near, Far
+
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&proj);
+
+        
+
+        FragmentShader fragImg;
+        fragImg.setShader(imageFragShader);
+        // Your code for the image fragment shader goes here
+
+        VertexShader vertImg;
+        // Your code for the image vertex shader goes here
+        // NOTE: This must include the at least the 
+        // projection matrix if not more transformations 
+        vertImg.setShader(SimpleVertexShader2);
+                
+        // Draw image triangle 
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        static BufferImage newImg("images/husky.bmp");
+        imageUniforms[0].ptr = (void*)&newImg;
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgC, imageAttributesC, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgD, imageAttributesD, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+
+        imageUniforms[0].ptr = (void*)&myImage;
+        view = camera4x4(topCam.x, topCam.y, topCam.z,
+                        topCam.yaw, topCam.pitch, topCam.roll);
+        imageUniforms[2].ptr = (void*)&view;
+
+        proj = orthographic4x4(60, 1.0, 1, 200);
+        imageUniforms[3].ptr = (void*)&proj;
+
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        imageUniforms[0].ptr = (void*)&newImg;
+        DrawPrimitive(TRIANGLE, topRight, verticesImgC, imageAttributesC, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgD, imageAttributesD, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        imageUniforms[0].ptr = (void*)&myImage;
+        view = camera4x4(frontCam.x, frontCam.y, frontCam.z,
+                        frontCam.yaw, frontCam.pitch, frontCam.roll);
+        imageUniforms[2].ptr = (void*)&view;
+
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        view = camera4x4(sideCam.x, sideCam.y, sideCam.z,
+                        sideCam.yaw, sideCam.pitch, sideCam.roll);
+        imageUniforms[2].ptr = (void*)&view;
+
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
 
 
         // Blit four panels to target

@@ -107,26 +107,36 @@ void processUserInputs(bool & running)
 
         if (e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
         {
-            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
+            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
         {
-            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
+            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
         {
-            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
+            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
         {
-            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
+            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * MOUSE_SENSITIVITY;
+        }
+
+        if (e.key.keysym.sym == 'f' && e.type == SDL_KEYDOWN)
+        {
+            myCam.y += 1;
+        }
+
+        if (e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN)
+        {
+            myCam.y -=1;
         }
     }
 }
@@ -206,11 +216,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             pointVector = {x - triangle[2].x, y - triangle[2].y};
             det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
-            if (boxMin.y == 511)
-            {
-                std::cout << "You're dead \n";
-            }
-
+         
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
                 double correctedZ = 0.0;
@@ -838,7 +844,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        TestPipeline(frame);
+        CADView(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

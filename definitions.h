@@ -21,6 +21,7 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define MOUSE_SENSITIVITY 0.6
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -102,6 +103,11 @@ struct camControls
     double roll = 0;
     double pitch = 0;
 };
+
+camControls myCam;
+camControls topCam = {0, 70, 70, 0, 0, 90};
+camControls sideCam = {0, 0, 0, 0, 0, 0};
+camControls frontCam = {0, 0, 0, 0, 0, 0};
 
 /******************************************************
  * BUFFER_2D:
@@ -675,25 +681,25 @@ Matrix orthographic4x4(const double & fovYDegree, const double & aspectRatio, co
     double top = near * tan((fovYDegree * M_PI) / 180.0 / 2.0);
     double right = aspectRatio * top;
 
-    rt[0][0] = 1 / right;
+    rt[0][0] = 1.0 / right;
     rt[0][1] = 0;
     rt[0][2] = 0;
     rt[0][3] = 0;
 
     rt[1][0] = 0;
-    rt[1][1] = 1 / top;
+    rt[1][1] = 1.0 / top;
     rt[1][2] = 0;
     rt[1][3] = 0;
 
     rt[2][0] = 0;
     rt[2][1] = 0;
-    rt[2][2] = -(2 / (far - near));
-    rt[2][3] = -((far + near) / (far - near));
+    rt[2][2] = (-2.0 / (far - near));
+    rt[2][3] = -(far + near) / (far - near);
 
     rt[3][0] = 0;
     rt[3][1] = 0;
-    rt[3][2] = 0;
-    rt[3][3] = 1;
+    rt[3][2] = 1;
+    rt[3][3] = 0;
 
     rt.numCols = 4;
     rt.numRows = 4;
@@ -860,4 +866,38 @@ void DrawPrimitive(PRIMITIVES prim,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);             
        
+class Triangle
+{
+private:
+    Vertex verts[3];
+    Attributes attrs[3];
+
+public:
+    // Boring default
+    Triangle() {}
+
+    Triangle(Vertex v1, Vertex v2, Vertex v3, Attributes a1, Attributes a2, Attributes a3)
+    {
+        verts[0] = v1;
+        verts[1] = v2;
+        verts[2] = v3;
+        attrs[0] = a1;
+        attrs[1] = a2;
+        attrs[2] = a3;
+    }
+
+    Triangle(Vertex verts[3], Attributes attrs[3])
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            this->verts[i] = verts[i];
+            this->attrs[i] = attrs[i];
+        }
+    }
+
+    Vertex* getVerts() { return (Vertex*)&verts; }
+    Attributes* getAttrs() { return (Attributes*)&attrs; }
+};
+
+    
 #endif
