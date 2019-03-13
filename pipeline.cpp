@@ -84,8 +84,8 @@ void processUserInputs(bool & running)
                 double mouseX = e.motion.xrel;
                 double mouseY = e.motion.yrel;
 
-                myCam.yaw += mouseX * 0.02;
-                myCam.pitch += mouseY * 0.02;
+                myCam.yaw += mouseX * MOUSE_SENSITIVITY;
+                myCam.pitch += mouseY * MOUSE_SENSITIVITY;
             }
 
         }
@@ -107,26 +107,48 @@ void processUserInputs(bool & running)
 
         if (e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
         {
-            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
+            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
         {
-            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
+            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
         {
-            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
+            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
         }
 
         if (e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
         {
-            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.5;
+            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
+            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * MOVE_SENSITIVITY;
+        }
+
+        if (e.key.keysym.sym == 'f' && e.type == SDL_KEYDOWN)
+        {
+            myCam.y += MOVE_SENSITIVITY;
+        }
+
+        if (e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN)
+        {
+            myCam.y -= MOVE_SENSITIVITY;
+        }
+
+        if(e.key.keysym.sym == 'r' && e.type == SDL_KEYDOWN)
+        {
+            ORTH_VIEW_BOX += 0.05;
+            std::cout << ORTH_VIEW_BOX << std::endl;
+        }
+
+        if (e.key.keysym.sym == 't' && e.type == SDL_KEYDOWN)
+        {
+            ORTH_VIEW_BOX -= 0.05;
+            std::cout << ORTH_VIEW_BOX << std::endl;
         }
     }
 }
@@ -206,11 +228,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             pointVector = {x - triangle[2].x, y - triangle[2].y};
             det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
 
-            if (boxMin.y == 511)
-            {
-                std::cout << "You're dead \n";
-            }
-
+         
             if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
             {
                 double correctedZ = 0.0;
@@ -761,14 +779,12 @@ void DrawPrimitive(PRIMITIVES prim,
     Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
     
-    // Stub this out for now
     // Clipping
     Vertex clippedVerts[MAX_VERTICES];
     Attributes clippedAttrs[MAX_VERTICES];
     int numClipped;
     clipVertices(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
 
-    // Stub this out for now
     // Normalization
     normalizeVerticies(clippedVerts, clippedAttrs, numClipped);
 
