@@ -416,32 +416,29 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         /******************************************************************
 	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
-        Matrix translate = Matrix(Translate, 100, 50, 0);
-        Matrix transform = Matrix(None, 0,0,0);
+        Matrix translate = translateMatrix(100, 50, 0);
         colorUniforms.matrix = translate;      
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
-        Matrix scale = Matrix(Scale, 0.5, 0.5, 0.5);
+        Matrix scale = scaleMatrix(0.5);
         colorUniforms.matrix = scale;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
-        Matrix rotate = Matrix(Rotate, 0, 0, 30);
-        //this is a temporary fix for whatever is wrong with rotate
-        Matrix translate2 = Matrix(Translate, -150, 0, 0);
-        colorUniforms.matrix = translate2 * rotate;
+        Matrix rotate = rotateMatrix(2, 30);
+        colorUniforms.matrix = rotate;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-        transform = (translate2 * rotate) * translate * scale;
+        Matrix transform = rotate * translate * scale;
         colorUniforms.matrix = transform;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 }

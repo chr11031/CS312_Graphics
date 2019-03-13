@@ -60,140 +60,263 @@ struct Vertex
 /****************************************************
  * Describes a matrix 
  ****************************************************/
-class Matrix 
+class Matrix
 {
+    // 2D Array
     private:
-        
+        double mat[4][4];
 
-        // Multiply a 1x4 and 4x1 matrix
-        double getValue( double row[4], double lhs[4][4], int column)
+    // Update Matrix values by array
+    void copyValues(const Matrix & source)
+    {
+        if(rowLen != source.rowLen || colLen != source.colLen) return;
+        for(int r = 0; r < rowLen; r++)
         {
-            return row[0] * lhs[0][column]
-                 + row[1] * lhs[1][column]
-                 + row[2] * lhs[2][column]
-                 + row[3] * lhs[3][column];
-        }
-
-        // Multiply a row by a Vertex
-        double multiplyVertex(const double row[4], const Vertex vert) const
-        {
-            return row[0] * vert.x
-                 + row[1] * vert.y
-                 + row[2] * vert.z
-                 + row[3] * vert.w;
-        }
-
-        //Only working for z right now
-        void createRotationMatrix(double x, double y, double z)
-        {
-            Matrix Mat;
-            (Mat).base[0][0] = cos(z * M_PI / 180.0);
-            (Mat).base[0][1] = -sin(z * M_PI / 180.0);
-            (Mat).base[1][0] = sin(z * M_PI / 180.0);
-            (Mat).base[1][1] = cos(z * M_PI / 180.0);
-            (Mat).base[2][2] = 1;
-            (Mat).base[3][3] = 1;
-
-            *this = *this * Mat;
-        }
-
-    public:
-
-        double base[4][4];
-        Matrix(Transformation transformation, double x, double y, double z)
-        {
-            //The identity matrix
-            base[0][0] = 1;
-            base[0][1] = 0;
-            base[0][2] = 0;
-            base[0][3] = 0;
-
-            base[1][0] = 0;
-            base[1][1] = 1;
-            base[1][2] = 0;
-            base[1][3] = 0;
-
-            base[2][0] = 0;
-            base[2][1] = 0;
-            base[2][2] = 1;
-            base[2][3] = 0;
-
-            base[3][0] = 0;
-            base[3][1] = 0;
-            base[3][2] = 0;
-            base[3][3] = 1;
-
-            switch (transformation)
+            for(int c = 0; c < colLen; c++)
             {
-                case Rotate:
-                    createRotationMatrix(x, y, z);
-                    break;
-
-                //creates a translation matrix with the values given
-                case Translate:
-                    base[0][3] = x;
-                    base[1][3] = y;
-                    base[2][3] = z;
-                    break;
-
-                //scales the matrix by the values given
-                case Scale:
-                    base[0][0] = x;
-                    base[1][1] = y;
-                    base[2][2] = z;
-                    break;
-
-                case None:
-                default:
-                    break;
+                mat[r][c] = (source.get(r))[c];
             }
         }
+    }
 
-        Matrix()
+    // Update Matrix values by array
+    void setValues(double values[])
+    {
+        int i = 0;
+        for(int r = 0; r < rowLen; r++)
         {
-            double x, y, z;
-            Matrix(None, x, y, z);
+            for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = values[i++];
+            }
+        }
+    }
+
+    // Matrix Dimensions
+    public:
+        int colLen;
+        int rowLen;
+
+    // Initialize size, setup identity matrix or set values to zero
+    Matrix(int width = 4, int height = 4)
+    {
+        colLen = width;
+        rowLen = height;
+        setIdentity();
+    }
+
+    // Initialize a vertex as a matrix
+    Matrix(const Vertex & vert)
+    {
+        rowLen = 4;
+        colLen = 1;
+        mat[0][0] = vert.x;
+        mat[1][0] = vert.y;
+        mat[2][0] = vert.z;
+        mat[3][0] = vert.w;
+    }
+
+    // Initialize matrix to suggested values
+    Matrix(double values[], int width = 4, int height = 4)
+    {
+        colLen = width;
+        rowLen = height;
+        setValues(values);
+    }
+
+    // Assignment operator 
+    Matrix& operator = (const Matrix & right)
+    {
+        colLen = right.colLen;
+        rowLen = right.rowLen;
+        copyValues(right);
+    }
+
+    // Dereference Matrix in 'mat[r][c]' format
+    double* operator [](int i) { return (double*)mat[i]; }
+
+    // Const version of '[]'
+    const double* get(int i) const { return (double*)mat[i]; }
+
+    // Is it?
+    bool isQuare()
+    {
+        return colLen == rowLen;
+    }
+
+    // Set all entries to zero
+    void setZero()
+    {
+        for(int r = 0; r < rowLen; r++)
+        {
+            for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = 0.0f;
+            }
+        }
+    }
+
+    // Setup the identity matrix if square
+    bool setIdentity()
+    {
+        setZero();
+        if(!isQuare()) return false;
+
+        for(int d = 0; d < colLen; d++)
+        {
+            mat[d][d] = 1.0f;
+        }
+    }
+
+    // Multiply two matrices together, return the result
+    Matrix operator *(const Matrix & right) const
+    {
+        Matrix tr(right.rowLen, this->colLen);
+
+        if(colLen != right.rowLen)
+        {
+            return tr;
         }
 
-        // Multiply two matrices
-        Matrix operator*(Matrix& multiplier)
+        int runLength = rowLen;
+        for(int c = 0; c < right.colLen; c++)
         {
-            Matrix temp;
-
-            temp.base[0][0] = getValue(base[0], multiplier.base, 0);
-            temp.base[0][1] = getValue(base[0], multiplier.base, 1);
-            temp.base[0][2] = getValue(base[0], multiplier.base, 2);
-            temp.base[0][3] = getValue(base[0], multiplier.base, 3);
-
-            temp.base[1][0] = getValue(base[1], multiplier.base, 0);
-            temp.base[1][1] = getValue(base[1], multiplier.base, 1);
-            temp.base[1][2] = getValue(base[1], multiplier.base, 2);
-            temp.base[1][3] = getValue(base[1], multiplier.base, 3);
-
-            temp.base[2][0] = getValue(base[2], multiplier.base, 0);
-            temp.base[2][1] = getValue(base[2], multiplier.base, 1);
-            temp.base[2][2] = getValue(base[2], multiplier.base, 2);
-            temp.base[2][3] = getValue(base[2], multiplier.base, 3);
-
-            temp.base[3][0] = getValue(base[3], multiplier.base, 0);
-            temp.base[3][1] = getValue(base[3], multiplier.base, 1);
-            temp.base[3][2] = getValue(base[3], multiplier.base, 2);
-            temp.base[3][3] = getValue(base[3], multiplier.base, 3);
-            return temp;
+            for(int r = 0; r < tr.rowLen; r++)
+            {
+                tr[r][c] = 0;
+                for(int i = 0; i < runLength; i++)
+                {
+                    tr[r][c] += mat[r][i] * (right.get(i))[c];
+                }
+            }
         }
+        return tr;
+    } 
 
+    // Multiply a 4-component vertex by this matrix, return vertex
+    Vertex operator *(const Vertex & right) const 
+    {
+        // Convert Vertex to Matrix 
+        Matrix vl(right);
 
-        Vertex multiplyByVertex(const Vertex& vert) const
-        {
-            Vertex temp;
-            temp.x = multiplyVertex(base[0], vert);
-            temp.y = multiplyVertex(base[1], vert);
-            temp.z = multiplyVertex(base[2], vert);
-            temp.w = multiplyVertex(base[3], vert);
-            return temp;
-        }
+        // Multiply
+        Matrix out = (*this) * vl;
 
+        // Return in vertex format
+        Vertex rv;
+        rv.x = out[0][0];
+        rv.y = out[1][0];
+        rv.z = out[2][0];
+        rv.w = out[3][0];
+        return rv;
+    }
 };
+
+// Rotational helper (4x4)
+Matrix rotateMatrix(const int & dim, const double & degs)
+{
+  Matrix tr(4, 4);
+  double rads = degs * M_PI / 180.0;
+  double cosT = cos(rads);
+  double sinT = sin(rads);
+
+  tr[0][0] = 1;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = 0;
+  tr[1][0] = 0;
+  tr[1][1] = 1;
+  tr[1][2] = 0;
+  tr[1][3] = 0;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = 1;
+  tr[2][3] = 0;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+
+  switch(dim)
+    {
+    case 0:
+      tr[1][1] = cosT;
+      tr[1][2] = -sinT;
+      tr[2][1] = sinT;
+      tr[2][2] = cosT;
+      break;
+    case 1:
+      tr[0][0] = cosT;
+      tr[0][2] = -sinT;
+      tr[2][0] = sinT;
+      tr[2][2] = cosT;
+      break;
+    case 2:
+      tr[0][0] = cosT;
+      tr[0][1] = -sinT;
+      tr[1][0] = sinT;
+      tr[1][1] = cosT;
+      break;
+    default:
+      tr[1][1] = cosT;
+      tr[1][2] = -sinT;
+      tr[2][1] = sinT;
+      tr[2][2] = cosT;
+      break;
+    }
+
+  return tr;
+}
+
+// Uniform scaling helper (4x4)
+Matrix scaleMatrix(const double & scale)
+{
+  Matrix tr(4, 4);
+  tr[0][0] = scale;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = 0;
+  tr[1][0] = 0;
+  tr[1][1] = scale;
+  tr[1][2] = 0;
+  tr[1][3] = 0;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = scale;
+  tr[2][3] = 0;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+
+  return tr;
+}
+
+// Translation helper (4x4)
+Matrix translateMatrix(const double & offX, const double & offY, const double & offZ)
+{
+  Matrix tr(4, 4);
+  tr[0][0] = 1;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = offX;
+  tr[1][0] = 0;
+  tr[1][1] = 1;
+  tr[1][2] = 0;
+  tr[1][3] = offY;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = 1;
+  tr[2][3] = offZ;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+
+  return tr;
+}
+
+
 
 /******************************************************
  * BUFFER_2D:
@@ -464,7 +587,10 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
     //multiplies the values with the matrix
-    vertOut = uniforms.matrix.multiplyByVertex(vertIn);
+    Matrix trans = (Matrix)uniforms.matrix;
+    vertOut = trans * vertIn;
+
+    // Pass through attributes
     attrOut = attrIn;
 }
 
