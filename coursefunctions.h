@@ -913,6 +913,17 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
 
+void TestVSD(Buffer2D<PIXEL> & target)
+{
+        Vertex[] wall1= 
+        {
+                {},
+                {},
+                {},
+                {}
+        };
+}
+
 
 
 #endif
