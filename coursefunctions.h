@@ -490,21 +490,45 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].values[0] = coordinates[0][0]; // First group of attributes 
+	imageAttributesA[0].values[1] = coordinates[0][1];
+	imageAttributesA[1].values[0] = coordinates[1][0];
+	imageAttributesA[1].values[1] = coordinates[1][1];
+	imageAttributesA[2].values[0] = coordinates[2][0];
+	imageAttributesA[2].values[1] = coordinates[2][1];
+	imageAttributesB[0].values[0] = coordinates[2][0]; // Second group of attributes
+	imageAttributesB[0].values[1] = coordinates[2][1];
+	imageAttributesB[1].values[0] = coordinates[3][0];
+	imageAttributesB[1].values[1] = coordinates[3][1];
+	imageAttributesB[2].values[0] = coordinates[0][0];
+	imageAttributesB[2].values[1] = coordinates[0][1];
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        for (int i = 0; i < 3; i++)
+        {
+            imageAttributesA[i].numValues = 2;
+            imageAttributesB[i].numValues = 2;
+        }
 
-        Attributes imageUniforms;
-        // Your code for the uniform goes here
+	static BufferImage myImage("checker.bmp");
+	Attributes imageUniforms;
+        imageUniforms.numValues = 0;
+	Matrix model = translateMatrix(0, 0, 0);
+	Matrix view = cameraMatrix(myCam.x, myCam.y, myCam.z, 
+					   myCam.yaw, myCam.pitch, myCam.roll);
+	Matrix proj = perspectiveMatrix(60, 1.0, 1, 200);
+
+	// Uniforms
+
+	imageUniforms.pointer = (void*)&myImage;
+	imageUniforms.matrix = model;
+	imageUniforms.matrix2 = view;
+	imageUniforms.matrix3 = proj;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = imageFragShader;
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+        vertImg.VertShader = SimpleVertexShader2; 
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
