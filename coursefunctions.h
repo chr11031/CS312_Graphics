@@ -221,6 +221,42 @@ void CADView(Buffer2D<PIXEL> & target)
         verticesImgD[1] = quad[7];
         verticesImgD[2] = quad[3];
 
+        Vertex verticesImgE[3];
+        Attributes imageAttributesE[3];
+        verticesImgE[0] = quad[1];
+        verticesImgE[1] = quad[5];
+        verticesImgE[2] = quad[2];
+
+        Vertex verticesImgF[3];
+        Attributes imageAttributesF[3];
+        verticesImgF[0] = quad[5];
+        verticesImgF[1] = quad[6];
+        verticesImgF[2] = quad[2];
+
+        Vertex verticesImgG[3];
+        Attributes imageAttributesG[3];
+        verticesImgG[0] = quad[4];
+        verticesImgG[1] = quad[0];
+        verticesImgG[2] = quad[3];
+
+        Vertex verticesImgH[3];
+        Attributes imageAttributesH[3];
+        verticesImgH[0] = quad[3];
+        verticesImgH[1] = quad[7];
+        verticesImgH[2] = quad[4];
+
+        Vertex verticesImgI[3];
+        Attributes imageAttributesI[3];
+        verticesImgI[0] = quad[5];
+        verticesImgI[1] = quad[4];
+        verticesImgI[2] = quad[7];
+
+        Vertex verticesImgJ[3];
+        Attributes imageAttributesJ[3];
+        verticesImgJ[0] = quad[7];
+        verticesImgJ[1] = quad[6];
+        verticesImgJ[2] = quad[5];
+
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
         
@@ -264,7 +300,74 @@ void CADView(Buffer2D<PIXEL> & target)
         imageAttributesD[2].insertDbl(coordinates[0][0]);
         imageAttributesD[2].insertDbl(coordinates[0][1]);
 
+        // Fifth group of attributes
+        imageAttributesE[0].insertDbl(coordinates[0][0]);
+        imageAttributesE[0].insertDbl(coordinates[0][1]);
+
+        imageAttributesE[1].insertDbl(coordinates[1][0]);
+        imageAttributesE[1].insertDbl(coordinates[1][1]);
+
+        imageAttributesE[2].insertDbl(coordinates[3][0]);
+        imageAttributesE[2].insertDbl(coordinates[3][1]);
+
+        // Sixth group of attributes
+        imageAttributesF[0].insertDbl(coordinates[1][0]);
+        imageAttributesF[0].insertDbl(coordinates[1][1]);
+
+        imageAttributesF[1].insertDbl(coordinates[2][0]);
+        imageAttributesF[1].insertDbl(coordinates[2][1]);
+
+        imageAttributesF[2].insertDbl(coordinates[3][0]);
+        imageAttributesF[2].insertDbl(coordinates[3][1]);
+
+        // Seventh group of attributes
+        imageAttributesG[0].insertDbl(coordinates[0][0]);
+        imageAttributesG[0].insertDbl(coordinates[0][1]);
+
+        imageAttributesG[1].insertDbl(coordinates[1][0]);
+        imageAttributesG[1].insertDbl(coordinates[1][1]);
+
+        imageAttributesG[2].insertDbl(coordinates[2][0]);
+        imageAttributesG[2].insertDbl(coordinates[2][1]);
+
+        // Eighth group of attributes
+        imageAttributesH[0].insertDbl(coordinates[2][0]);
+        imageAttributesH[0].insertDbl(coordinates[2][1]);
+
+        imageAttributesH[1].insertDbl(coordinates[3][0]);
+        imageAttributesH[1].insertDbl(coordinates[3][1]);
+
+        imageAttributesH[2].insertDbl(coordinates[0][0]);
+        imageAttributesH[2].insertDbl(coordinates[0][1]);
+
+        // Ninth group of attributes
+        imageAttributesI[0].insertDbl(coordinates[0][0]);
+        imageAttributesI[0].insertDbl(coordinates[0][1]);
+
+        imageAttributesI[1].insertDbl(coordinates[1][0]);
+        imageAttributesI[1].insertDbl(coordinates[1][1]);
+
+        imageAttributesI[2].insertDbl(coordinates[2][0]);
+        imageAttributesI[2].insertDbl(coordinates[2][1]);
+
+        // Tenth group of attributes
+        imageAttributesJ[0].insertDbl(coordinates[2][0]);
+        imageAttributesJ[0].insertDbl(coordinates[2][1]);
+
+        imageAttributesJ[1].insertDbl(coordinates[3][0]);
+        imageAttributesJ[1].insertDbl(coordinates[3][1]);
+
+        imageAttributesJ[2].insertDbl(coordinates[0][0]);
+        imageAttributesJ[2].insertDbl(coordinates[0][1]);
+
+        
+
         static BufferImage myImage("images/doggie.bmp");
+        static BufferImage huskyImg("images/husky.bmp");
+        static BufferImage foxieImg("images/fox-dog.bmp");
+        static BufferImage labImage("images/lab.bmp");
+        static BufferImage smartImg("images/smart-dog.bmp");
+
         //Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
@@ -275,6 +378,7 @@ void CADView(Buffer2D<PIXEL> & target)
         Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
                                myCam.yaw, myCam.pitch, myCam.roll);
         Matrix proj = perspective4x4(60, 1.0, 1, 200); // FOV, Aspect, Near, Far
+        //Matrix proj = orthographic4x4(30, 30, 1, 200);
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
@@ -297,10 +401,24 @@ void CADView(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, topLeft, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, topLeft, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
-        static BufferImage newImg("images/husky.bmp");
-        imageUniforms[0].ptr = (void*)&newImg;
+        
+        imageUniforms[0].ptr = (void*)&huskyImg;
         DrawPrimitive(TRIANGLE, topLeft, verticesImgC, imageAttributesC, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, topLeft, verticesImgD, imageAttributesD, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        imageUniforms[0].ptr = (void*)&foxieImg;
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgE, imageAttributesE, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgF, imageAttributesF, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        imageUniforms[0].ptr = (void*)&labImage;
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgG, imageAttributesG, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgH, imageAttributesH, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        imageUniforms[0].ptr = (void*)&smartImg;
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgI, imageAttributesI, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgJ, imageAttributesJ, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        
 
 
         imageUniforms[0].ptr = (void*)&myImage;
@@ -308,13 +426,13 @@ void CADView(Buffer2D<PIXEL> & target)
                         topCam.yaw, topCam.pitch, topCam.roll);
         imageUniforms[2].ptr = (void*)&view;
 
-        proj = orthographic4x4(60, 1.0, 1, 200);
+        proj = orthographic4x4(25, 25, 1, 200);
         imageUniforms[3].ptr = (void*)&proj;
 
         DrawPrimitive(TRIANGLE, topRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, topRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
-        imageUniforms[0].ptr = (void*)&newImg;
+        imageUniforms[0].ptr = (void*)&huskyImg;
         DrawPrimitive(TRIANGLE, topRight, verticesImgC, imageAttributesC, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, topRight, verticesImgD, imageAttributesD, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
@@ -328,10 +446,11 @@ void CADView(Buffer2D<PIXEL> & target)
 
         view = camera4x4(sideCam.x, sideCam.y, sideCam.z,
                         sideCam.yaw, sideCam.pitch, sideCam.roll);
+        imageUniforms[0].ptr = &foxieImg;
         imageUniforms[2].ptr = (void*)&view;
 
-        DrawPrimitive(TRIANGLE, botRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
-        DrawPrimitive(TRIANGLE, botRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgE, imageAttributesE, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgF, imageAttributesF, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
 
 

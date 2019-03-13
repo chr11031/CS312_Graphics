@@ -21,7 +21,9 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
-#define MOUSE_SENSITIVITY 0.6
+#define MOUSE_SENSITIVITY 0.02
+#define MOVE_SENSITIVITY 0.9
+double ORTH_VIEW_BOX =  1.0;
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -106,7 +108,7 @@ struct camControls
 
 camControls myCam;
 camControls topCam = {0, 70, 70, 0, 0, 90};
-camControls sideCam = {0, 0, 0, 0, 0, 0};
+camControls sideCam = {70, 0, 70, -90, 0, 0};
 camControls frontCam = {0, 0, 0, 0, 0, 0};
 
 /******************************************************
@@ -673,33 +675,33 @@ Matrix perspective4x4(const double & fovYDegree, const double & aspectRatio, con
     return rt;
 }
 
-Matrix orthographic4x4(const double & fovYDegree, const double & aspectRatio, const double & near,
+Matrix orthographic4x4(const double & right, const double & top, const double & near,
                       const double & far)
 {
     Matrix rt;
 
-    double top = near * tan((fovYDegree * M_PI) / 180.0 / 2.0);
-    double right = aspectRatio * top;
+    double newRight = right * ORTH_VIEW_BOX;
+    double newTop = top * ORTH_VIEW_BOX;
 
-    rt[0][0] = 1.0 / right;
+    rt[0][0] = 1.0 / newRight;
     rt[0][1] = 0;
     rt[0][2] = 0;
     rt[0][3] = 0;
 
     rt[1][0] = 0;
-    rt[1][1] = 1.0 / top;
+    rt[1][1] = 1.0 / newTop;
     rt[1][2] = 0;
     rt[1][3] = 0;
 
     rt[2][0] = 0;
     rt[2][1] = 0;
-    rt[2][2] = (-2.0 / (far - near));
-    rt[2][3] = -(far + near) / (far - near);
+    rt[2][2] = (2.0 / (far - near));
+    rt[2][3] = -((far + near) / (far - near));
 
     rt[3][0] = 0;
     rt[3][1] = 0;
-    rt[3][2] = 1;
-    rt[3][3] = 0;
+    rt[3][2] = 0;
+    rt[3][3] = 1;
 
     rt.numCols = 4;
     rt.numRows = 4;
