@@ -854,7 +854,7 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        CADView(frame);
+        TestPipeline(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

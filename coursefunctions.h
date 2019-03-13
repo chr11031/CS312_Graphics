@@ -887,7 +887,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         model.addTrans(0, 0, 0);
         Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
                                myCam.yaw, myCam.pitch, myCam.roll);
-        Matrix proj = orthographic4x4(60, 1.0, 1, 200); // FOV, Aspect, Near, Far
+        Matrix proj = perspective4x4(60, 1.0, 1, 200); // FOV, Aspect, Near, Far
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
