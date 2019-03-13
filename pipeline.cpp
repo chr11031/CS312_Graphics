@@ -823,8 +823,6 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
 
-    BufferImage bmpImage("c.bmp");
-
     // Draw loop 
     bool running = true;
     while(running) 
