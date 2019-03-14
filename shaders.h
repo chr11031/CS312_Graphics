@@ -2,6 +2,15 @@
 #ifndef SHADERS_H
 #define SHADERS_H
 
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const ... ) // TODO something else goes here
+{
+    Transform* model = (Transform*)uniforms[1].ptr;
+    Transform* view = (Transform*)uniforms[2].ptr;
+    Transform* proj = (Transform*)uniforms[3].ptr;
+
+    vertOut = (*proj) * (*proj) * (*proj); // TODO something else goes here
+}
+
 /****************************************************
  * MYVERTSHADER:
  * Vertex shader for transformations, transfers inputting vertices,

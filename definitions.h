@@ -212,6 +212,19 @@ Vertex& Vertex::operator *= (const Matrix &rhs) {
     return *this;
 }
 
+// variables needed for view/camera transform
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
+};
+camControls myCam; // the global variable for view controls
+
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -391,12 +404,16 @@ class Attributes
     public:
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() : numMembers(0) {}
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
             // Your code goes here when clipping is implemented
+            for(int i = 0; i < first.values.size(); i++)
+            {
+                arr[i].d = (first[i].d) // to be continued...
+            }
         }
 
         /// My Code

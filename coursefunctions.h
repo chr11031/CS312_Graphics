@@ -696,12 +696,35 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttrubutesA[0].add(coordinates[0][0]);
+        imageAttrubutesA[0].add(coordinates[0][1]);
+        imageAttrubutesA[1].add(coordinates[1][0]);
+        imageAttrubutesA[1].add(coordinates[1][1]);
+        imageAttrubutesA[2].add(coordinates[2][0]);
+        imageAttrubutesA[2].add(coordinates[2][1]);
+        
+        imageAttrubutesB[0].add(coordinates[2][0]);
+        imageAttrubutesB[0].add(coordinates[2][1]);
+        imageAttrubutesB[1].add(coordinates[2][0]);
+        imageAttrubutesB[1].add(coordinates[2][1]);
+        imageAttrubutesB[2].add(coordinates[0][0]);
+        imageAttrubutesB[2].add(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        imageUniforms.ptrImg = myImage;
+
+        Transform model = translate4x4(0, 0, 0);
+        Transform view = camera4x4(myCam.x, myCam.y, myCam.z,
+                                   myCam.yaw, myCam.pitch, myCam.roll);
+        Transform proj = perspective4x4(60.0, 1, 1, 200); // FOV, aspect ratio, near, far
+        
+        imageUniforms.ptrImg = &model;
+        imageUniforms.ptrImg = &view; // these need to pushback ptrImg void pointers into a vector
+        imageUniforms.ptrImg = &proj;
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
