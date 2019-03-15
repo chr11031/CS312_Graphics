@@ -2,6 +2,9 @@
 #include "definitions.h"
 #include "coursefunctions.h"
 
+#define MOVE_SPEED 1
+#define MOUSE_SPEED 0.05
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -60,8 +63,8 @@ void processUserInputs(bool & running)
                 double mouseX = e.motion.xrel;
                 double mouseY = e.motion.yrel;
 
-                myCam.yaw -= mouseX * 0.02;
-                myCam.pitch += mouseY * 0.02;
+                myCam.yaw -= mouseX * MOUSE_SPEED;
+                myCam.pitch += mouseY * MOUSE_SPEED;
             }
         }
 
@@ -83,23 +86,23 @@ void processUserInputs(bool & running)
         // translation
         if (e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN)
         {
-            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * 0.5; // previous * 0.05
-            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * 0.5; // previous -=
+            myCam.z += (cos((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
+            myCam.x += (sin((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
         }
         if (e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
         {
-            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * 0.5; // previous +=
+            myCam.z -= (cos((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
+            myCam.x -= (sin((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
         }
         if (e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
         {
-            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * 0.5; // previous -=
+            myCam.x -= (cos((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
+            myCam.z += (sin((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
         }
         if (e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
         {
-            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * 0.5;
-            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * 0.5; // previous +=
+            myCam.x += (cos((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
+            myCam.z -= (sin((myCam.yaw / 180) * M_PI)) * MOVE_SPEED;
         }
     }
 }
