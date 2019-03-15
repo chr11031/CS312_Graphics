@@ -771,28 +771,22 @@ class Attributes
         /*******************************************************
          * MEMBER FUNCTIONS
          * ****************************************************/
-        void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs)
+        void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs, const Vertex vertices[3])
         {
             double w1 = det1 / area;
             double w2 = det2 / area;
             double w3 = 1 - w2 - w1;
+            double z  = 1.0 / (vertices[0].w * w2 + vertices[1].w * w3 + vertices[2].w * w1);
 
             for (int i = 0; i < numValues; i++)
             {
-                attrValues[i].d = vertAttrs[0].attrValues[i].d * w2 +
-                                  vertAttrs[1].attrValues[i].d * w3 +
-                                  vertAttrs[2].attrValues[i].d * w1;
-                
+                attrValues[i].d = (vertAttrs[0].attrValues[i].d * w2 +
+                                   vertAttrs[1].attrValues[i].d * w3 +
+                                   vertAttrs[2].attrValues[i].d * w1) * z;
             }
         }
 
-        void concatMatrices    (const Matrix & transform) throw (const char *) { this->matrix *= transform; }
-        void correctPerspective(double z)
-        {
-            for (int i = 0; i < numValues; i++)
-                attrValues[i].d *= z;
-        }
-
+        void concatMatrices    (const Matrix & transform) { this->matrix *= transform; }
         void setMatrix(double newData[][4], int numRows, int numCols)
         {
             matrix.numRows = numRows;
