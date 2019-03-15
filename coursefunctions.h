@@ -1,4 +1,7 @@
 #include "definitions.h"
+#include "ModelLoader.h"
+#include "shaders.h"
+#include "matrix.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -153,8 +156,8 @@ void GameOfLife(Buffer2D<PIXEL> & target)
 void CADView(Buffer2D<PIXEL> & target)
 {
         // Each CAD Quadrant
-        static int halfWid = target.width()/2;
-        static int halfHgt = target.height()/2;
+        static int halfWid = target.width() / 2;
+        static int halfHgt = target.height() / 2;
         static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);
         static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
@@ -162,8 +165,193 @@ void CADView(Buffer2D<PIXEL> & target)
 
 
         // Your code goes here 
+        static Buffer2D<double> zBuf(target.width(), target.height());
         // Feel free to copy from other test functions to get started!
+        Vertex quad[] = { {-20, -20, 70, 1},
+                        {20, -20, 70, 1},
+                        {20, 20, 70, 1},
+                        {-20, 20, 70, 1}};
 
+        Vertex verticesImgA[3];
+        Attributes colorAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
+
+        Vertex verticesImgB[3];        
+        Attributes colorAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
+
+        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+	colorAttributesA[0].insertDbl(coordinates[0][0]); // First group of attributes 
+        colorAttributesA[0].insertDbl(coordinates[0][1]);
+        colorAttributesA[1].insertDbl(coordinates[1][0]);
+        colorAttributesA[1].insertDbl(coordinates[1][1]);
+        colorAttributesA[2].insertDbl(coordinates[2][0]);
+        colorAttributesA[2].insertDbl(coordinates[2][1]);
+
+        colorAttributesB[0].insertDbl(coordinates[2][0]); // Second group of attributes
+        colorAttributesB[0].insertDbl(coordinates[2][1]);
+        colorAttributesB[1].insertDbl(coordinates[3][0]);
+        colorAttributesB[1].insertDbl(coordinates[3][1]);
+        colorAttributesB[2].insertDbl(coordinates[0][0]);
+        colorAttributesB[2].insertDbl(coordinates[0][1]);
+
+        Attributes colorUniforms;
+        Attributes colorUniformsTop;
+        Attributes colorUniformsSide;
+        Attributes colorUniformsFront;
+        // Your code for the uniform goes here
+        BufferImage myImage("yoshi.bmp");
+
+        // Initialize the matrices to 4x4 matrices
+        Matrix model(4, 4);
+        Matrix view(4, 4);
+        Matrix viewTop(4, 4);
+        Matrix viewSide(4, 4);
+        Matrix proj(4, 4);
+        Matrix proj2(4, 4);
+
+        Matrix rotate(4, 4);
+
+        // add the transforms to the uniforms
+        model.addTranslation(0, 0, 0);
+        view.camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        viewTop = view;
+        viewSide = view;
+        proj.perspective4x4(60, 1.0, 1, 200);
+        proj2.orthographic4x4(60, 1.0, 50, 200);
+
+        viewTop.addXRotation(M_PI/2);
+        viewSide.addYRotation(M_PI/2);
+        viewTop.addTranslation(0, 90, 120);
+        viewSide.addTranslation(-90, 0, 120);
+
+        colorUniforms.insertPtr((void*)&myImage);
+        colorUniforms.insertPtr((void*)&model);
+        colorUniforms.insertPtr((void*)&view);
+        colorUniforms.insertPtr((void*)&proj);
+
+        colorUniformsTop.insertPtr((void*)&myImage);
+        colorUniformsTop.insertPtr((void*)&model);
+        colorUniformsTop.insertPtr((void*)&viewTop);
+        colorUniformsTop.insertPtr((void*)&proj2);
+
+        colorUniformsSide.insertPtr((void*)&myImage);
+        colorUniformsSide.insertPtr((void*)&model);
+        colorUniformsSide.insertPtr((void*)&viewSide);
+        colorUniformsSide.insertPtr((void*)&proj2);
+
+        colorUniformsFront.insertPtr((void*)&myImage);
+        colorUniformsFront.insertPtr((void*)&model);
+        colorUniformsFront.insertPtr((void*)&view);
+        colorUniformsFront.insertPtr((void*)&proj2);
+
+
+        FragmentShader fragImg;
+        // Your code for the image fragment shader goes here
+        fragImg.setShader(imageFragShader);
+
+        VertexShader vertImg;
+        // Your code for the image vertex shader goes here
+        // NOTE: This must include the at least the 
+        // projection matrix if not more transformations 
+        vertImg.setShader(vertexShader2);
+
+        //
+        // First side
+        //
+        // Perspective correct
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+
+        //
+        // Second side
+        //
+        model.addYRotation(M_PI/2);
+        model.addTranslation(-90, 0, 90);
+        // Perspective correct
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+
+        //
+        // Third side
+        //
+        model.addYRotation(M_PI/2);
+        model.addTranslation(-90, 0, 90);
+        // Perspective
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+
+        //
+        // Fourth side
+        //
+        model.addYRotation(M_PI/2);
+        model.addTranslation(-90, 0, 90);
+        // Perspective
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+
+        //
+        // Fifth side
+        //
+        model.addZRotation(M_PI/2);
+        // Perspective
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+
+        //
+        // Sixth side
+        //
+        model.addZRotation(M_PI);
+        // Perspective
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, colorAttributesA, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, colorAttributesB, &colorUniforms, &fragImg, &vertImg, &zBuf);
+        // Orthographic
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, colorAttributesA, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, colorAttributesB, &colorUniformsFront, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, colorAttributesA, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, colorAttributesB, &colorUniformsTop, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, colorAttributesA, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, colorAttributesB, &colorUniformsSide, &fragImg, &vertImg, &zBuf);
 
         // Blit four panels to target
         int yStartSrc = 0;
@@ -180,6 +368,10 @@ void CADView(Buffer2D<PIXEL> & target)
                         target[ySrc+halfHgt][xSrc+halfWid] = topRight[ySrc][xSrc];
                 }
         }
+        topLeft.zeroOut();
+        topRight.zeroOut();
+        botLeft.zeroOut();
+        botRight.zeroOut();
 }
 
 /***************************************************
@@ -331,7 +523,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageAttributes[2].uv[1] = 1;
 
         // 24 bit/pixel?
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("yoshi.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
@@ -453,7 +645,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix transMatrix(4, 4);
         transMatrix.addTranslation(100, 50, 0);
-        colorUniforms.vertTransform = transMatrix;
+        // colorUniforms.transforms[0] = transMatrix;
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
@@ -462,7 +654,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix scaleMatrix(4, 4);
         scaleMatrix.addScaling(0.5, 0.5, 1);
-        colorUniforms.vertTransform = scaleMatrix;
+        // colorUniforms.transforms[0] = scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
@@ -470,8 +662,8 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
         Matrix rotMatrix(4, 4);
-        rotMatrix.addRotation(M_PI/4);
-        colorUniforms.vertTransform = rotMatrix;
+        rotMatrix.addZRotation(M_PI/4);
+        // colorUniforms.transforms[0] = rotMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
@@ -479,10 +671,13 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * the previous transformations concatenated.
          ************************************************/
 	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-        // colorUniforms.vertTransform = rotMatrix * (transMatrix * scaleMatrix);
-        colorUniforms.vertTransform = rotMatrix;
-        colorUniforms.vertTransform *= transMatrix;
-        colorUniforms.vertTransform *= scaleMatrix;
+        // colorUniforms.transforms[0] = rotMatrix;
+        // colorUniforms.transforms[0] *= transMatrix;
+        // colorUniforms.transforms[0] *= scaleMatrix;
+        // This works too
+        // colorUniforms.vertTransform = scaleMatrix;
+        // colorUniforms.vertTransform.addTranslation(100, 50, 0);
+        // colorUniforms.vertTransform.addZRotation(M_PI/4);
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
@@ -534,21 +729,52 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+	imageAttributesA[0].insertDbl(coordinates[0][0]); // First group of attributes 
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+        imageAttributesB[0].insertDbl(coordinates[2][0]); // Second group of attributes
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
-        BufferImage myImage("yoshi.bmp");
+        BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        // imageUniforms.image = &myImage;
+
+        // Initialize the matrices to 4x4 matrices
+        Matrix model(4, 4);
+        Matrix view(4, 4);
+        Matrix proj(4, 4);
+
+        // add the transforms to the uniforms
+        model.addTranslation(0, 0, 0);
+        view.camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        proj.perspective4x4(60, 1.0, 1, 200);
+
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&proj);
+
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        fragImg.setShader(imageFragShader);
 
         VertexShader vertImg;
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
-                
+        vertImg.setShader(vertexShader2);
+
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
@@ -556,6 +782,52 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // NOTE: To test the Z-Buffer additional draw calls/geometry need to be called into this scene
 }
 
+/*****************************************************************************
+ * TEST MODEL LOADER
+ * Test the new model loader that I will be implementing. should be able to 
+ * load an obj file and display the model to the screen.
+ ****************************************************************************/
+void TestModelLoader(Buffer2D<PIXEL> & target)
+{
+        //
+        // Create vectors of attributes and vertices to load the model into.
+        //
+
+        BufferImage myImage("yoshi.bmp");
+        // Ensure the checkboard image is in this directory, you can use another image though
+
+        Attributes imageUniforms;
+        // Your code for the uniform goes here
+        // imageUniforms.image = &myImage;
+
+        // Initialize the matrices to 4x4 matrices
+        Matrix model(4, 4);
+        Matrix view(4, 4);
+        Matrix proj(4, 4);
+
+        // add the transforms to the uniforms
+        model.addTranslation(0, 0, 0);
+        view.camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        proj.perspective4x4(60, 1.0, 1, 200);
+
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&proj);
+
+
+        FragmentShader fragImg;
+        // Your code for the image fragment shader goes here
+        fragImg.setShader(imageFragShader);
+
+        VertexShader vertImg;
+        // Your code for the image vertex shader goes here
+        // NOTE: This must include the at least the 
+        // projection matrix if not more transformations 
+        vertImg.setShader(vertexShader2);
+
+        // Loop through the vectors to print the pieces of the model to the screen.
+}
 
 
 #endif

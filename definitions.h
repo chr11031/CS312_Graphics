@@ -3,7 +3,6 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include <math.h>
-#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -47,260 +46,19 @@ struct Vertex
     double w;
 };
 
-
-/****************************************************
- * Matrix for transforming vertices. 
- ****************************************************/
-class Matrix
+// view/camera transform
+struct camControls
 {
-  private:
-    double * matrixPtr;
-    int rows;
-    int columns;
-    bool init;
-
-  public:
-    Matrix(): rows(0), columns(0), matrixPtr(NULL), init(false) {};
-
-    // constructor that sets up the matrix size
-    Matrix(int rows, int columns)
-    {
-        this->rows = rows;
-        this->columns = columns;
-        matrixPtr = new double[rows * columns];
-        for(int i = 0; i < (rows * columns); i++)
-        {
-            matrixPtr[i] = 0;
-        }
-        init = false;
-    }
-
-    ~Matrix()
-    {
-        if(matrixPtr != NULL)
-        {
-            delete [] matrixPtr;
-            matrixPtr = NULL;
-        }
-    }
-
-    /*************************************************************************
-     * Add Rotation
-     * Add rotation to the current matrix.
-     ************************************************************************/
-    void addRotation(double rot/*radians*/)
-    {
-        Matrix rotate(this->rows, this->columns);
-        // initialize the rotation matrix
-        rotate.matrixPtr[0] = cos(rot);
-        rotate.matrixPtr[1] = -sin(rot);
-        rotate.matrixPtr[1 * this->columns] = sin(rot);
-        rotate.matrixPtr[1 * this->columns + 1] = cos(rot);
-        rotate.matrixPtr[2 * this->columns + 2] = 1;
-        rotate.matrixPtr[3 * this->columns + 3] = 1;
-        // if the matrix has nothing in it, just make it equal to this one
-        if (init == false)
-        {
-            for(int i = 0; i < (this->rows * this->columns); i++)
-            {
-                this->matrixPtr[i] = rotate.matrixPtr[i];
-            }
-            init = true;
-        }
-        // if there is something in the matrix, multiply to combine.
-        else
-        {
-            *this = rotate * (*this);
-        }
-    }
-
-    /*************************************************************************
-     * Add Scaling
-     * Add scaling to the current matrix.
-     ************************************************************************/
-    void addScaling(double scaleX, double scaleY, double scaleZ)
-    {
-        // this array is used in the for loop to make things easier. 
-        double scaleArray[4] = {scaleX, scaleY, scaleZ, 1};
-
-        Matrix scale(this->rows, this->columns);
-        // initialize the scaling matrix
-        for(int i = 0; i < this->rows; i++)
-        {
-            scale.matrixPtr[i * this->columns + i] = scaleArray[i];
-        }
-        // if the matrix has nothing in it, just make it equal to this one
-        if (init == false)
-        {
-            for(int i = 0; i < (this->rows * this->columns); i++)
-            {
-                this->matrixPtr[i] = scale.matrixPtr[i];
-            }
-            init = true;
-        }
-        // if there is something in the matrix, multiply to combine.
-        else
-        {
-            *this = scale * (*this);
-        }
-    }
-
-    /*************************************************************************
-     * Add Translation
-     * Add translation to the current matrix.
-     ************************************************************************/
-    void addTranslation(double transX, double transY, double transZ)
-    {
-        Matrix translate(this->rows, this->columns);
-        // initialize translation matrix.
-        translate.matrixPtr[1 * this->columns - 1] = transX;
-        translate.matrixPtr[2 * this->columns - 1] = transY;
-        translate.matrixPtr[3 * this->columns - 1] = transZ;
-        for(int i = 0; i < this->rows; i++)
-        {
-            translate.matrixPtr[i * this->columns + i] = 1;
-        }
-        // if the matrix has nothing in it, just make it equal to this one
-        if (init == false)
-        {
-            for(int i = 0; i < (this->rows * this->columns); i++)
-            {
-                this->matrixPtr[i] = translate.matrixPtr[i];
-            }
-            init = true;
-        }
-        // if there is something in the matrix, multiply to combine.
-        else
-        {
-            *this = translate * (*this);
-        }
-    }
-
-    /*****************************************************************
-     * Equals operator.
-     * rows, columns, and init can be copied, but the matrix has to
-     * be set to a new matrix of the right size and then the individual
-     * values can be copied over.
-     ****************************************************************/
-    Matrix & operator = (const Matrix & rhs)
-    {
-        this->rows = rhs.rows;
-        this->columns = rhs.columns;
-        this->init = rhs.init;
-        if(this->matrixPtr != NULL)
-        {
-            delete [] matrixPtr;
-        }
-        matrixPtr = new double[this->rows * this->columns];
-        for(int i = 0; i < (this->rows * this->columns); i++)
-        {
-            this->matrixPtr[i] = rhs.matrixPtr[i];
-        }
-        return *this;
-    }
-
-        /*************************************************************************
-     * Multiplication operator
-     * A friend function that multiplies the two matrices together.
-     ************************************************************************/
-    Matrix & operator *= (const Matrix & rhs)
-    {
-        if (this->columns != rhs.rows)
-        {
-            // the matrices can't be multiplied so return an empty one.
-            Matrix mat;
-            return mat;
-        }
-
-        Matrix newMatrix(this->rows, rhs.columns);
-        for(int i = 0; i < this->rows; i++)
-        {
-            for(int j = 0; j < rhs.columns; j++)
-            {
-                double sum = 0;
-                for(int k = 0; k < rhs.rows; k++)
-                {
-                     sum += this->matrixPtr[i * this->columns + k] * 
-                        rhs.matrixPtr[k * rhs.columns + j];
-                }
-                newMatrix.matrixPtr[i * newMatrix.columns + j] = sum;
-            }
-        }
-        newMatrix.init = true;
-        *this = newMatrix;
-        return *this;
-    }
-
-    // has to be a friend to access the private variables.
-    friend Matrix operator * (const Matrix & lhs, const Matrix & rhs);
-    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
 };
 
-    /*************************************************************************
-     * Multiplication operator
-     * A friend function that multiplies the two matrices together.
-     ************************************************************************/
-    Matrix operator * (const Matrix & lhs, const Matrix & rhs)
-    {
-        if (lhs.columns != rhs.rows)
-        {
-            // the matrices can't be multiplied so return an empty one.
-            Matrix mat;
-            return mat;
-        }
+camControls myCam;
 
-        Matrix newMatrix(lhs.rows, rhs.columns);
-        for(int i = 0; i < lhs.rows; i++)
-        {
-            for(int j = 0; j < rhs.columns; j++)
-            {
-                double sum = 0;
-                for(int k = 0; k < rhs.rows; k++)
-                {
-                     sum += lhs.matrixPtr[i * lhs.columns + k] * 
-                        rhs.matrixPtr[k * rhs.columns + j];
-                }
-                newMatrix.matrixPtr[i * newMatrix.columns + j] = sum;
-            }
-        }
-        newMatrix.init = true;
-        // std::cout << "New Matrix:" << std::endl;
-        // for(int i = 0; i < newMatrix.rows * newMatrix.columns; i++)
-        // {
-        //     std::cout << newMatrix.matrixPtr[i] << ' ';
-        //     if((i % newMatrix.columns) - 3 == 0)
-        //     {
-        //         std::cout << std::endl;
-        //     }
-        // }
-        // std::cout << std::endl;
-
-        // returning the 0 matrix for some reason. The multiplied matrix is correct.
-        return newMatrix; 
-    }
-
-/**************************************************************
- * A friend multiplication operator to help when multiplying 
- * a vertex.
- *************************************************************/
-Vertex operator * (const Matrix & rhs, const Vertex & lhs)
-{
-    if (rhs.columns != 4 || rhs.rows != 4)
-    {
-        // A vertex has 4 "rows" so the matrix must have 4 columns and 4 rows
-        // so the output will be correct.
-        Vertex vert;
-        return vert;
-    }
-
-    Vertex newVertex;
-    newVertex.x = rhs.matrixPtr[0] * lhs.x + rhs.matrixPtr[1] * lhs.y + rhs.matrixPtr[2] * lhs.z + rhs.matrixPtr[3] * lhs.w;
-    newVertex.y = rhs.matrixPtr[4] * lhs.x + rhs.matrixPtr[5] * lhs.y + rhs.matrixPtr[6] * lhs.z + rhs.matrixPtr[7] * lhs.w;
-    newVertex.z = rhs.matrixPtr[8] * lhs.x + rhs.matrixPtr[9] * lhs.y + rhs.matrixPtr[10] * lhs.z + rhs.matrixPtr[11] * lhs.w;
-    newVertex.w = rhs.matrixPtr[12] * lhs.x + rhs.matrixPtr[13] * lhs.y + rhs.matrixPtr[14] * lhs.z + rhs.matrixPtr[15] * lhs.w;
-
-    return newVertex;
-}
 
 /******************************************************
  * BUFFER_2D:
@@ -312,6 +70,7 @@ template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -325,22 +84,25 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+            baseAllocated = true;
         }
 
         // Empty Constructor
-        Buffer2D()
-        {}
+        Buffer2D(){}
 
     public:
         // Free dynamic memory
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
-            {
-                free(grid[r]);
-            }
-            free(grid);
+	        if(baseAllocated)	    
+	        {
+	            for(int r = 0; r < h; r++)
+		        {
+		            free(grid[r]);
+		        }
+	            free(grid);
+	        }
         }
 
         // Size-Specified constructor, no data
@@ -390,6 +152,23 @@ class Buffer2D
         }
 };
 
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+// The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
 
 /****************************************************
  * BUFFER_IMAGE:
@@ -400,8 +179,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
-
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+    	bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
         // Private intialization setup
         void setupInternal()
         {
@@ -409,7 +188,6 @@ class BufferImage : public Buffer2D<PIXEL>
             h = img->h;
             w = img->w;
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
-
             PIXEL* row = (PIXEL*)img->pixels;
             row += (w*h);
             for(int i = 0; i < h; i++)
@@ -419,12 +197,75 @@ class BufferImage : public Buffer2D<PIXEL>
             }
         }
 
+    private:
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+    
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] = 0xff000000 + 
+                                 ((pixelPtr->r) << 16) +
+                                 ((pixelPtr->g) << 8) +
+                                 ((pixelPtr->b));
+                                 ++pixelPtr;
+                }
+            }
+    
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
+
     public:
         // Free dynamic memory
         ~BufferImage()
         {
-            // De-Allocate pointers for column references
-            free(grid);
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+	            free(grid);
+		        return;
+            }
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -432,7 +273,6 @@ class BufferImage : public Buffer2D<PIXEL>
                 SDL_FreeSurface(img);
             }
         }
-
         // Assignment constructor
         BufferImage& operator=(const BufferImage & ib)
         {
@@ -446,7 +286,6 @@ class BufferImage : public Buffer2D<PIXEL>
                 grid[i] = ib.grid[i];
             }
         }
-
         // Constructor based on instantiated SDL_Surface
         BufferImage(SDL_Surface* src) 
         { 
@@ -456,19 +295,29 @@ class BufferImage : public Buffer2D<PIXEL>
             ourSurfaceInstance = false;
             setupInternal();
         }
-
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            SDL_LockSurface(img); // added just because.
-            setupInternal();
+	        ourSurfaceInstance = false;
+	        if(!readBMP(path))
+	        {
+	            return;
+	        }	  
+	        ourBufferData = true;
         }
+};
+
+// Interpoaltes between 3 weighted points 3 different double values for barycentric
+double baryInterp(const double & firstWgt, const double & secndWgt, const double & thirdWgt,
+			 const double & firstVal, const double & secndVal, const double & thirdVal)
+{
+    return ((firstWgt * thirdVal) + (secndWgt * firstVal) + (thirdWgt * secndVal));
+}
+
+union attrib
+{
+    double d;
+    void *ptr;
 };
 
 /***************************************************
@@ -485,19 +334,84 @@ class Attributes
         Vertex *vert;
         double rgb[3];
         double uv[2];
-        Matrix vertTransform;
+        // Matrix transforms[3];
+
+        // New stuff
+        int numMembers = 0;
+        attrib arr[16];
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() 
+        {
+            // transforms[0].initializeMatrix(4, 4);
+            // transforms[1].initializeMatrix(4, 4);
+            // transforms[2].initializeMatrix(4, 4);
+
+            rgb[0] = 0;
+            rgb[1] = 0;
+            rgb[2] = 0;
+
+            uv[0] = 0;
+            uv[1] = 0;
+
+            image = NULL;
+            vert = NULL;
+
+            color = 0xff000000;
+            numMembers = 0;
+        }
+
+        // Interpolation Constructor
+        Attributes( const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third,
+		            const double & correctZ)
+        {
+            while(numMembers < first.numMembers)
+            {
+                arr[numMembers].d = baryInterp(firstWgt, secndWgt, thirdWgt, first.arr[numMembers].d, secnd[numMembers].d, third.arr[numMembers].d);
+			    arr[numMembers].d = arr[numMembers].d * correctZ;
+			    numMembers += 1;
+            }
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
             // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for (int i = 0; i < numMembers; i++)
+            {
+                arr[i].d = (first[i].d + ((second[i].d - first[i].d) * along));
+            }
         }
 
         ~Attributes()
         {
+
+        }
+
+                // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
         }
 };	
 
@@ -505,9 +419,19 @@ class Attributes
  * CROSS_PRODUCT
  * calculates the cross product of the given vertices.
  ******************************************************/
-float triangleArea(double v1[2], double v2[2])
+float determinant(double v1[2], double v2[2])
 {
-    return ((v1[0] * v2[1]) - (v1[1] * v2[0])) / 2;
+    return ((v1[0] * v2[1]) - (v1[1] * v2[0]));
+}
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
 }
 
 /***************************************************************************
@@ -527,42 +451,6 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 {
     // Output our shader color value, in this case red.
     fragment = 0xffff0000;
-}
-
-void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    fragment = 0xff00ff00;
-}
-
-/********************************************************************
- * COLOR FRAG SHADER
- * adds the red, green, and blue values to the color of the pixel.
- *******************************************************************/
-void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.rgb[0] * 0xff) << 16;
-    color += (unsigned int)(vertAttr.rgb[1] * 0xff) << 8;
-    color += (unsigned int)(vertAttr.rgb[2] * 0xff) << 0;
-
-    fragment = color;
-}
-
-/*****************************************************************
- * IMAGE FRAG SHADER 
- * prints the image to the screen according to the UV coords.
- *****************************************************************/
-void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    BufferImage *ptr = (BufferImage*)uniforms.image;
-
-    int wid = ptr->width() - 1;
-    int hgt = ptr->height() - 1;
-
-    int x = vertAttr.uv[0] * hgt;
-    int y = vertAttr.uv[1] * wid;
-
-    fragment = (*ptr)[y][x];
 }
 
 /*******************************************************
@@ -597,6 +485,7 @@ class FragmentShader
         }
 };
 
+
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -604,14 +493,6 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
-
-// multiplies the vertex by a matrix to get the new vertices.
-void vertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    vertOut = uniforms.vertTransform * vertIn;
-    attrOut = vertAttr;
-}
-
 
 /**********************************************************
  * VERTEX_SHADER
