@@ -564,39 +564,19 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        imageAttributesA[0].attrValues[0].d = coordinates[0][0];
-        imageAttributesA[0].attrValues[1].d = coordinates[0][1];
-        imageAttributesA[0].numValues = 2;
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
 
-        imageAttributesA[1].attrValues[0].d = coordinates[1][0];
-        imageAttributesA[1].attrValues[1].d = coordinates[1][1];
-        imageAttributesA[1].numValues = 2;
-
-        imageAttributesA[2].attrValues[0].d = coordinates[2][0];
-        imageAttributesA[2].attrValues[1].d = coordinates[2][1];
-        imageAttributesA[2].numValues = 2;
-
-        // Previous un commented
-        // imageAttributesA[3].attrValues[0].d = coordinates[3][0];
-        // imageAttributesA[3].attrValues[1].d = coordinates[3][1];
-        // imageAttributesA[3].numValues = 2;
-
-        imageAttributesB[0].attrValues[0].d = coordinates[2][0]; // 00
-        imageAttributesB[0].attrValues[1].d = coordinates[2][1]; // 01
-        imageAttributesB[0].numValues = 2;
-
-        imageAttributesB[1].attrValues[0].d = coordinates[3][0]; // 10
-        imageAttributesB[1].attrValues[1].d = coordinates[3][1]; // 11
-        imageAttributesB[1].numValues = 2;
-
-        imageAttributesB[2].attrValues[0].d = coordinates[0][0]; // 20
-        imageAttributesB[2].attrValues[1].d = coordinates[0][1]; // 21
-        imageAttributesB[2].numValues = 2;
-
-        // Previous this was un commented
-        // imageAttributesB[3].attrValues[0].d = coordinates[3][0];
-        // imageAttributesB[3].attrValues[1].d = coordinates[3][1];
-        // imageAttributesB[3].numValues = 2;
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         static BufferImage myImage("checker.bmp");
         Attributes  imageUniforms;
