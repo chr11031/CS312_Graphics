@@ -549,55 +549,50 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
-        /*
-        imageAttributesA[0]     00
-        imageAttributesA[0]     01
-        imageAttributesA[1]     10
-        imageAttributesA[1]     11
-        imageAttributesA[2]     20
-        imageAttributesA[2]     21
+        
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
 
-        imageAttributesB[0]     20
-        imageAttributesB[0]     21
-        imageAttributesB[1]     30
-        imageAttributesB[1]     31
-        imageAttributesB[2]     00
-        imageAttributesB[2]     01
-        */
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+        
 
-
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        static BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
 
         //uniforms
         // 0 -> image reference
         // 1 -> model transform
-        // 2 view transform
+        // 2 -> view transform
 
-        //transfrorm model = Matrix(4,4);
-        //transform view camera(mycam.x,mycam.y,mycam.z,mycam.pitch,mycam.yaw,mycam.roll)
+        Matrix model = Matrix(4,4);
+        Matrix camView = Matrix(4,4);
+        camView.cameraTransform(myCam.x,myCam.y,myCam.z,myCam.pitch,myCam.yaw,myCam.roll);
+        Matrix projection = Matrix(4,4);
+        projection.transformPerspective(60.0, 1.0, 1, 200); //FOV, AspectRatio, Near, Far
         
-        //imageUniforms.insertPtr((void*)&myImage)
-        //imageUniforms.insertPtr((void*)&model)
-        //imageUniforms.insertPtr((void*)&view)
-
-
-        //imageUniforms assign uniform
-        // Your code for the uniform goes here
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&camView);
+        imageUniforms.insertPtr((void*)&projection);
 
         FragmentShader fragImg;
         fragImg.FragShader = ImageFragShader;
-        // Your code for the image fragment shader goes here
 
         VertexShader vertImg;
-        
-        //vertImg.VertexShader = simpleVertexShader2
-        
+        vertImg.VertShader = SimpleVertexShader2;
         
         // Your code for the image vertex shader goes here
         // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+        // projection matrix if not more transformations
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);

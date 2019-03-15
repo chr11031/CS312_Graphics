@@ -65,6 +65,34 @@ struct camControls
 };
 camControls myCam;
 
+/****************************************
+ * determinant (cross product)
+ * Takes vertexes and uses cross product math
+ * to find the determinant
+ ***************************************/
+double determinant(const double & vtx1, const double & vtx2, 
+                    const double & vty1, const double & vty2)//XXYY
+{
+    double determ = 0.0;
+    determ = (vtx1 * vty2) - (vty1 * vtx2);
+    return determ;
+}
+
+/****************************************
+ * Interpolation
+ * returns interpolation math
+ ***************************************/
+double interpolate(double areaTri, double determ1, double determ2, 
+                    double determ3, double attr1, double attr2, double attr3, double zCorrect = 1)
+{
+    //pull weights
+    double w1 = (determ2 / areaTri) * attr1;
+    double w2 = (determ3 / areaTri) * attr2;
+    double w3 = (determ1 / areaTri) * attr3; 
+
+    return zCorrect * (w1 + w2 + w3);//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
+} 
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -98,6 +126,7 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
+            if(grid == nullptr) { return; }
             // De-Allocate pointers for column references
             for(int r = 0; r < h; r++)
             {
@@ -279,6 +308,7 @@ class BufferImage : public Buffer2D<PIXEL>
             }
             // De-Allocate pointers for column references
             free(grid);
+            grid = nullptr;
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -348,17 +378,17 @@ class Attributes
 {      
     public:
         int numMembers = 0;
-        attrib att[16];//0R 1G 2B 3U 4V --
+        attrib att[16];//0R 1G 2B 3U 4V -- 0U 1V
 
         //Matrix trans = Matrix(4,4);
 
         //for image
-        void* ptrImg;
+        void* ptrImg = NULL;
         double size = 3;
         PIXEL color = 0;
 
         // Obligatory empty constructor
-        Attributes() { /*numMembers = 0;*/ }
+        Attributes() { numMembers = 0; }
 
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -368,6 +398,20 @@ class Attributes
             for (int i = 0; i < numMembers; i++)
             {
                 att[i].d = (first.att[i].d) + ((second.att[i].d - first.att[i].d) * along); 
+            }
+        }
+
+        // interpolate all doubles
+        Attributes(const double & firstDet, const double & secondDet, const double & thirdDet, 
+                   const Attributes & first, const Attributes & second, const Attributes & third,
+                   const double & correctZ, const double& area)
+        {
+            numMembers = 0;
+            while(numMembers < first.numMembers)
+            {
+                att[numMembers].d = interpolate(area, firstDet, secondDet, thirdDet, first.att[numMembers].d, second.att[numMembers].d, third.att[numMembers].d);
+                att[numMembers].d = att[numMembers].d * correctZ;
+                numMembers += 1;
             }
         }
 

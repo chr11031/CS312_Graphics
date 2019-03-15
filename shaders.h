@@ -49,7 +49,15 @@ class FragmentShader
  * Takes image data and returns fragment
  ******************************/
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
-    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+    BufferImage* ptr;
+    if(uniforms.ptrImg != NULL){
+        ptr = (BufferImage*)uniforms.ptrImg;
+    }
+    else
+    {
+        ptr = (BufferImage*)uniforms.att[0].ptr;
+    }
+    
 
     int wid = ptr->width();
     int hgth = ptr->height();
@@ -60,6 +68,22 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = (*ptr)[y][x];
 
 }
+
+/*******************************
+ * Image Frag Shader 2
+ * Takes image data and returns fragment
+ ******************************
+void ImageFragShader2(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
+
+    int wid = ptr->width();
+    int hgth = ptr->height();
+
+    int x = vertAttr.att[0].d * (wid - 1);// U
+    int y = vertAttr.att[1].d * (hgth - 1);// V
+
+    fragment = (*ptr)[y][x];
+}*/
 
 /*******************************
  * color Frag Shader
@@ -118,6 +142,7 @@ void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & v
 {
     //simple matrix connection
     Matrix* trans = (Matrix*)uniforms.att[0].ptr;
+    // borrowed for example vertOut = (*(TransformationMatrix*)uniforms[0].ptr).multiplyByVertex(vertIn);
     vertOut = (*trans) * vertIn;
 
     // Pass through attributes
@@ -131,7 +156,7 @@ void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & 
     Matrix* view = (Matrix*)uniforms.att[2].ptr;
     Matrix* proj = (Matrix*)uniforms.att[3].ptr;
 
-    vertOut = (*proj) * (*view) * (*model) * vertIn;
+    vertOut = ((*proj) * ((*view) * ((*model) * vertIn)));
 
     // Pass through attributes
     attrOut = attrIn;

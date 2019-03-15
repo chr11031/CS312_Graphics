@@ -207,11 +207,11 @@ class Matrix
         *this = *this * persT;
     }
 
-/* Assume semetric
+/*
     void transformOrthographicGeneral(const double & fovYDegrees, const double & aspectRatio, 
             const double & nearPlane, const double & farPlane){
                 //WARNING!!! INCOMPLETE
-        // 2/(right-l) 0            0        -((right + l)/(right - l))
+        // 2/(right-left) 0            0        -((right + l)/(right - l))
         // 0           2/(top - b)  0        -((t+b)/(t-b))
         // 0           0            -2/(f-n) -((f+n)/(f-n))
         // 0           0            0        1
@@ -221,11 +221,11 @@ class Matrix
         //double bottom =
         //double left =
 
-        orthoT.setData(0,(2/(right-1)));
-        orthoT.setData(3,(-(right+1)/(right-1)));
-        //orthoT.setData(5,(2/(top-bottom)));
-        //orthoT.setData(7,(-(top+bottom)/(top-bottom)));
-        orthoT.setData(10,(-2/(farPlane-nearPlane)));
+        orthoT.setData(0,(2/(right-left)));
+        orthoT.setData(3,(-(right+left/(right-left)));
+        orthoT.setData(5,(2/(top-bottom)));
+        orthoT.setData(7,(-(top+bottom)/(top-bottom)));
+        orthoT.setData(10,(2/(farPlane-nearPlane)));
         orthoT.setData(11,(-(farPlane+nearPlane)/(farPlane-nearPlane)));
 
 
@@ -244,7 +244,7 @@ class Matrix
 
         orthoT.setData(0,(1/right));
         orthoT.setData(5,(1/top));
-        orthoT.setData(10,(-2/(farPlane-nearPlane)));
+        orthoT.setData(10,(2/(farPlane-nearPlane)));//neg?
         orthoT.setData(11,(-((farPlane+nearPlane)/(farPlane+nearPlane))));
 
         *this = *this * orthoT;

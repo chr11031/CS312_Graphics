@@ -117,35 +117,6 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 	target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
-
-/****************************************
- * determinant (cross product)
- * Takes vertexes and uses cross product math
- * to find the determinant
- ***************************************/
-double determinant(const double & vtx1, const double & vtx2, 
-                    const double & vty1, const double & vty2)//XXYY
-{
-    double determ = 0.0;
-    determ = (vtx1 * vty2) - (vty1 * vtx2);
-    return determ;
-}
-
-/****************************************
- * Interpolation
- * returns interpolation math
- ***************************************/
-double interpolate(double areaTri, double determ1, double determ2, 
-                    double determ3, double attr1, double attr2, double attr3, double zCorrect = 1)
-{
-    //pull weights
-    double w1 = (determ2 / areaTri) * attr1;
-    double w2 = (determ3 / areaTri) * attr2;
-    double w3 = (determ1 / areaTri) * attr3; 
-
-    return zCorrect * (w1 + w2 + w3);//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
-} 
-
 /****************************************
  * DRAW_Line
  * Renders a line to the screen.
@@ -192,12 +163,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             //If inside the triangle draw
             if (firstDet >= 0 && secondDet >= 0 && thirdDet >=0)
             {
-                target[(int)ypix][(int)xpix] = attrs[0].color;
+                target[(int)ypix][(int)xpix] = attrs[0].color;//SEG FAULTS IN PIPELINE
                 Attributes interpolatedAttribs;
 
                 double zCorrect = 1 / interpolate(area, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w); 
 
-                    //for the color RGB and UV
+                //for the color RGB and UV
                 
                 interpolatedAttribs.insertDbl(interpolate(area, firstDet, secondDet, thirdDet, attrs[0].att[0].d, attrs[1].att[0].d, attrs[2].att[0].d, zCorrect));
                 interpolatedAttribs.insertDbl(interpolate(area, firstDet, secondDet, thirdDet, attrs[0].att[1].d, attrs[1].att[1].d, attrs[2].att[1].d, zCorrect));
@@ -260,7 +231,7 @@ void intersectAtPositiveLine(double & along, const double & segStartX, const dou
 
     if(segDiffX == segDiffY){ return ;}
 
-    along = (segStartY - segStartX) / (segDiffY - segDiffX);
+    along = (segStartY - segStartX) / (segDiffX - segDiffY);
 }
 
 void intersectAtNegativeLine(double & along, const double & segStartX, const double & segStartY, const double & segEndX, const double & segEndY)
@@ -278,173 +249,164 @@ Vertex vertBetweenVerts(const Vertex & vertA, const Vertex & vertB, const double
 {
     Vertex rv;
     rv.x = (vertA.x) + ((vertB.x-vertA.x) * along); 
-    rv.x = (vertA.y) + ((vertB.y-vertA.y) * along); 
-    rv.x = (vertA.z) + ((vertB.z-vertA.z) * along); 
-    rv.x = (vertA.w) + ((vertB.w-vertA.w) * along); 
+    rv.y = (vertA.y) + ((vertB.y-vertA.y) * along); 
+    rv.z = (vertA.z) + ((vertB.z-vertA.z) * along); 
+    rv.w = (vertA.w) + ((vertB.w-vertA.w) * along); 
     return rv;
 }
 
-//virtexclipping
-void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], 
-				const int & numIn, 
-				Vertex clippedVertices[], Attributes clippedAttrs[], int & numClipped)
+// Clip Vertices
+void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], const int &numIn, 
+                    Vertex clippedVertices[], Attributes clippedAttrs[], int &numClipped)
 {
+    // TMP clip buffers
+    int num;
+    int numOut;
+    bool inBounds[MAX_VERTICES];
+    Vertex tmpVertsA[MAX_VERTICES];
+    Vertex tmpVertsB[MAX_VERTICES];
+    Attributes tmpAttrsA[MAX_VERTICES];
+    Attributes tmpAttrsB[MAX_VERTICES];
 
+    Vertex const* srcVerts;
+    Vertex* sinkVerts;
 
-		// TMP Clip buffers 
-		int num;
-		int numOut;
-		bool inBounds[MAX_VERTICES];
-		Vertex tmpVertA[MAX_VERTICES];
-		Vertex tmpVertB[MAX_VERTICES];
-		Attributes tmpAttrA[MAX_VERTICES];
-		Attributes tmpAttrB[MAX_VERTICES];
-		
-		Vertex const * srcVerts;
-		Vertex* sinkVerts;
-		Attributes const * srcAttrs;
-		Attributes* sinkAttrs;
+    Attributes const* srcAttrs;
+    Attributes* sinkAttrs;
 
-		
-		// Setup Pointers for the first round of clipping 
-		srcVerts = transformedVerts;
-		srcAttrs = transformedAttrs;
-		sinkVerts = tmpVertA;
-		sinkAttrs = tmpAttrA;
-		num = numIn;
-		numOut = 0;
-				
-    // Clip on each side against wLimit
+    // Setup pointers for the firt round of clipping
+
+    srcVerts = transformedVerts;
+    srcAttrs = transformedAttrs;
+    sinkVerts = tmpVertsA;
+    sinkAttrs = tmpAttrsA;
+    num = numIn;
+    numOut = 0;
+
     double wLimit = 0.001;
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (srcVerts[i].w > wLimit);    
+        inBounds[i] = (srcVerts[i].w > wLimit);
     }
     for(int i = 0; i < num; i++)
     {
         int cur = i;
         int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
 
-        if(curVertIn && nextVertIn)
+        if(curVertexIn && nextVertexIn)
         {
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else if(curVertIn && !nextVertIn)
+        else if(curVertexIn && !nextVertexIn)
+        {
+            double along;
+            intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertexIn && nextVertexIn)
         {
             double along;
             intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
 
             sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
             sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-        }
-        else if(!curVertIn && nextVertIn)
-        {
-            double along;
-            intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
 
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
+        else
         {
-            ; //Do nothing... 
+            // Do Nothing
         }
     }
 
     // Clip against X
+    srcVerts = tmpVertsA;
+    srcAttrs = tmpAttrsA;
+    sinkVerts = tmpVertsB;
+    sinkAttrs = tmpAttrsB;
+    num = numOut;
+    numOut = 0;
+    
+    // Clip against X = w
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].x < srcVerts[i].w);
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
+
+        if(curVertexIn && nextVertexIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertexIn && !nextVertexIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertexIn && nextVertexIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else
+        {
+            // Do Nothing
+        }
+    }
 
     // Setup pointers
-    srcVerts = tmpVertA;
-    srcAttrs = tmpAttrA;
-    sinkVerts = tmpVertB;
-    sinkAttrs = tmpAttrB;
+    srcVerts = tmpVertsB;
+    srcAttrs = tmpAttrsB;
+    sinkVerts = tmpVertsA;
+    sinkAttrs = tmpAttrsA;
     num = numOut;
     numOut = 0;
 
-    // Clip X=W
+
+    // Clip against -X = w
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (srcVerts[i].x < srcVerts[i].w);    
+        inBounds[i] = (-srcVerts[i].x < srcVerts[i].w);
     }
     for(int i = 0; i < num; i++)
     {
         int cur = i;
         int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
 
-        if(curVertIn && nextVertIn)
+        if(curVertexIn && nextVertexIn)
         {
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else if(curVertIn && !nextVertIn)
-        {
-            double along;
-            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-        }
-        else if(!curVertIn && nextVertIn)
-        {
-            double along;
-            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-
-            
-
-            sinkVerts[numOut] = srcVerts[next];
-            sinkAttrs[numOut++] = srcAttrs[next];
-        }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
-    }
-
-    // Setup Pointers
-    srcVerts = tmpVertB;
-    srcAttrs = tmpAttrB;
-    sinkVerts = tmpVertA;
-    sinkAttrs = tmpAttrA;
-    num = numOut;
-    numOut = 0;
-
-    // Clip -X=W
-    for(int i = 0; i < num; i++)
-    {
-        inBounds[i] = (-srcVerts[i].x < srcVerts[i].w);    
-    }
-    for(int i = 0; i < num; i++)
-    {
-        int cur = i;
-        int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
-
-        if(curVertIn && nextVertIn)
-        {
-            sinkVerts[numOut] = srcVerts[next];
-            sinkAttrs[numOut++] = srcAttrs[next];
-        }
-        else if(curVertIn && !nextVertIn)
+        else if(curVertexIn && !nextVertexIn)
         {
             double along;
             intersectAtNegativeLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
-
             sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
             sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
         }
-        else if(!curVertIn && nextVertIn)
+        else if(!curVertexIn && nextVertexIn)
         {
             double along;
             intersectAtNegativeLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
@@ -455,100 +417,95 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
+        else
         {
-            ; //Do nothing... 
+            // Do Nothing
         }
     }
-
-
 
     // Clip against Y
+    srcVerts = tmpVertsA;
+    srcAttrs = tmpAttrsA;
+    sinkVerts = tmpVertsB;
+    sinkAttrs = tmpAttrsB;
+    num = numOut;
+    numOut = 0;
+    
+    // Clip against Y = w
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].y < srcVerts[i].w);
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
+
+        if(curVertexIn && nextVertexIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertexIn && !nextVertexIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertexIn && nextVertexIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else
+        {
+            // Do Nothing
+        }
+    }
 
     // Setup pointers
-    srcVerts = tmpVertA;
-    srcAttrs = tmpAttrA;
-    sinkVerts = tmpVertB;
-    sinkAttrs = tmpAttrB;
+    srcVerts = tmpVertsB;
+    srcAttrs = tmpAttrsB;
+    sinkVerts = tmpVertsA;
+    sinkAttrs = tmpAttrsA;
     num = numOut;
     numOut = 0;
 
-    // Clip Y=W
+
+    // Clip against -Y = w
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (srcVerts[i].y < srcVerts[i].w);    
+        inBounds[i] = (-srcVerts[i].y < srcVerts[i].w);
     }
     for(int i = 0; i < num; i++)
     {
         int cur = i;
         int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
 
-        if(curVertIn && nextVertIn)
+        if(curVertexIn && nextVertexIn)
         {
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else if(curVertIn && !nextVertIn)
-        {
-            double along;
-            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-        }
-        else if(!curVertIn && nextVertIn)
-        {
-            double along;
-            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-
-            sinkVerts[numOut] = srcVerts[next];
-            sinkAttrs[numOut++] = srcAttrs[next];
-        }
-        else // (!curVertIn && !nextVertIn)
-        {
-            ; //Do nothing... 
-        }
-    }
-
-    // Setup Pointers
-    srcVerts = tmpVertB;
-    srcAttrs = tmpAttrB;
-    sinkVerts = tmpVertA;
-    sinkAttrs = tmpAttrA;
-    num = numOut;
-    numOut = 0;
-
-    // Clip -Y=W
-    for(int i = 0; i < num; i++)
-    {
-        inBounds[i] = (-srcVerts[i].y < srcVerts[i].w);    
-    }
-    for(int i = 0; i < num; i++)
-    {
-        int cur = i;
-        int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
-
-        if(curVertIn && nextVertIn)
-        {
-            sinkVerts[numOut] = srcVerts[next];
-            sinkAttrs[numOut++] = srcAttrs[next];
-        }
-        else if(curVertIn && !nextVertIn)
+        else if(curVertexIn && !nextVertexIn)
         {
             double along;
             intersectAtNegativeLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
-
             sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
             sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
         }
-        else if(!curVertIn && nextVertIn)
+        else if(!curVertexIn && nextVertexIn)
         {
             double along;
             intersectAtNegativeLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
@@ -559,116 +516,112 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
+        else
         {
-            ; //Do nothing... 
+            // Do Nothing
         }
     }
 
     // Clip against Z
-
-    // Setup pointers
-    srcVerts = tmpVertA;
-    srcAttrs = tmpAttrA;
-    sinkVerts = tmpVertB;
-    sinkAttrs = tmpAttrB;
+    srcVerts = tmpVertsA;
+    srcAttrs = tmpAttrsA;
+    sinkVerts = tmpVertsB;
+    sinkAttrs = tmpAttrsB;
     num = numOut;
     numOut = 0;
-
-    // Clip Z=W
+    
+    // Clip against Z = w
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (srcVerts[i].z < srcVerts[i].w);    
+        inBounds[i] = (srcVerts[i].z < srcVerts[i].w);
     }
     for(int i = 0; i < num; i++)
     {
         int cur = i;
         int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
 
-        if(curVertIn && nextVertIn)
+        if(curVertexIn && nextVertexIn)
         {
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else if(curVertIn && !nextVertIn)
+        else if(curVertexIn && !nextVertexIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertexIn && nextVertexIn)
         {
             double along;
             intersectAtPositiveLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
 
             sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
             sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-        }
-        else if(!curVertIn && nextVertIn)
-        {
-            double along;
-            intersectAtPositiveLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
 
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
+        else
         {
-            ; //Do nothing... 
+            // Do Nothing
         }
     }
 
-    // Setup Pointers
-    srcVerts = tmpVertB;
-    srcAttrs = tmpAttrB;
+    // Setup pointers
+    srcVerts = tmpVertsB;
+    srcAttrs = tmpAttrsB;
     sinkVerts = clippedVertices;
     sinkAttrs = clippedAttrs;
     num = numOut;
     numOut = 0;
 
-    // Clip -Z=W
+
+    // Clip against -Z = w
     for(int i = 0; i < num; i++)
     {
-        inBounds[i] = (-srcVerts[i].z < srcVerts[i].w);    
+        inBounds[i] = (-srcVerts[i].z < srcVerts[i].w);
     }
     for(int i = 0; i < num; i++)
     {
         int cur = i;
         int next = (i+1) % num;
-        bool curVertIn = inBounds[cur];
-        bool nextVertIn = inBounds[next];
+        bool curVertexIn = inBounds[cur];
+        bool nextVertexIn = inBounds[next];
 
-        if(curVertIn && nextVertIn)
+        if(curVertexIn && nextVertexIn)
         {
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else if(curVertIn && !nextVertIn)
+        else if(curVertexIn && !nextVertexIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertexIn && nextVertexIn)
         {
             double along;
             intersectAtNegativeLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
 
             sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
             sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
-        }
-        else if(!curVertIn && nextVertIn)
-        {
-            double along;
-            intersectAtNegativeLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
-
-            sinkVerts[numOut] = vertBetweenVerts(srcVerts[cur], srcVerts[next], along);
-            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
 
             sinkVerts[numOut] = srcVerts[next];
             sinkAttrs[numOut++] = srcAttrs[next];
         }
-        else // (!curVertIn && !nextVertIn)
+        else
         {
-            ; //Do nothing... 
+            // Do Nothing
         }
     }
 
-    // Final number of output vertices
-    numClipped = numOut;  
+    numClipped = numOut;
 }
 
 //normalizeVerticies
@@ -690,7 +643,7 @@ void normalizeVertices(	Vertex clippedVertices[],
 		// Setup Attributes 
 		for(int j = 0; j < clippedAttrs[i].numMembers; j++)
 		{
-			clippedAttrs[i].att[j].d /= zValue;//NEED TO FIX
+			clippedAttrs[i].att[j].d /= zValue;
 		}		
 	}
 }
@@ -770,7 +723,21 @@ void DrawPrimitive(PRIMITIVES prim,
             DrawLine(target, transformedVerts, transformedAttrs, uniforms, frag);
             break;
         case TRIANGLE:
-            DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
+            //DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
+            Vertex tri[3];
+            Attributes vAttr[3];
+            for(int i =2; i <numClipped; i++)
+            {
+                tri[0] = clippedVertices[0];
+                tri[1] = clippedVertices[i-1];
+                tri[2] = clippedVertices[i];
+
+                vAttr[0] = clippedAttrs[0];
+                vAttr[1] = clippedAttrs[i-1];
+                vAttr[2] = clippedAttrs[i];
+
+                DrawTriangle(target, tri, vAttr, uniforms, frag);
+            }
     }
 }
 
@@ -808,8 +775,8 @@ int main()
         // Your code goes here
         //TestDrawFragments(frame); //good
         //TestDrawPerspectiveCorrect(frame); //good
-        TestVertexShader(frame); //good
-        //TestPipeline(frame);
+        //TestVertexShader(frame); //good
+        TestPipeline(frame); //clipping error and seg fault
         //CAD View //Did on Matt's computer want to write on mine too later
 
         // Push to the GPU
