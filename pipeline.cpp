@@ -20,10 +20,10 @@ double interpolateZ(const double & area, const double & det1, const double & det
     double w2 = det2 / area;
     double w3 = 1 - w1 - w2;
 
-    double fractionalZ = vertices[0].w * w2 +
-                         vertices[1].w * w3 +
-                         vertices[2].w * w1;
-    return 1 / fractionalZ;
+    double fractionalZ = 1 / (vertices[0].w * w2 +
+                              vertices[1].w * w3 +
+                              vertices[2].w * w1);
+    return fractionalZ;
 }
 
 /***********************************************
@@ -205,8 +205,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
     double area = determinant(vector01.x, -vector20.x, vector01.y, -vector20.y);
 
-    // Obtained from the point we are looking at in the loop
-    Vertex pointVector;
 
     // Variables to hold the weights
     double det1;
@@ -216,28 +214,16 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     {
         for (int x = boxMin.x; x <= boxMax.x; x++)
         {
-            // Obtain the first determinant
-            pointVector = {x - triangle[0].x, y - triangle[0].y};
-            det1 = determinant(vector01.x, pointVector.x, vector01.y, pointVector.y);
-
-            // Obtain the second determinant
-            pointVector = {x - triangle[1].x, y - triangle[1].y};
-            det2 = determinant(vector12.x, pointVector.x, vector12.y, pointVector.y);
-
-            // Obatin the third determinant
-            pointVector = {x - triangle[2].x, y - triangle[2].y};
-            det3 = determinant(vector20.x, pointVector.x, vector20.y, pointVector.y);
-
+            // Obtain two determinants
+            det1 = determinant(vector01.x, x - triangle[0].x, vector01.y, y - triangle[0].y);
+            det2 = determinant(vector12.x, x - triangle[1].x, vector12.y, y - triangle[1].y);
          
-            if ((det1 >= 0.0) && (det2 >= 0.0) && (det3 >= 0.0))
+            if ((det1 >= 0.0) && (det2 >= 0.0) && ((det1 + det2) < area))
             {
-                double correctedZ = 0.0;
                 Attributes interpolatedAttrs;
                 interpolatedAttrs.numMembers = attrs[0].numMembers;
 
-                correctedZ = interpolateZ(area, det1, det2, det3, triangle);
-                interpolatedAttrs.interpolateValues(area, det1, det2, det3, attrs);
-                interpolatedAttrs.correctPerspective(correctedZ);
+                interpolatedAttrs.interpolateValues(area, det1, det2, attrs, triangle);
 
                 frag->FragShader(target[y][x], interpolatedAttrs, *uniforms);
             }

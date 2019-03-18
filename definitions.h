@@ -21,8 +21,8 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
-#define MOUSE_SENSITIVITY 0.02
-#define MOVE_SENSITIVITY 0.9
+#define MOUSE_SENSITIVITY 0.05
+#define MOVE_SENSITIVITY 1.2
 double ORTH_VIEW_BOX =  1.0;
 
 // Max # of vertices after clipping
@@ -107,7 +107,7 @@ struct camControls
 };
 
 camControls myCam;
-camControls topCam = {0, 70, 70, 0, 0, 90};
+camControls topCam = {0, 0, 0, 0, 0, 0};
 camControls sideCam = {70, 0, 70, -90, 0, 0};
 camControls frontCam = {0, 0, 0, 0, 0, 0};
 
@@ -450,17 +450,23 @@ class Attributes
             }
         }
 
-        void interpolateValues(const double &area, const double &d1, const double &d2, const double &d3, Attributes* vertAttrs)
+        void interpolateValues(const double &area, const double &d1, const double &d2,
+                               Attributes* vertAttrs, const Vertex tri[3])
         {
             double w1 = d1 / area;
             double w2 = d2 / area;
             double w3 = 1 - w1 - w2;
 
+            double correctedZ = 1 / (tri[0].w * w2 +
+                                     tri[1].w * w3 +
+                                     tri[2].w * w1);
+
             for (int i = 0; i < this->numMembers; i++)
             {
-                attribs[i].d = vertAttrs[0].attribs[i].d * w2 +
+                attribs[i].d = (vertAttrs[0].attribs[i].d * w2 +
                                 vertAttrs[1].attribs[i].d * w3 +
-                                vertAttrs[2].attribs[i].d * w1;
+                                vertAttrs[2].attribs[i].d * w1) * correctedZ;
+                
             }
         }
 
@@ -901,5 +907,36 @@ public:
     Attributes* getAttrs() { return (Attributes*)&attrs; }
 };
 
+
+class Quad
+{
+public:
+    Vertex verts[4];
+
+};
+
+class Node
+{
+public:
+    Quad quad;
+    Vertex normal;
+    // The boundary wall that this node is either behind or in front of
+    Node* parent;
+    // All objects in front of the node
+    Node* leftChild;
+    // All objects behind the node
+    Node* rightChild;
+
+    // If the pointer returned is null it is not intersected
+    // If it is we return the X and Z points of where the quad
+    // in the node is intersected
+    Vertex* isIntersected(Quad quadInQuestion);
+};
+
+class BSPTree
+{
+public:
+
+};
     
 #endif

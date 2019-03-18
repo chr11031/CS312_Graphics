@@ -915,13 +915,165 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
 void TestVSD(Buffer2D<PIXEL> & target)
 {
-        Vertex[] wall1= 
+        double coords[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        Vertex wall1[]= 
         {
-                {},
-                {},
-                {},
-                {}
+                {10, 0, 80, 1},
+                {60, 0, 50, 1},
+                {60, 40, 50, 1},
+                {10, 40, 80, 1}
         };
+
+        Vertex wall2[]=
+        {
+                {85, 0, 35, 1},
+                {135, 0, 5, 1},
+                {135, 40, 5, 1},
+                {85, 40, 35, 1}
+        };
+
+        Vertex wall3[]=
+        {
+                {35, 0, 65, 1},
+                {110, 0,20, 1},
+                {110, 40, 20, 1},
+                {35, 40, 65, 1}
+        };
+
+
+        // First wall vertices and attributes
+        Vertex vertsImg1A[3];
+        Attributes attrsImg1A[3];
+        vertsImg1A[0] = wall1[0];
+        vertsImg1A[1] = wall1[1];
+        vertsImg1A[2] = wall1[2];
+
+        Vertex vertsImg1B[3];
+        Attributes attrsImg1B[3];
+        vertsImg1B[0] = wall1[2];
+        vertsImg1B[1] = wall1[3];
+        vertsImg1B[2] = wall1[0];
+
+        attrsImg1A[0].insertDbl(coords[0][0]);
+        attrsImg1A[0].insertDbl(coords[0][1]);
+
+        attrsImg1A[1].insertDbl(coords[1][0]);
+        attrsImg1A[1].insertDbl(coords[1][1]);
+
+        attrsImg1A[2].insertDbl(coords[2][0]);
+        attrsImg1A[2].insertDbl(coords[2][1]);
+
+        attrsImg1B[0].insertDbl(coords[2][0]);
+        attrsImg1B[0].insertDbl(coords[2][1]);
+
+        attrsImg1B[1].insertDbl(coords[3][0]);
+        attrsImg1B[1].insertDbl(coords[3][1]);
+
+        attrsImg1B[2].insertDbl(coords[0][0]);
+        attrsImg1B[2].insertDbl(coords[0][1]);
+
+        // Second wall vertices and attributes
+        Vertex vertsImg2A[3];
+        Attributes attrsImg2A[3];
+        vertsImg2A[0] = wall2[0];
+        vertsImg2A[1] = wall2[1];
+        vertsImg2A[2] = wall2[2];
+
+        Vertex vertsImg2B[3];
+        Attributes attrsImg2B[3];
+        vertsImg2B[0] = wall2[2];
+        vertsImg2B[1] = wall2[3];
+        vertsImg2B[2] = wall2[0];
+
+        attrsImg2A[0].insertDbl(coords[0][0]);
+        attrsImg2A[0].insertDbl(coords[0][1]);
+
+        attrsImg2A[1].insertDbl(coords[1][0]);
+        attrsImg2A[1].insertDbl(coords[1][1]);
+
+        attrsImg2A[2].insertDbl(coords[2][0]);
+        attrsImg2A[2].insertDbl(coords[2][1]);
+
+        attrsImg2B[0].insertDbl(coords[2][0]);
+        attrsImg2B[0].insertDbl(coords[2][1]);
+
+        attrsImg2B[1].insertDbl(coords[3][0]);
+        attrsImg2B[1].insertDbl(coords[3][1]);
+
+        attrsImg2B[2].insertDbl(coords[0][0]);
+        attrsImg2B[2].insertDbl(coords[0][1]);
+
+        // Third wall vertices and attributes
+
+        Vertex vertsImg3A[3];
+        Attributes attrsImg3A[3];
+        vertsImg3A[0] = wall3[0];
+        vertsImg3A[1] = wall3[1];
+        vertsImg3A[2] = wall3[2];
+
+        Vertex vertsImg3B[3];
+        Attributes attrsImg3B[3];
+        vertsImg3B[0] = wall3[2];
+        vertsImg3B[1] = wall3[3];
+        vertsImg3B[2] = wall3[0];
+
+        attrsImg3A[0].insertDbl(coords[0][0]);
+        attrsImg3A[0].insertDbl(coords[0][1]);
+
+        attrsImg3A[1].insertDbl(coords[1][0]);
+        attrsImg3A[1].insertDbl(coords[1][1]);
+
+        attrsImg3A[2].insertDbl(coords[2][0]);
+        attrsImg3A[2].insertDbl(coords[2][1]);
+
+        attrsImg3B[0].insertDbl(coords[2][0]);
+        attrsImg3B[0].insertDbl(coords[2][1]);
+
+        attrsImg3B[1].insertDbl(coords[3][0]);
+        attrsImg3B[1].insertDbl(coords[3][1]);
+
+        attrsImg3B[2].insertDbl(coords[0][0]);
+        attrsImg3B[2].insertDbl(coords[0][1]);
+
+        static BufferImage totoro("images/totoro.bmp");
+        static BufferImage haku("images/hugs.bmp");
+        static BufferImage laputa("images/laputa.bmp");
+        Attributes imageUniforms;
+
+        Matrix model;
+        model.addTrans(0,0,0);
+        Matrix view = camera4x4(myCam.x, myCam.y, myCam.z,
+                                myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix proj = perspective4x4(60, 1.0, 1, 200);
+
+        imageUniforms.insertPtr((void*)&totoro);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);
+        imageUniforms.insertPtr((void*)&proj);
+
+        FragmentShader fragShader(imageFragShader);
+        VertexShader vertShader(SimpleVertexShader2);
+
+        Matrix newModel;
+        newModel.addTrans(10, 0, 20);
+
+        imageUniforms[0].ptr = (void*)&laputa;
+        imageUniforms[1].ptr = (void*)&newModel;
+
+        DrawPrimitive(TRIANGLE, target, vertsImg3A, attrsImg3A, &imageUniforms, &fragShader, &vertShader);
+        DrawPrimitive(TRIANGLE, target, vertsImg3B, attrsImg3B, &imageUniforms, &fragShader, &vertShader);
+
+        imageUniforms[0].ptr = (void*)&totoro;
+        imageUniforms[1].ptr = (void*)&model;
+
+        DrawPrimitive(TRIANGLE, target, vertsImg1A, attrsImg1A, &imageUniforms, &fragShader, &vertShader);
+        DrawPrimitive(TRIANGLE, target, vertsImg1B, attrsImg1B, &imageUniforms, &fragShader, &vertShader);
+
+        imageUniforms[0].ptr = (void*)&haku;
+
+        DrawPrimitive(TRIANGLE, target, vertsImg2A, attrsImg2A, &imageUniforms, &fragShader, &vertShader);
+        DrawPrimitive(TRIANGLE, target, vertsImg2B, attrsImg2B, &imageUniforms, &fragShader, &vertShader);
+ 
 }
 
 
