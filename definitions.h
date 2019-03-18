@@ -798,7 +798,7 @@ class Attributes
         /*******************************************************
          * MEMBER FUNCTIONS
          * ****************************************************/
-        void interpolateValues(const double & det1, const double & det2, const double & det3, const double & area, Attributes* vertAttrs, const Vertex vertices[3])
+        void interpolateValues(const double & det1, const double & det2, const double & area, Attributes* vertAttrs, const Vertex vertices[3])
         {
             double w1 = det1 / area;
             double w2 = det2 / area;

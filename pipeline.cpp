@@ -165,14 +165,14 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // now we do the crossproduct of the moving vert (v3, which is being incremented) and constant verts (v1 & v2) and put them in respect to the original crossproduct by dividing by the crossproduct of v1 and v2
             double det1 = crossProduct(v1.x, x - triangle[0].x, v1.y, y - triangle[0].y);
             double det2 = crossProduct(v2.x, x - triangle[1].x, v2.y, y - triangle[1].y);
-            double det3 = crossProduct(v3.x, x - triangle[2].x, v3.y, y - triangle[2].y);
+            // double det3 = crossProduct(v3.x, x - triangle[2].x, v3.y, y - triangle[2].y);
 
             // now we are checking to see if the area ratio (a or b) are positive, then we see if combined they equal or are less than the actual triangle area
-            if ((det1 >= 0) && (det2 >= 0) && (det3 >= 0))
+            if ((det1 >= 0) && (det2 >= 0) && (det1 + det2 < area))
             {
                 Attributes interpolatedAttribs;
                 interpolatedAttribs.numValues = attrs[0].numValues;
-                interpolatedAttribs.interpolateValues(det1, det2, det3, area, attrs, triangle);
+                interpolatedAttribs.interpolateValues(det1, det2, area, attrs, triangle);
                 
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
             }
