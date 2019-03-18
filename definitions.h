@@ -95,6 +95,33 @@ struct bmpLayout
     unsigned short bpp;
 };
 
+class Quad
+{
+    public:
+        Vertex verts[4];
+
+
+};
+
+class Node
+{
+    public:
+        // variables
+        Quad myQuad;
+        Vertex normal;
+        Node * parent;
+        Node * backChild;
+        Node * frontChild;
+
+        // methods
+        Vertex * isIntersected(); // only x and z are relevant - y is always 39
+};
+
+class BSPTree
+{
+    public:
+};
+
 /****************************************************
  * This is the matrix class which holds the number of
  * rows, the number of columns, and the data in a 2D

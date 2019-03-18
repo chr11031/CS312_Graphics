@@ -300,7 +300,7 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = (Vertex){50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         
-        // chanign colors to floats
+        // changing colors to floats
         colorAttributes[0].attrValues[0].d = 1.0;
         colorAttributes[0].attrValues[1].d = 0.0;
         colorAttributes[0].attrValues[2].d = 0.0;
