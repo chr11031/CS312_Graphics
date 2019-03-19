@@ -913,18 +913,22 @@ public:
 class Quad
 {
 public:
-    Quad() : verts(NULL) , intersectionLine(NULL) {}
-    Quad(Vertex newVerts[4])
+    Quad() : verts(NULL), intersectionLine(NULL) {}
+    Quad(Vertex newVerts[4]) : verts(NULL), intersectionLine(NULL)
     {
-        this->intersectionLine = NULL;
-        this->verts = new Vertex[4];
         this->setVerts(newVerts);
+    }
+    Quad(const Quad & newQuad) : verts(NULL), intersectionLine(NULL)
+    {
+        *this = newQuad;
     }
 
     ~Quad()
     {
-        delete verts;
-        delete intersectionLine;
+        if (NULL != this->verts)
+            delete[] verts;
+        if (NULL != this->intersectionLine)
+            delete intersectionLine;
     }
     bool isIntersected(Quad splitter);
 
@@ -944,13 +948,28 @@ public:
 
     void setVerts(Vertex newVerts[4])
     {
-        if (NULL == verts)
-            verts = new Vertex[4];
+        if (NULL == this->verts)
+            this->verts = new Vertex[4];
         
         for (int i = 0; i < 4; i++)
             this->verts[i] = newVerts[i];
 
         this->findNormal();
+    }
+
+    Quad & operator= (const Quad & rhs)
+    {
+        if (NULL == this->verts)
+            this->verts = new Vertex[4];
+
+        if (NULL == rhs.verts)
+            return *this;
+
+
+        for(int i = 0; i < 4; i++)
+            this->verts[i] = rhs.verts[i];
+
+        return *this;
     }
 
 private:
@@ -985,7 +1004,7 @@ bool Quad::isIntersected(Quad splitter)
     this->intersectionLine->y = 0;
     this->intersectionLine->z = (this->verts[0].z + (t * (this->verts[1].z - this->verts[0].z)));
 
-    std::cout << "{ " << this->intersectionLine->x << ", " << this->intersectionLine->y << ", " << this->intersectionLine->z << "}\n";
+    //std::cout << "{ " << this->intersectionLine->x << ", " << this->intersectionLine->y << ", " << this->intersectionLine->z << "}\n";
     return true;
 }
 
@@ -1001,7 +1020,7 @@ void Quad::findNormal()
         ((height.x * width.y) - (height.y * width.x))
     };
 
-    std::cout << "{ " << norm.x << ", " << norm.y << ", " << norm.z << "}\n";
+    //std::cout << "{ " << norm.x << ", " << norm.y << ", " << norm.z << "}\n";
 
     this->normal = norm;
 }
@@ -1009,16 +1028,29 @@ void Quad::findNormal()
 class Node
 {
 public:
-    Node() {}
-    Node(Vertex quad[4])
+    Node() : parent(NULL), leftChild(NULL), rightChild(NULL) {}
+    Node(Vertex quad[4]) : parent(NULL), leftChild(NULL), rightChild(NULL)
     {
         this->quad.setVerts(quad);
     }
-    Node(Quad newQuad)
+    Node(Quad newQuad) : parent(NULL), leftChild(NULL), rightChild(NULL)
     {
         this->quad = newQuad;
     }
-    Quad quad;
+    Node(const Node & newNode) : parent(NULL), leftChild(NULL), rightChild(NULL)
+    {
+        *this = newNode;
+    }
+    ~Node()
+    {
+        if (!parent)
+            delete parent;
+        if (!leftChild)
+            delete leftChild;
+        if (!rightChild)
+            delete rightChild;
+    }
+    
 
     // The boundary wall that this node is either behind or in front of
     Node* parent;
@@ -1028,9 +1060,28 @@ public:
     Node* rightChild;
 
     bool isQuadIntersected(Node* splitter) { return quad.isIntersected(splitter->quad); }
-    void partition(std::vector<Node*> front, std::vector<Node*> back);
+    void partition(std::vector<Node*> & allNodes, std::vector<Node*> & front, std::vector<Node*> & back);
     void split(Node* & node1, Node* & node2);
+
+    Node & operator= (const Node & node)
+    {
+        this->quad = node.quad;
+        this->parent = node.parent;
+        this->leftChild = node.leftChild;
+        this->rightChild = node.rightChild;
+
+        return *this;
+    }
+
+private:
+    Quad quad;
 };
+
+void Node::partition(std::vector<Node*> & allNodes, std::vector<Node*> & front, std::vector<Node*> & back)
+{
+    Node* newNode = new Node();
+    allNodes.push_back(newNode);
+}
 
 void Node::split(Node* & node1, Node* & node2)
 {

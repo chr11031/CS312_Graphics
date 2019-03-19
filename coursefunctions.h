@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include <iostream>
 #include "shaders.h"
 #include "math.h"
 
@@ -959,13 +960,15 @@ void TestVSD(Buffer2D<PIXEL> & target)
 
         Quad itsLitYo(wall10);
         Quad isSplitterYo(wall11);
-        Node firstNode(wall10);
-        Node secondNode(wall11);
-        Node* newNode1 = NULL;
-        Node* newNode2 = NULL;
+        Node* firstNode = new Node(itsLitYo);
+        Node* secondNode = new Node(isSplitterYo);
+        firstNode = secondNode;
+        Node thirdNode(*firstNode);
 
-        if (firstNode.isQuadIntersected(&secondNode))
-                firstNode.split(newNode1, newNode2);
+        std::vector<Node*> all;
+        all.push_back(firstNode);
+        firstNode->partition(all, all, all);
+        std::cout << all.size() << std::endl;
 
 
         // First wall vertices and attributes
