@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <limits>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -47,148 +48,6 @@ struct Vertex
     double w;
 };
 
-/**********************************************************
- * MATRIX
- * Encapsulates a transformation matrix
- *********************************************************/
-class Matrix
-{
-    private:
-        double matrix[4][4];
-
-        void initialize(double matrix[4][4])
-        {
-            for(int y = 0; y < 4; y++)
-            {
-                for(int x = 0; x < 4; x++)
-                {
-                    this->matrix[y][x] = matrix[y][x];
-                }
-            }
-        }
-
-    public:
-        Matrix() 
-        {
-            double data[4][4] = {
-                {1.0, 0.0, 0.0, 0.0},
-                {0.0, 1.0, 0.0, 0.0},
-                {0.0, 0.0, 1.0, 0.0},
-                {0.0, 0.0, 0.0, 1.0}};
-            initialize(data);
-        }
-
-        Matrix(double matrix[4][4])
-        {
-            initialize(matrix);
-        }
-
-        double* operator[](int i)
-        {
-            if(i < 0 || i >= 4)
-                throw(false);
-            return matrix[i];
-        }
-
-        const double* operator[](int i) const
-        {
-            if(i < 0 || i >= 4)
-                throw(false);
-            return matrix[i];
-        }
-};
-
-// The identity matrix
-Matrix IdentityMatrix()
-{
-    double data[4][4] = {
-        {1.0, 0.0, 0.0, 0.0}, 
-        {0.0, 1.0, 0.0, 0.0}, 
-        {0.0, 0.0, 1.0, 0.0}, 
-        {0.0, 0.0, 0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Transformation matrix that translates
-Matrix TranslationMatrix(double dx, double dy, double dz)
-{
-    double data[4][4] = {
-        {1.0, 0.0, 0.0, dx}, 
-        {0.0, 1.0, 0.0, dy}, 
-        {0.0, 0.0, 1.0, dz}, 
-        {0.0, 0.0, 0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Transformation matrix that scales
-Matrix ScaleMatrix(double sx, double sy, double sz)
-{
-    double data[4][4] = {
-        { sx, 0.0, 0.0, 0.0}, 
-        {0.0,  sy, 0.0, 0.0}, 
-        {0.0, 0.0,  sz, 0.0}, 
-        {0.0, 0.0, 0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Transformation matrix that rotates ccw around the x-axis
-Matrix XRotationMatrix(double rad)
-{
-    double data[4][4] = {
-        {1.0,       0.0,       0.0, 0.0}, 
-        {0.0,  cos(rad), -sin(rad), 0.0}, 
-        {0.0,  sin(rad),  cos(rad), 0.0}, 
-        {0.0,       0.0,       0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Transformation matrix that rotates ccw around the y-axis
-Matrix YRotationMatrix(double rad)
-{
-    double data[4][4] = {
-        { cos(rad), 0.0, sin(rad), 0.0}, 
-        {      0.0, 1.0,      0.0, 0.0}, 
-        {-sin(rad), 0.0, cos(rad), 0.0}, 
-        {      0.0, 0.0,      0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Transformation matrix that rotates ccw around the z-axis
-Matrix ZRotationMatrix(double rad)
-{
-    double data[4][4] = {
-        {cos(rad), -sin(rad), 0.0, 0.0}, 
-        {sin(rad),  cos(rad), 0.0, 0.0}, 
-        {     0.0,       0.0, 1.0, 0.0}, 
-        {     0.0,       0.0, 0.0, 1.0}};
-    return Matrix(data);
-}
-
-// Multiplies two matrices
-Matrix operator*(const Matrix &lhs, const Matrix &rhs)
-{
-    Matrix result;
-    for(int y = 0; y < 4; y++)
-    {
-        for(int x = 0; x < 4; x++)
-        {
-            result[y][x] = lhs[y][0] * rhs[0][x] + lhs[y][1] * rhs[1][x] + lhs[y][2] * rhs[2][x] + lhs[y][3] * rhs[3][x];
-        }
-    }
-    return result;
-}
-
-// Muliplies a matrix by a vertex
-Vertex operator*(const Matrix &lhs, const Vertex &rhs)
-{
-    Vertex result;
-    result.x = rhs.x * lhs[0][0] + rhs.y * lhs[0][1] + rhs.z * lhs[0][2] + rhs.w * lhs[0][3];
-    result.y = rhs.x * lhs[1][0] + rhs.y * lhs[1][1] + rhs.z * lhs[1][2] + rhs.w * lhs[1][3];
-    result.z = rhs.x * lhs[2][0] + rhs.y * lhs[2][1] + rhs.z * lhs[2][2] + rhs.w * lhs[2][3];
-    result.w = rhs.x * lhs[3][0] + rhs.y * lhs[3][1] + rhs.z * lhs[3][2] + rhs.w * lhs[3][3];
-    return result;
-}
-
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -222,12 +81,16 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
+            if(grid == nullptr)
+                return;
+
             // De-Allocate pointers for column references
             for(int r = 0; r < h; r++)
             {
                 free(grid[r]);
             }
             free(grid);
+            grid = nullptr;
         }
 
         // Size-Specified constructor, no data
@@ -267,8 +130,8 @@ class Buffer2D
         }
 
         // Width, height
-        const int & width()  { return w; }
-        const int & height() { return h; }
+        const int & width() const  { return w; }
+        const int & height() const { return h; }
 
         // The frequented operator for grabbing pixels
         inline T* & operator[] (int i)
@@ -312,6 +175,7 @@ class BufferImage : public Buffer2D<PIXEL>
         {
             // De-Allocate pointers for column references
             free(grid);
+            grid = nullptr;
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -357,6 +221,32 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/*************************************************************
+ * DETERMINANT
+ * Calculates the determinant of two 2D vectors using AD-CB. 
+ ************************************************************/
+double determinant(double v1x, double v1y, double v2x, double v2y) 
+{
+    // AD - CB
+    return v1x * v2y - v1y * v2x;
+}
+
+/*************************************************************
+ * LERP
+ * Linearly interpolates three attributes. 
+ ************************************************************/
+double lerp(double area, double d1, double d2, double d3, double a1, double a2, double a3) 
+{
+    return ((d1 * a3) + (d2 * a1) + (d3 * a2)) / area;
+}  
+
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -366,49 +256,80 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        // Members
+    	int numAttribs = 0;
+        attrib att[16];
+
         // Obligatory empty constructor
         Attributes() {}
 
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        // Interpolation Constructor
+        Attributes( const double &areaTriangle, const double &firstDet, const double &secndDet, const double &thirdDet, 
+                    const Attributes& first, const Attributes& secnd, const Attributes& third, const double &depth)
         {
-            // Your code goes here when clipping is implemented
+            while(numAttribs < first.numAttribs)
+            {
+	         att[numAttribs].d = depth * lerp(areaTriangle, firstDet, secndDet, thirdDet, first[numAttribs].d, secnd[numAttribs].d, third[numAttribs].d);
+			 numAttribs += 1;
+            }
+        }
+
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
+        {
+            numAttribs = first.numAttribs;
+			for(int i = 0; i < numAttribs; i++)
+			{
+				att[i].d = (first[i].d) + ((second[i].d - first[i].d) * along);
+			}
+
+			/*r = first.r + ((second.r - first.r) * along);
+            g = first.g + ((second.g - first.g) * along);
+            b = first.b + ((second.b - first.b) * along);
+            u = first.u + ((second.u - first.u) * along);
+            v = first.v + ((second.v - first.v) * along);*/
+        }
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return att[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return att[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            att[numAttribs].d = d;
+            numAttribs += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            att[numAttribs].ptr = ptr;
+            numAttribs += 1;
         }
         
         PIXEL color;
 
-        double u;
-        double v; 
-        void* ptrImg;
+        //double u;
+        //double v; 
+        //void* ptrImg;
 
-        double r;
-        double g;
-        double b;
+        //double r;
+        //double g;
+        //double b;
 
-        Matrix transform;
+        //Matrix model;
+        //Matrix view;
+        //Matrix projection;
 };	
-
-// Image Fragment Shader 
-void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (bf->width()-1);
-    int y = vertAttr.v * (bf->height()-1);
-
-    fragment = (*bf)[y][x];
-}
-
-// My Fragment Shader for color interpolation
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    // Output our shader color value, in this case red
-    PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.r *0xff) << 16;
-    color += (unsigned int)(vertAttr.g *0xff) << 8;
-    color += (unsigned int)(vertAttr.b *0xff) << 0;
-
-    fragment = color;
-}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -449,12 +370,6 @@ class FragmentShader
         }
 };
 
-void ColorVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    vertOut = uniforms.transform * vertIn;
-    attrOut = vertAttr;
-}
-
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
@@ -462,6 +377,7 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
+
 
 /**********************************************************
  * VERTEX_SHADER
@@ -507,25 +423,23 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);
+                   Buffer2D<double>* zBuf = NULL); 
 
-/*************************************************************
- * DETERMINANT
- * Calculates the determinant of two 2D vectors using AD-CB. 
- ************************************************************/
-double determinant(double v1x, double v1y, double v2x, double v2y) 
+/***********************************************
+ * CLEAR_ZBUF
+ * Sets the Z buffer to the indicated depth value.
+ **********************************************/
+void clearZBuf(Buffer2D<double> & frame, double depth = std::numeric_limits<double>::infinity())
 {
-    // AD - CB
-    return v1x * v2y - v1y * v2x;
+    int h = frame.height();
+    int w = frame.width();
+    for(int y = 0; y < h; y++)
+    {
+        for(int x = 0; x < w; x++)
+        {
+            frame[y][x] = depth;
+        }
+    }
 }
-
-/*************************************************************
- * LERP
- * Linearly interpolates three attributes. 
- ************************************************************/
-double lerp(double area, double d1, double d2, double d3, double a1, double a2, double a3) 
-{
-    return ((d1 * a3) + (d2 * a1) + (d3 * a2)) / area;
-}   
        
 #endif
