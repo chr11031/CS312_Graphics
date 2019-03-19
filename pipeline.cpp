@@ -1,10 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <vector>
-#include <iostream>
-#include <math.h>
-
-using namespace std;
+#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -40,18 +36,92 @@ void SendFrame(SDL_Texture* GPU_OUTPUT, SDL_Renderer * ren, SDL_Surface* frameBu
  * Updates the state of the application based on:
  * keyboard, mouse, touch screen, gamepad inputs. 
  ************************************************************/
-void processUserInputs(bool & running)
+void processUserInputs(bool & running, bool & change, int & count)
 {
     SDL_Event e;
     int mouseX;
     int mouseY;
+    int cur;
+
     while(SDL_PollEvent(&e)) 
     {
-        if(e.type == SDL_QUIT) 
+        if(e.type == SDL_KEYDOWN) // translation
         {
-            running = false;
-        }
-        if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) 
+	        switch (e.key.keysym.sym)
+            {
+                case '1':
+                case 'w':
+                {
+                    myCam.z += (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+	    	        myCam.x += (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
+                    break;
+                }
+                case '2':
+                case 's':
+                {
+                    myCam.z -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+	    	        myCam.x -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
+                    break;
+                }
+                case '3':
+                case 'a':
+                {
+                    myCam.x -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+	    	        myCam.z += (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
+                    break;
+                }
+                case '4':
+                case 'd':
+                {
+                    myCam.x += (cos((myCam.yaw / 180.0) * M_PI)) * 0.5;
+	    	        myCam.z -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.5;
+                    break;
+                }
+                case 'q': 
+                {
+                    running = false;
+                    break;
+                }
+                case 'c':
+                {
+                    change = false;
+                    break;
+                }
+                case 'p':
+                {
+                    count++;
+                    break;
+                }
+                default:
+                    break;
+            }
+        }		
+		else if(e.type == SDL_MOUSEMOTION)
+		{
+		    cur = SDL_ShowCursor(SDL_QUERY);
+			if(cur == SDL_DISABLE)
+			{
+			    double mouseX = e.motion.xrel;
+				double mouseY = e.motion.yrel;
+				myCam.yaw += mouseX * 0.02;
+			    myCam.pitch += mouseY * 0.02;
+		    }
+	    }
+		else if(e.type == SDL_MOUSEBUTTONDOWN)
+		{
+		    cur = SDL_ShowCursor(SDL_QUERY);
+		    if(cur == SDL_DISABLE)
+		    {
+			    SDL_ShowCursor(SDL_ENABLE);
+		   		SDL_SetRelativeMouseMode(SDL_FALSE);
+		    }
+		    else
+		   	{
+		    	SDL_ShowCursor(SDL_DISABLE);
+		   		SDL_SetRelativeMouseMode(SDL_TRUE);
+		    }
+    	}
+        else if(e.type == SDL_QUIT) 
         {
             running = false;
         }
@@ -65,64 +135,153 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    frag->FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
- * DRAW_TRIANGLE
+ * DRAW_LINE
  * Renders a line to the screen.
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-    for (float t = 0; t < 1; t += .01)
-    {
-        int x = ((int)triangle[0].x)*(1.0-t) + ((int)triangle[1].x)*t;
-        int y = ((int)triangle[0].y)*(1.0-t) + ((int)triangle[1].y)*t;
-        target[y][x] = attrs[0].color;
-    }
-
-    for (float t = 1; t < 2; t += .01)
-    {
-        int x = ((int)triangle[1].x)*(1.0-t) + ((int)triangle[2].x)*t;
-        int y = ((int)triangle[1].y)*(1.0-t) + ((int)triangle[2].y)*t;
-        target[y][x] = attrs[1].color;
-    }
-
-    for (float t = 2; t < 3; t += .01)
-    {
-        int x = ((int)triangle[2].x)*(1.0-t) + ((int)triangle[0].x)*t;
-        int y = ((int)triangle[2].y)*(1.0-t) + ((int)triangle[0].y)*t;
-        target[y][x] = attrs[2].color;
-    }
-
 }
 
-/*******************************************************
- * determinant
- *   By taking the two vertex point we can times them together and
- *   Perform the cross product of the two and return the float
- * ******************************************************/
-double determinant(const double & v1x, const double & v2x, const double & v1y, const double & v2y)
+/****************************************
+ * DRAW_TRIANGLE_SCANLINES
+ *
+ * Renders a triangle/convex polygon
+ * to the screen with the appropriate 
+ * fill pattern
+ ***************************************/
+void DrawTriangleScanlines(BufferImage & frame, Vertex* triangle, Attributes* attrs, Attributes* const uniforms, FragmentShader * const frag)
 {
-    double determin;
-    determin = ((v1x * v2y) - (v1y * v2x));// /2;
-    return determin; 
-}
+    // Sort from least to greatest - simple O(n^2) for small set
+    // Y-ordered primarily, X-ordered secondarily 
+    int count = 3;
+    for(int i = 0; i < count; i++)
+    {
+        for(int j = 0; j < count - 1; j++)
+        {
+            if  (triangle[j].y > triangle[j+1].y || 
+                ((triangle[j].y == triangle[j+1].y && (triangle[j].x > triangle[j+1].x))))
+            {
+                SWAP(Vertex, triangle[j], triangle[j+1]);
+                SWAP(Attributes, attrs[j], attrs[j+1]);
+            }
+        }
+    }
 
-/****************************************************
- * Interpolation
- *   Area = Area + area + area
- *   Area = 1/2 Determinate
- * *****************************************************/
-double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attrs1, double attrs2, double attrs3)
-{
-    //Finding where the point is in the traingle and how much color is in each part
-    double interpolated = 0.0;
-    interpolated = (firstDet/areaTriangle * attrs3) + (secndDet/areaTriangle * attrs1) + (thirdDet/areaTriangle * attrs2);
+    // Determinant information
+    Vertex firstLeft = triangle[0];
+    Vertex lastRight = triangle[count-1]; 
+    int diffX = (int)lastRight.x - (int)firstLeft.x;
+    int diffY = (int)lastRight.y - (int)firstLeft.y;
 
-    return interpolated;
+    // Build left-right lists
+    bool flatTop = triangle[0].y == triangle[1].y;
+    bool flatBottom = triangle[count-1].y == triangle[count-2].y;
+    int lastIteration = count - 1;
+    int numLeft = 0;
+    int numRight = 0;
+    Vertex left[8];
+    Vertex right[8];
+    Attributes lAttr[8]; 
+    Attributes rAttr[8];
+    for(int i = 0; i < count; i++)
+    {
+        int det = determinant((int)triangle[i].x - (int)firstLeft.x, diffX, 
+			      (int)triangle[i].y - (int)firstLeft.y, diffY);
+        if(det > 0)
+        {
+            rAttr[numRight] = attrs[i];
+            right[numRight++] = triangle[i];
+        }
+        else if (det < 0)
+        {
+            lAttr[numLeft] = attrs[i];
+            left[numLeft++] = triangle[i];
+        }
+        else
+        {
+            if(!(i == 0 && flatTop))
+            {
+                rAttr[numRight] = attrs[i];
+                right[numRight++] = triangle[i];
+            }
+            if(!(i == lastIteration && flatBottom))
+            {
+                lAttr[numLeft] = attrs[i];
+                left[numLeft++] = triangle[i];
+            }
+        }
+    }
+
+    // Adjust counts for bounds checks
+    --numLeft;
+    --numRight;
+ 
+    // Draw so that we are careful about adjacent polygon fitting
+    int iLeftFirst  = -1;
+    int iLeftSecond = 0;
+    int iRightFirst = -1;
+    int iRightSecond= 0;
+    int y = left[0].y;
+    int lastY = left[numLeft].y;
+    double startX = left[0].x;
+    double endX = right[0].x;
+    double numerator;
+    double divisor;
+    double stepLeft;
+    double stepRight;
+
+    Vertex scanVertices[2];
+    while(y <= lastY)
+    {
+        // Check bounds for interpolation
+        if((int)left[iLeftSecond].y == y && iLeftSecond < numLeft)
+        {
+            ++iLeftFirst;
+            ++iLeftSecond;
+            stepLeft = 0.0;
+            diffY = left[iLeftSecond].y - left[iLeftFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = left[iLeftSecond].x - left[iLeftFirst].x; 
+                divisor = diffY;
+                stepLeft = numerator / divisor;
+            }
+        }
+        if((int)right[iRightSecond].y == y && iRightSecond < numRight)
+        {
+            ++iRightSecond;
+            ++iRightFirst;
+            stepRight = 0.0;
+            diffY = right[iRightSecond].y - right[iRightFirst].y;
+            if(diffY != 0) // Why does this diffY even get tested???
+            {
+                numerator = right[iRightSecond].x - right[iRightFirst].x; 
+                divisor = diffY;
+                stepRight = numerator / divisor;
+            }
+        }
+
+        // Scanline process
+        scanVertices[0].x = startX;
+        scanVertices[0].y = y;
+        scanVertices[1].x = endX;
+        scanVertices[1].y = y;
+
+        int numSteps = (scanVertices[1].x - scanVertices[0].x);
+        while(scanVertices[0].x <= scanVertices[1].x)
+        {
+	  frame[scanVertices[0].y][(int)scanVertices[0].x++] = 0xffff0000; // Pre-mixed but can be attributes tweaked later
+        }
+
+        startX += stepLeft;
+        endX += stepRight;
+        y++;
+    }
 }
 
 /*************************************************************
@@ -132,50 +291,48 @@ double interp(double areaTriangle, double firstDet, double secndDet, double thir
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
+    // Create a bounding box
+    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
+    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
 
-    //By finding the max and min of both are x and y axis we can find the outer box of the triangle. 
-    int maxX = MAX3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
-    int minX = MIN3((int)triangle[0].x, (int)triangle[1].x, (int)triangle[2].x);
-    int maxY = MAX3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
-    int minY = MIN3((int)triangle[0].y, (int)triangle[1].y, (int)triangle[2].y);
-
-    //Finding the vertexis of the triangles
+    // Compute first, second, third X-Y pairs
     double firstVec[] = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y};
-    double secndVec[] = {triangle[2].x -  triangle[1].x, triangle[2].y - triangle[1].y};
+    double secndVec[] = {triangle[2].x - triangle[1].x, triangle[2].y - triangle[1].y};
     double thirdVec[] = {triangle[0].x - triangle[2].x, triangle[0].y - triangle[2].y};
 
-    //Find the area of the triangle that you want
-    double areaTriangle = determinant(firstVec[X_Key], -thirdVec[X_Key], firstVec[Y_Key], -thirdVec[Y_Key]);
-   
-   //Two for loops to go through both the y and the x 
-    for (int y = minY; y < maxY; y++)
+    // Compute area of the whole triangle
+    double areaTriangle = determinant(firstVec[X_KEY], -thirdVec[X_KEY], firstVec[Y_KEY], -thirdVec[Y_KEY]);
+ 
+    // Loop through every pixel in the grid
+    for(int y = minY; y < maxY; y++)
     {
-        for (int x = minX; x < maxX; x++)
+        for(int x = minX; x < maxX; x++)
         {
+            // Determine if the pixel is in the triangle by the determinant's sign
+            double firstDet = determinant(firstVec[X_KEY], x - triangle[0].x, firstVec[Y_KEY], y - triangle[0].y);
+            double secndDet = determinant(secndVec[X_KEY], x - triangle[1].x, secndVec[Y_KEY], y - triangle[1].y);
+            double thirdDet = determinant(thirdVec[X_KEY], x - triangle[2].x, thirdVec[Y_KEY], y - triangle[2].y);
 
-          //Take the determinant of the differnt vertexes 
-          double firstDet = determinant(firstVec[X_Key], x - triangle[0].x, firstVec[Y_Key], y - triangle[0].y);
-          double secndDet = determinant(secndVec[X_Key], x - triangle[1].x, secndVec[Y_Key], y - triangle[1].y);
-          double thirdDet = determinant(thirdVec[X_Key], x - triangle[2].x, thirdVec[Y_Key], y - triangle[2].y);
+            double firstWgt = firstDet / areaTriangle;
+            double secndWgt = secndDet / areaTriangle;
+            double thirdWgt = thirdDet / areaTriangle;
 
-          //IF the determinates are in the triangle
-          if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
-          {
+            // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
+            if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
+            {
+	            // Find corrected 'Z' value
+	            double correctZ = 1.0 / baryInterp(firstWgt, secndWgt, thirdWgt, triangle[0].w, triangle[1].w, triangle[2].w);
+	      
+                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                Attributes interpolatedAttribs(firstWgt, secndWgt, thirdWgt, attrs[0], attrs[1], attrs[2], correctZ);
 
-              double zt = 1/interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
-
-              Attributes interpolatedAttribs;
-              int size = (sizeof(interpolatedAttribs.newColor)/sizeof(*interpolatedAttribs.newColor));
-              for (int i = 0; i <= size; i++)
-              {
-                  interpolatedAttribs.newColor[i] = zt *interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].newColor[i], attrs[1].newColor[i], attrs[2].newColor[i]);
-              }
-              frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
-
-          }
+                // Call shader callback
+                frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
+            }
         }
     }
-    
 }
 
 /**************************************************************
@@ -186,24 +343,526 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
                                  Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
-    // Defaults to pass-through behavior
-    if(vert == NULL)
+  if(vert == NULL)
     {
-        for(int i = 0; i < numIn; i++)
-        {
-            transformedVerts[i] = inputVerts[i];
-            transformedAttrs[i] = inputAttrs[i];
-        }
+    for(int i = 0; i < numIn; i++)
+    {
+      transformedVerts[i] = inputVerts[i];
+      transformedAttrs[i] = inputAttrs[i];
     }
-    else
-    {
-        for(int i = 0; i < numIn; i++)
-        {
-            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
-        }
 
+    return;
+    }
+  
+
+    // Defaults to pass-through behavior
+    for(int i = 0; i < numIn; i++)
+    {
+        vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
     }
 }
+
+void intersectAgainstYLimit(double & along, 
+							const double & yLimit, 
+							const double & segStartY,
+							const double & segEndY)
+{
+	along = -1;
+	
+	double segDiffY = (segEndY - segStartY);
+	if(segDiffY == 0)
+	{
+		return;
+	}
+	
+	along = (yLimit - segStartY) / segDiffY;
+}
+
+void intersectAtPositiveLine(	double & along, 
+								const double & segStartX, 
+								const double & segStartY,
+								const double & segEndX, 
+								const double & segEndY)								
+{
+	along = -1;
+	double segDiffX = (segEndX - segStartX);
+	double segDiffY = (segEndY - segStartY);
+	
+	if(segDiffX == segDiffY)
+	{
+		return ;
+	}
+	
+	along = (segStartY - segStartX) / (segDiffX - segDiffY);
+}
+
+void intersectAtNegativeLine(	double & along, 
+								const double & segStartX, 
+								const double & segStartY,
+								const double & segEndX, 
+								const double & segEndY)								
+{
+	along = -1;
+	double segDiffX = (segEndX - segStartX);
+	double segDiffY = (segEndY - segStartY);
+	
+	if(segDiffX == segDiffY)
+	{
+		return ;
+	}
+	
+	along = (segStartY + segStartX) / (-segDiffX - segDiffY);
+}
+
+Vertex VertexBetweenVerts(const Vertex & vertA, const Vertex & vertB, const double & along)
+{
+	Vertex rv;
+	rv.x = (vertA.x) + ((vertB.x-vertA.x) * along);
+	rv.y = (vertA.y) + ((vertB.y-vertA.y) * along);
+	rv.z = (vertA.z) + ((vertB.z-vertA.z) * along);
+	rv.w = (vertA.w) + ((vertB.w-vertA.w) * along);
+	return rv;
+} 
+
+void clipVertices(Vertex const transformedVerts[], Attributes const transformedAttrs[], 
+				const int & numIn, 
+				Vertex clippedVertices[], Attributes clippedAttrs[], int & numClipped)
+{
+
+
+		// TMP Clip buffers 
+		int num;
+		int numOut;
+		bool inBounds[MAX_VERTICES];
+		Vertex tmpVertA[MAX_VERTICES];
+		Vertex tmpVertB[MAX_VERTICES];
+		Attributes tmpAttrA[MAX_VERTICES];
+		Attributes tmpAttrB[MAX_VERTICES];
+		
+		Vertex const * srcVerts;
+		Vertex* sinkVerts;
+		Attributes const * srcAttrs;
+		Attributes* sinkAttrs;
+
+		
+		// Setup Pointers for the first round of clipping 
+		srcVerts = transformedVerts;
+		srcAttrs = transformedAttrs;
+		sinkVerts = tmpVertA;
+		sinkAttrs = tmpAttrA;
+		num = numIn;
+		numOut = 0;
+				
+    // Clip on each side against wLimit
+    double wLimit = 0.001;
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].w > wLimit);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAgainstYLimit(along, wLimit, srcVerts[cur].w, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Clip against X
+
+    // Setup pointers
+    srcVerts = tmpVertA;
+    srcAttrs = tmpAttrA;
+    sinkVerts = tmpVertB;
+    sinkAttrs = tmpAttrB;
+    num = numOut;
+    numOut = 0;
+
+    // Clip X=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].x < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Setup Pointers
+    srcVerts = tmpVertB;
+    srcAttrs = tmpAttrB;
+    sinkVerts = tmpVertA;
+    sinkAttrs = tmpAttrA;
+    num = numOut;
+    numOut = 0;
+
+    // Clip -X=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (-srcVerts[i].x < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].x, srcVerts[cur].w, srcVerts[next].x, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+
+
+    // Clip against Y
+
+    // Setup pointers
+    srcVerts = tmpVertA;
+    srcAttrs = tmpAttrA;
+    sinkVerts = tmpVertB;
+    sinkAttrs = tmpAttrB;
+    num = numOut;
+    numOut = 0;
+
+    // Clip Y=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].y < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Setup Pointers
+    srcVerts = tmpVertB;
+    srcAttrs = tmpAttrB;
+    sinkVerts = tmpVertA;
+    sinkAttrs = tmpAttrA;
+    num = numOut;
+    numOut = 0;
+
+    // Clip -Y=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (-srcVerts[i].y < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].y, srcVerts[cur].w, srcVerts[next].y, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Clip against Z
+
+    // Setup pointers
+    srcVerts = tmpVertA;
+    srcAttrs = tmpAttrA;
+    sinkVerts = tmpVertB;
+    sinkAttrs = tmpAttrB;
+    num = numOut;
+    numOut = 0;
+
+    // Clip Z=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (srcVerts[i].z < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtPositiveLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Setup Pointers
+    srcVerts = tmpVertB;
+    srcAttrs = tmpAttrB;
+    sinkVerts = clippedVertices;
+    sinkAttrs = clippedAttrs;
+    num = numOut;
+    numOut = 0;
+
+    // Clip -Z=W
+    for(int i = 0; i < num; i++)
+    {
+        inBounds[i] = (-srcVerts[i].z < srcVerts[i].w);    
+    }
+    for(int i = 0; i < num; i++)
+    {
+        int cur = i;
+        int next = (i+1) % num;
+        bool curVertIn = inBounds[cur];
+        bool nextVertIn = inBounds[next];
+
+        if(curVertIn && nextVertIn)
+        {
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else if(curVertIn && !nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+        }
+        else if(!curVertIn && nextVertIn)
+        {
+            double along;
+            intersectAtNegativeLine(along, srcVerts[cur].z, srcVerts[cur].w, srcVerts[next].z, srcVerts[next].w);
+
+            sinkVerts[numOut] = VertexBetweenVerts(srcVerts[cur], srcVerts[next], along);
+            sinkAttrs[numOut++] = Attributes(srcAttrs[cur], srcAttrs[next], along);
+
+            sinkVerts[numOut] = srcVerts[next];
+            sinkAttrs[numOut++] = srcAttrs[next];
+        }
+        else // (!curVertIn && !nextVertIn)
+        {
+            ; //Do nothing... 
+        }
+    }
+
+    // Final number of output vertices
+    numClipped = numOut;  
+}
+
+void normalizeVertices(	Vertex clippedVertices[], 
+						Attributes clippedAttrs[], 
+						const int & numClipped)
+{
+	for(int i = 0; i < numClipped; i++)
+	{
+		// Normalize X,Y,Z components of homogeneous coordinates
+		clippedVertices[i].x /= clippedVertices[i].w;
+		clippedVertices[i].y /= clippedVertices[i].w;
+		clippedVertices[i].z /= clippedVertices[i].w;
+		
+		// Setup W value for depth interpolation 
+		double zValue = clippedVertices[i].w;
+		clippedVertices[i].w = 1.0 / zValue;
+			
+		// Setup Attributes 
+		for(int j = 0; j < clippedAttrs[i].numMembers; j++)
+		{
+			clippedAttrs[i][j].d /= zValue;
+		}		
+	}
+	
+}
+
+void viewportTransform( Buffer2D<PIXEL>& target, 
+						Vertex clippedVertices[], 
+						const int & numClipped)
+{
+	// Move from -1 -> 1 space in X,Y to screen coordinates 
+	int w = target.width();
+	int h = target.height();
+	
+	for(int i = 0; i < numClipped; i++)
+	{
+		clippedVertices[i].x = (round( (( (clippedVertices[i].x + 1) / 2.0 * w))));
+		clippedVertices[i].y = (round( (( (clippedVertices[i].y + 1) / 2.0 * h))));
+		
+		/*	Let's say we have clipped, normalized vertex (-0.5, -1)		
+		*	Our Box is from -1 to 1 in X,Y 
+		*
+		*	For screen X,Y positions 
+		*	SX = (-0.5 + 1) / 2 * W = 0.25 * Width 
+		*	SY = (-1 + 1) / 2 * H = 0.0 * Height 
+		*/ 
+		
+		
+	}
+	
+}
+	
+
+
+
 
 /***************************************************************************
  * DRAW_PRIMITIVE
@@ -243,6 +902,20 @@ void DrawPrimitive(PRIMITIVES prim,
     Attributes transformedAttrs[MAX_VERTICES];
     VertexShaderExecuteVertices(vert, inputVerts, inputAttrs, numIn, uniforms, transformedVerts, transformedAttrs);
 
+	// Clipping
+    Vertex clippedVertices[MAX_VERTICES];
+    Attributes clippedAttrs[MAX_VERTICES];
+	int numClipped;
+	clipVertices(transformedVerts, transformedAttrs, numIn, 
+				clippedVertices, clippedAttrs, numClipped);
+		
+	// Normalize 
+	normalizeVertices(clippedVertices, clippedAttrs, numClipped);
+	
+	// Adapt to viewport 
+	viewportTransform(target, clippedVertices, numClipped);
+	
+	
     // Vertex Interpolation & Fragment Drawing
     switch(prim)
     {
@@ -253,8 +926,23 @@ void DrawPrimitive(PRIMITIVES prim,
             DrawLine(target, transformedVerts, transformedAttrs, uniforms, frag);
             break;
         case TRIANGLE:
-            DrawTriangle(target, transformedVerts, transformedAttrs, uniforms, frag);
+			Vertex tri[3];
+			Attributes vAttr[3];
+			for(int i = 2; i < numClipped; i++)
+			{
+				tri[0] = clippedVertices[0];
+				tri[1] = clippedVertices[i-1];
+				tri[2] = clippedVertices[i];
+
+				vAttr[0] = clippedAttrs[0];
+				vAttr[1] = clippedAttrs[i-1];
+				vAttr[2] = clippedAttrs[i];
+				
+				DrawTriangle(target, tri, vAttr, uniforms, frag);
+			}
+			
     }
+    SDL_Delay(.9);
 }
 
 /*************************************************************
@@ -280,19 +968,77 @@ int main()
 
     // Draw loop 
     bool running = true;
-    while(running) 
+    bool change = true;
+    int count = 0;
+/*    while(running) //original loop 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        processUserInputs(running, change, count);
 
         // Refresh Screen
         clearScreen(frame);
 
-        // Your code goes here
-        TestVertexShader(frame);
+		// Demonstrate perspective
+        //TestDrawPerspectiveCorrect(frame);
+		//TestVertexShader(frame);
+        TestPipeline(frame);
+        //GameOfLife(frame);
+        //CADView(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
+    }*/
+   while(running) 
+   {    
+        change = true;
+        count = 0;
+        while(change && running)
+        {
+            // Handle user inputs
+            processUserInputs(running, change, count);
+
+            // Refresh Screen
+            clearScreen(frame);
+
+            personalProject(frame, count);
+
+            // Push to the GPU
+            SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
+
+        }    
+
+        change = true;
+        count = 0;
+        while(running && change) 
+        {           
+            // Handle user inputs
+            processUserInputs(running, change, count);
+
+            // Refresh Screen
+            clearScreen(frame);
+
+            personalProject1(frame, count);
+
+           // Push to the GPU
+            SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
+        }
+
+
+        change = true;
+        count = 0;
+        while(running && change) 
+        {           
+            // Handle user inputs
+            processUserInputs(running, change, count);
+
+            // Refresh Screen
+            clearScreen(frame);
+
+            personalProject2(frame, count);
+
+            // Push to the GPU
+            SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
+        }
     }
 
     // Cleanup
