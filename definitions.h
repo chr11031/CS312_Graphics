@@ -1,4 +1,6 @@
 #define SDL_MAIN_HANDLED
+#include <iostream>
+#include <vector>
 #include "SDL2/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
@@ -911,15 +913,113 @@ public:
 class Quad
 {
 public:
-    Vertex verts[4];
+    Quad() : verts(NULL) , intersectionLine(NULL) {}
+    Quad(Vertex newVerts[4])
+    {
+        this->intersectionLine = NULL;
+        this->verts = new Vertex[4];
+        this->setVerts(newVerts);
+    }
 
+    ~Quad()
+    {
+        delete verts;
+        delete intersectionLine;
+    }
+    bool isIntersected(Quad splitter);
+
+    Quad* getQuad() { return (Quad*)&verts; }
+    Vertex* getIntersectionLine() { return intersectionLine; }
+
+    Vertex       & operator[] (const int & i)        
+    { 
+        if (i >= 0 && i <=3 && NULL != verts)
+            return verts[i]; 
+    }
+    const Vertex & operator[] (const int & i) const  
+    { 
+        if (i >= 0 && i <= 3 && NULL != verts)
+            return verts[i]; 
+    }
+
+    void setVerts(Vertex newVerts[4])
+    {
+        if (NULL == verts)
+            verts = new Vertex[4];
+        
+        for (int i = 0; i < 4; i++)
+            this->verts[i] = newVerts[i];
+
+        this->findNormal();
+    }
+
+private:
+    void findNormal();
+
+    Vertex* verts;
+    Vertex* intersectionLine;
+    Vertex normal;
 };
+
+bool Quad::isIntersected(Quad splitter)
+{
+    Vertex top = {this->verts[0].x - splitter.verts[0].x, 
+                        this->verts[0].y - splitter.verts[0].y,
+                        this->verts[0].z - splitter.verts[0].z };
+    Vertex bottom = {this->verts[1].x - this->verts[0].x,
+                          this->verts[1].y - this->verts[0].y,
+                          this->verts[1].z - this->verts[0].z};
+
+    double numerator =   (splitter.normal.x * top.x) + (splitter.normal.y * top.y) + (splitter.normal.z * top.z);
+    double denominator = ((-splitter.normal.x) * bottom.x) + ((-splitter.normal.y) * bottom.y) + ((-splitter.normal.z) * bottom.z);
+
+    // If the denominator is 0 the lines are parallel and don't intersect return NULL
+    if (denominator == 0)
+        return false;
+
+    double t = numerator / denominator;
+
+    if (NULL == this->intersectionLine)
+        this->intersectionLine = new Vertex;
+    this->intersectionLine->x = (this->verts[0].x + (t * (this->verts[1].x - this->verts[0].x)));
+    this->intersectionLine->y = 0;
+    this->intersectionLine->z = (this->verts[0].z + (t * (this->verts[1].z - this->verts[0].z)));
+
+    std::cout << "{ " << this->intersectionLine->x << ", " << this->intersectionLine->y << ", " << this->intersectionLine->z << "}\n";
+    return true;
+}
+
+void Quad::findNormal()
+{
+    Vertex height = {verts[3].x - verts[0].x, verts[3].y - verts[0].y, verts[3].z - verts[0].z};
+    Vertex width  = {verts[1].x - verts[0].x, verts[1].y - verts[0].y, verts[1].z - verts[0].z};
+
+    Vertex norm = 
+    {
+        ((height.y * width.z) - (height.z * width.y)),
+        ((height.z * width.x) - (height.x * width.z)),
+        ((height.x * width.y) - (height.y * width.x))
+    };
+
+    std::cout << "{ " << norm.x << ", " << norm.y << ", " << norm.z << "}\n";
+
+    this->normal = norm;
+}
 
 class Node
 {
 public:
+    Node() {}
+    Node(Vertex quad[4])
+    {
+        this->quad.setVerts(quad);
+    }
+    Node(Quad newQuad)
+    {
+        this->quad = newQuad;
+    }
     Quad quad;
-    Vertex normal;
+
     // The boundary wall that this node is either behind or in front of
     Node* parent;
     // All objects in front of the node
@@ -927,16 +1027,56 @@ public:
     // All objects behind the node
     Node* rightChild;
 
-    // If the pointer returned is null it is not intersected
-    // If it is we return the X and Z points of where the quad
-    // in the node is intersected
-    Vertex* isIntersected(Quad quadInQuestion);
+    bool isQuadIntersected(Node* splitter) { return quad.isIntersected(splitter->quad); }
+    void partition(std::vector<Node*> front, std::vector<Node*> back);
+    void split(Node* & node1, Node* & node2);
 };
+
+void Node::split(Node* & node1, Node* & node2)
+{
+    Vertex* intersectionLine = this->quad.getIntersectionLine();
+    intersectionLine->w = this->quad[0].w;
+
+    Vertex leftNode[4] = 
+    {
+        {this->quad[0].x, this->quad[0].y, this->quad[0].z, this->quad[0].w},
+        {intersectionLine->x, intersectionLine->y, intersectionLine->z, intersectionLine->w},
+        {intersectionLine->x, intersectionLine->y + 40, intersectionLine->z, intersectionLine->w},
+        {this->quad[3].x, this->quad[3].y, this->quad[3].z, this->quad[3].w}
+    };
+
+    Vertex rightNode[4] = 
+    {
+        {intersectionLine->x, intersectionLine->y, intersectionLine->z, intersectionLine->w},
+        {this->quad[1].x, this->quad[1].y, this->quad[1].z, this->quad[1].w},
+        {this->quad[2].x, this->quad[2].y, this->quad[2].z, this->quad[2].w},
+        {intersectionLine->x, intersectionLine->y + 40, intersectionLine->z, intersectionLine->w}
+    };
+
+    if (NULL == node1)
+        node1 = new Node(leftNode);
+    else   
+        node1->quad.setVerts(leftNode);
+
+    if (NULL == node2)
+        node2 = new Node(rightNode);
+    else
+        node2->quad.setVerts(rightNode);
+
+
+}
 
 class BSPTree
 {
-public:
+private:
+    Node* root;
 
+public:
+    BSPTree();
+    Node* buildTree(std::vector<Node*> allNodes);
+
+
+    
 };
     
 #endif

@@ -941,6 +941,33 @@ void TestVSD(Buffer2D<PIXEL> & target)
         };
 
 
+        Vertex wall10[]=
+        {
+                {6, 0, 8, 1},
+                {10, 0, 4, 1},
+                {10, 40, 4, 1},
+                {6, 40, 8, 1}
+        };
+
+        Vertex wall11[] =
+        {
+                {8, 0, 6, 1},
+                {9, 0, 10, 1},
+                {9, 40, 10, 1},
+                {8, 40, 6, 1}
+        };
+
+        Quad itsLitYo(wall10);
+        Quad isSplitterYo(wall11);
+        Node firstNode(wall10);
+        Node secondNode(wall11);
+        Node* newNode1 = NULL;
+        Node* newNode2 = NULL;
+
+        if (firstNode.isQuadIntersected(&secondNode))
+                firstNode.split(newNode1, newNode2);
+
+
         // First wall vertices and attributes
         Vertex vertsImg1A[3];
         Attributes attrsImg1A[3];
