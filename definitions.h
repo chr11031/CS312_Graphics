@@ -807,7 +807,7 @@ class Attributes
                 value[i].d = (first.value[i].d) + ((second.value[i].d - first.value[i].d) * along);
             }
         }
-
+  
         void insertDbl(const double d)
         {
             value[numValues].d = d;
