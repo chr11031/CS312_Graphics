@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "math.h"
 #include <limits>
+#include <random>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -45,6 +46,26 @@ struct Vertex
     double x;
     double y;
     double z;
+    double w;
+};
+
+/****************************************************
+ * Describes a vertex normal. 
+ ****************************************************/
+struct Normal
+{
+    double x;
+    double y;
+    double z;
+};
+
+/****************************************************
+ * Describes a texture coordinate. 
+ ****************************************************/
+struct UV
+{
+    double u;
+    double v;
     double w;
 };
 
@@ -440,6 +461,14 @@ void clearZBuf(Buffer2D<double> & frame, double depth = std::numeric_limits<doub
             frame[y][x] = depth;
         }
     }
+}
+
+std::default_random_engine re;
+
+double randomDouble(double min = 0, double max = 1)
+{
+    std::uniform_real_distribution<double> dist(min, max);
+    return dist(re);
 }
        
 #endif

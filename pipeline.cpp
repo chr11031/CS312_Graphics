@@ -64,10 +64,27 @@ void processUserInputs(bool & running)
  * Renders a point to the screen with the
  * appropriate coloring.
  ***************************************/
-void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
+void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag, Buffer2D<double>* zBuf)
 {
     // Set our pixel according to the attribute value!
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+
+    int x = (int) v[0].x;
+    int y = (int) v[0].y;
+
+    if(x < 0 || y < 0 || x >= target.width() || y >= target.height())
+        return;
+
+    double depth = 1 / v[0].w;
+
+    if(zBuf == nullptr)
+        ;
+    else if(depth < (*zBuf)[y][x])
+        (*zBuf)[y][x] = depth;
+    else
+        return;
+
+    frag->FragShader(target[y][x], *attrs, *uniforms);
 }
 
 /****************************************
@@ -606,11 +623,14 @@ void normalizeVertices(Vertex clippedVerts[], Attributes clippedAttrs[], const i
         double zValue = clippedVerts[i].w;
         clippedVerts[i].w = 1.0 / zValue;
 
-        //Setup Attributes
-        for(int j = 0; j < clippedAttrs[i].numAttribs; j++)
-		{
-			clippedAttrs[i][j].d /= zValue;
-		}		
+        if(numClipped >= 3)
+        {
+            //Setup Attributes
+            for(int j = 0; j < clippedAttrs[i].numAttribs; j++)
+		    {
+			    clippedAttrs[i][j].d /= zValue;
+		    }	
+        }	
     }
 }
 
@@ -669,7 +689,19 @@ void DrawPrimitive(PRIMITIVES prim,
     Vertex clippedVerts[MAX_VERTICES];
     Attributes clippedAttrs[MAX_VERTICES];
     int numClipped;
-    clipVertices(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
+
+    if(prim == TRIANGLE)
+        clipVertices(transformedVerts, transformedAttrs, numIn, clippedVerts, clippedAttrs, numClipped);
+    else
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            clippedVerts[i] = transformedVerts[i];
+            clippedAttrs[i] = transformedAttrs[i];
+        }
+        numClipped = numIn;
+    }
+    
 
     // Normalize
     normalizeVertices(clippedVerts, clippedAttrs, numClipped);
@@ -681,7 +713,7 @@ void DrawPrimitive(PRIMITIVES prim,
     switch(prim)
     {
         case POINT:
-            DrawPoint(target, clippedVerts, clippedAttrs, uniforms, frag);
+            DrawPoint(target, clippedVerts, clippedAttrs, uniforms, frag, zBuf);
             break;
         case LINE:
             DrawLine(target, clippedVerts, clippedAttrs, uniforms, frag);
@@ -726,6 +758,7 @@ int main()
     BufferImage frame(FRAME_BUF);
 
     camControl = firstPersonCamControl;
+    SetupProject();
 
     // Draw loop 
     bool running = true;
@@ -737,11 +770,13 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestPipeline(frame);
+        Project(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
+
+    cleanupProject();
 
     // Cleanup
     //SDL_FreeSurface(FRAME_BUF);

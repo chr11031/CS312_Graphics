@@ -1,6 +1,9 @@
 #include "definitions.h"
 #include "shaders.h"
 #include "controls.h"
+#include "model.h"
+#include "gameobject.h"
+#include "particlesystem.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -593,6 +596,69 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+}
+
+Model* cube;
+Model* sphere;
+Model* plane;
+GameObject* box;
+GameObject* ball;
+GameObject* ground;
+BufferImage* myImage;
+Matrix projection = PerspectiveMatrix(60, 1.0, 1, 200); 
+ParticleSystem* ps;
+
+void SetupProject()
+{
+        myCam.y = 1.6;
+        myCam.yaw = 45;
+
+        cube = loadOBJ("cube.obj");
+        box = new GameObject(cube, 1, 0, 0);
+        box->setPosition(5, 1, 5);
+
+        sphere = loadOBJ("sphere.obj");
+        ball = new GameObject(sphere, 0, 0, 1);
+        ball->setPosition(5, 3, 5);
+
+        myImage = new BufferImage("checker.bmp");
+        plane = loadOBJ("plane.obj");
+        ground = new GameObject(plane, myImage);
+
+        Vertex position = {3, 0, 3, 1};
+        Vertex direction = {0, 1, 0, 0};
+
+        ps = new ParticleSystem(1000, position, direction, 30, 0.01, 0.0001);
+}
+
+/********************************************
+ * 
+ *******************************************/
+void Project(Buffer2D<PIXEL> & target)
+{
+        static Buffer2D<double> zBuf(target.width(), target.height());
+        clearZBuf(zBuf);
+
+        Matrix view = CameraMatrix(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+
+        ps->addParticle(0, 1, 0);
+
+        box->draw(target, view, projection, &zBuf);
+        ball->draw(target, view, projection, &zBuf);
+        ground->draw(target, view, projection, &zBuf);
+        ps->draw(target, view, projection, &zBuf);
+}
+
+void cleanupProject()
+{
+        delete cube;
+        delete sphere;
+        delete plane;
+        delete box;
+        delete ball;
+        delete ground;
+        delete myImage;
+        delete ps;
 }
 
 
