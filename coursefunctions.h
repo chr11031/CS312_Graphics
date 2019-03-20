@@ -143,7 +143,10 @@ void CADView(Buffer2D<PIXEL> & target)
 
         // Your code goes here 
         // Feel free to copy from other test functions to get started!
-
+        topLeft.zeroOut();
+        topRight.zeroOut();
+        botLeft.zeroOut();
+        botRight.zeroOut();
 
         // Blit four panels to target
         int yStartSrc = 0;
@@ -251,15 +254,15 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         colorTriangle[2] = {50, 452, 1, 1};
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
         // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].value[0] = 1.0;
-        colorAttributes[0].value[1] = 0.0;
-        colorAttributes[0].value[2] = 0.0;
-        colorAttributes[1].value[0] = 0.0;
-        colorAttributes[1].value[1] = 1.0;
-        colorAttributes[1].value[2] = 0.0;
-        colorAttributes[2].value[0] = 0.0;
-        colorAttributes[2].value[1] = 0.0;
-        colorAttributes[2].value[2] = 1.0;
+        colorAttributes[0].value[0].d = 1.0;
+        colorAttributes[0].value[1].d = 0.0;
+        colorAttributes[0].value[2].d = 0.0;
+        colorAttributes[1].value[0].d = 0.0;
+        colorAttributes[1].value[1].d = 1.0;
+        colorAttributes[1].value[2].d = 0.0;
+        colorAttributes[2].value[0].d = 0.0;
+        colorAttributes[2].value[1].d = 0.0;
+        colorAttributes[2].value[2].d = 1.0;
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
@@ -280,12 +283,12 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         imageTriangle[2] = {350, 252, 1, 1};
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].value[0] = 1;
-        imageAttributes[0].value[1] = 0;
-        imageAttributes[1].value[0] = 1;
-        imageAttributes[1].value[1] = 1;
-        imageAttributes[2].value[0] = 0;
-        imageAttributes[2].value[1] = 1;
+        imageAttributes[0].value[0].d = 1;
+        imageAttributes[0].value[1].d = 0;
+        imageAttributes[1].value[0].d = 1;
+        imageAttributes[1].value[1].d = 1;
+        imageAttributes[2].value[0].d = 0;
+        imageAttributes[2].value[1].d = 1;
 
         BufferImage myImage("checker.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
@@ -332,19 +335,19 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
-        imageAttributesA[0].value[0] = coordinates[0][0];
-        imageAttributesA[0].value[1] = coordinates[0][1];
-        imageAttributesA[1].value[0] = coordinates[1][0];
-        imageAttributesA[1].value[1] = coordinates[1][1];
-        imageAttributesA[2].value[0] = coordinates[2][0];
-        imageAttributesA[2].value[1] = coordinates[2][1];
+        imageAttributesA[0].value[0].d = coordinates[0][0];
+        imageAttributesA[0].value[1].d = coordinates[0][1];
+        imageAttributesA[1].value[0].d = coordinates[1][0];
+        imageAttributesA[1].value[1].d = coordinates[1][1];
+        imageAttributesA[2].value[0].d = coordinates[2][0];
+        imageAttributesA[2].value[1].d = coordinates[2][1];
 
-        imageAttributesB[0].value[0] = coordinates[2][0];
-        imageAttributesB[0].value[1] = coordinates[2][1];
-        imageAttributesB[1].value[0] = coordinates[3][0];
-        imageAttributesB[1].value[1] = coordinates[3][1];
-        imageAttributesB[2].value[0] = coordinates[0][0];
-        imageAttributesB[2].value[1] = coordinates[0][1];
+        imageAttributesB[0].value[0].d = coordinates[2][0];
+        imageAttributesB[0].value[1].d = coordinates[2][1];
+        imageAttributesB[1].value[0].d = coordinates[3][0];
+        imageAttributesB[1].value[1].d = coordinates[3][1];
+        imageAttributesB[2].value[0].d = coordinates[0][0];
+        imageAttributesB[2].value[1].d = coordinates[0][1];
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
@@ -380,15 +383,15 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
-        colorAttributes[0].value[0] = 1.0;
-        colorAttributes[0].value[1] = 0.0;
-        colorAttributes[0].value[2] = 0.0;
-        colorAttributes[1].value[0] = 0.0;
-        colorAttributes[1].value[1] = 1.0;
-        colorAttributes[1].value[2] = 0.0;
-        colorAttributes[2].value[0] = 0.0;
-        colorAttributes[2].value[1] = 0.0;
-        colorAttributes[2].value[2] = 1.0;
+        colorAttributes[0].value[0].d = 1.0;
+        colorAttributes[0].value[1].d = 0.0;
+        colorAttributes[0].value[2].d = 0.0;
+        colorAttributes[1].value[0].d = 0.0;
+        colorAttributes[1].value[1].d = 1.0;
+        colorAttributes[1].value[2].d = 0.0;
+        colorAttributes[2].value[0].d = 0.0;
+        colorAttributes[2].value[1].d = 0.0;
+        colorAttributes[2].value[2].d = 1.0;
 
         colorAttributes[0].numValues = 3;
         colorAttributes[1].numValues = 3;
@@ -494,18 +497,49 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].insertDbl(coordinates[0][0]); // First group of attributes
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
 
-        BufferImage myImage("checker.bmp");
+        imageAttributesB[0].insertDbl(coordinates[2][0]); // Second group of attributes
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+
+        static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
+        //imageUniforms.insertPtr((void *)&myImage);
+
+        Transform model = translate4x4(0, 0, 0);
+        Transform view = camera4x4(myCam.x, myCam.y, myCam.z,
+                                        myCam.yaw, myCam.pitch, myCam.roll);
+        
+        Transform proj = perspective4x4(60.0, 1, 1, 200); // FOV, Aspect Ratio, Near, Far
+        // Uniforms
+        // [0] -> Image reference
+        // [1] -> Model transform
+        // [2] -> View transform
+        imageUniforms.insertPtr((void *) &myImage);
+        imageUniforms.insertPtr((void *) &model);
+        imageUniforms.insertPtr((void *) &view);
+        imageUniforms.insertPtr((void *) &proj);
 
         FragmentShader fragImg;
         // Your code for the image fragment shader goes here
+        //fragImg.FragShader = ImageFragShader;//
+        fragImg.FragShader = FragShaderUVwithoutImage;//
 
         VertexShader vertImg;
         // Your code for the image vertex shader goes here
+        vertImg.VertShader = SimpleVertexShader2;
         // NOTE: This must include the at least the 
         // projection matrix if not more transformations 
                 
