@@ -10,6 +10,11 @@
 //
 //
 
+void grayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    fragment = 0xff808080;
+}
+
 void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     fragment = 0xff00ff00;
@@ -21,14 +26,6 @@ void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
  *******************************************************************/
 void colorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // PIXEL color = 0xff000000;
-    // color += (unsigned int)(vertAttr.rgb[0] * 0xff) << 16;
-    // color += (unsigned int)(vertAttr.rgb[1] * 0xff) << 8;
-    // color += (unsigned int)(vertAttr.rgb[2] * 0xff) << 0;
-
-    // fragment = color;
-
-    // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
     color += (unsigned int)(vertAttr[0].d *0xff) << 16;
     color += (unsigned int)(vertAttr[1].d *0xff) << 8;
@@ -71,7 +68,6 @@ void vertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn
     Vertex transVert = (*model) * vertIn;
     Vertex viewVert = (*view) * transVert;
     vertOut = (*proj) * viewVert;
-    // vertOut = (*proj) * (*view) * (*model) * vertIn;
 
     // Pass through attributes
     attrOut = vertAttr;

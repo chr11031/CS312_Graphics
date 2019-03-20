@@ -82,23 +82,31 @@ void processUserInputs(bool & running)
         //Translation
         if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
         {
-            myCam.y -= (cos(myCam.yaw / 180.0 * M_PI)) * 0.5;
-            myCam.z -= (sin(myCam.yaw / 180.0 * M_PI)) * 0.5;
+            myCam.y -= (cos(myCam.yaw / 180.0 * M_PI)) * 0.1;
+            myCam.z -= (sin(myCam.yaw / 180.0 * M_PI)) * 0.1;
         }
         if((e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN))
         {
-            myCam.y += (cos(myCam.yaw / 180.0 * M_PI)) * 0.5;
-            myCam.z += (sin(myCam.yaw / 180.0 * M_PI)) * 0.5;
+            myCam.y += (cos(myCam.yaw / 180.0 * M_PI)) * 0.1;
+            myCam.z += (sin(myCam.yaw / 180.0 * M_PI)) * 0.1;
         }
         if((e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN))
         {
-            myCam.x += (cos(myCam.yaw / 180.0 * M_PI)) * 0.5;
-            myCam.z += (sin(myCam.yaw / 180.0 * M_PI)) * 0.5;
+            myCam.x += (cos(myCam.yaw / 180.0 * M_PI)) * 0.1;
+            myCam.z += (sin(myCam.yaw / 180.0 * M_PI)) * 0.1;
         }
         if((e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN))
         {
-            myCam.x -= (cos(myCam.yaw / 180.0 * M_PI)) * 0.5;
-            myCam.z -= (sin(myCam.yaw / 180.0 * M_PI)) * 0.5;
+            myCam.x -= (cos(myCam.yaw / 180.0 * M_PI)) * 0.1;
+            myCam.z -= (sin(myCam.yaw / 180.0 * M_PI)) * 0.1;
+        }
+        if((e.key.keysym.sym == 'f' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z += 0.1;
+        }
+        if((e.key.keysym.sym == 'r' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z -= 0.1;
         }
 
     }
@@ -312,7 +320,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
 
     // Clip on each side against wLimit
     double wLimit = 0.001;
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (srcVerts[i].w > wLimit);    
     }
@@ -364,7 +372,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip X=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (srcVerts[i].x < srcVerts[i].w);    
     }
@@ -416,7 +424,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip -X=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (-srcVerts[i].x < srcVerts[i].w);    
     }
@@ -470,7 +478,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip Y=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (srcVerts[i].y < srcVerts[i].w);    
     }
@@ -520,7 +528,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip -Y=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (-srcVerts[i].y < srcVerts[i].w);    
     }
@@ -572,7 +580,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip Z=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (srcVerts[i].z < srcVerts[i].w);    
     }
@@ -622,7 +630,7 @@ void clipVertices(Vertex const transformedVerts[], Attributes const transformedA
     numOut = 0;
 
     // Clip -Z=W
-    for(int i = 0; i < num; i++)
+    for(int i = num; i--; )
     {
         inBounds[i] = (-srcVerts[i].z < srcVerts[i].w);    
     }
@@ -781,6 +789,7 @@ void DrawPrimitive(PRIMITIVES prim,
                 vAttr[1] = clippedAttrs[i - 1];
                 vAttr[2] = clippedAttrs[i];
 
+                
                 DrawTriangle(target, tri, vAttr, uniforms, frag);
             }
     }
@@ -824,8 +833,8 @@ int main()
         // TestDrawPerspectiveCorrect(frame);
         // TestVertexShader(frame);
         // TestPipeline(frame);
-        CADView(frame);
-        // TestModelLoader(frame);
+        // CADView(frame);
+        TestModelLoader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -23,9 +23,9 @@ class Matrix
         this->rows = rows;
         this->columns = columns;
         matrixPtr = new double[rows * columns];
-        for(int i = 0; i < rows; i++)
+        for(int i = rows; i--; )
         {
-            for(int j = 0; j < columns; j++)
+            for(int j = columns; j--; )
             {
                 if (i == j)
                     matrixPtr[i * columns + j] = 1;
@@ -49,9 +49,9 @@ class Matrix
         this->rows = rows;
         this->columns = columns;
         matrixPtr = new double[rows * columns];
-        for(int i = 0; i < rows; i++)
+        for(int i = rows; i--; )
         {
-            for(int j = 0; j < columns; j++)
+            for(int j = columns; j--; )
             {
                 if (i == j)
                     matrixPtr[i * columns + j] = 1;
@@ -67,12 +67,13 @@ class Matrix
      ************************************************************************/
     void addXRotation(double rot/*radians*/)
     {
-        Matrix rotate(this->rows, this->columns);
+        int col = this->columns;
+        Matrix rotate(this->rows, col);
         // initialize the rotation matrix
-        rotate.matrixPtr[1 * this->columns + 1] = cos(rot);
-        rotate.matrixPtr[1 * this->columns + 2] = -sin(rot);
-        rotate.matrixPtr[2 * this->columns + 1] = sin(rot);
-        rotate.matrixPtr[2 * this->columns + 2] = cos(rot);
+        rotate.matrixPtr[col + 1] = cos(rot);
+        rotate.matrixPtr[col + 2] = -sin(rot);
+        rotate.matrixPtr[2 * col + 1] = sin(rot);
+        rotate.matrixPtr[2 * col + 2] = cos(rot);
         
         rotate *= (*this);
         (*this) = rotate;
@@ -84,12 +85,13 @@ class Matrix
      ************************************************************************/
     void addYRotation(double rot/*radians*/)
     {
-        Matrix rotate(this->rows, this->columns);
+        int col = this->columns;
+        Matrix rotate(this->rows, col);
         // initialize the rotation matrix
         rotate.matrixPtr[0] = cos(rot);
         rotate.matrixPtr[2] = sin(rot);
-        rotate.matrixPtr[2 * this->columns] = -sin(rot);
-        rotate.matrixPtr[2 * this->columns + 2] = cos(rot);
+        rotate.matrixPtr[2 * col] = -sin(rot);
+        rotate.matrixPtr[2 * col + 2] = cos(rot);
         
         rotate *= (*this);
         (*this) = rotate;
@@ -101,12 +103,13 @@ class Matrix
      ************************************************************************/
     void addZRotation(double rot/*radians*/)
     {
-        Matrix rotate(this->rows, this->columns);
+        int col = this->columns;
+        Matrix rotate(this->rows, col);
         // initialize the rotation matrix
         rotate.matrixPtr[0] = cos(rot);
         rotate.matrixPtr[1] = -sin(rot);
-        rotate.matrixPtr[1 * this->columns] = sin(rot);
-        rotate.matrixPtr[1 * this->columns + 1] = cos(rot);
+        rotate.matrixPtr[col] = sin(rot);
+        rotate.matrixPtr[col + 1] = cos(rot);
 
         rotate *= (*this);
         (*this) = rotate;
@@ -123,7 +126,8 @@ class Matrix
 
         Matrix scale(this->rows, this->columns);
         // initialize the scaling matrix
-        for(int i = 0; i < this->rows; i++)
+        // for(int i = 0; i < this->rows; i++)
+        for(int i = this->rows; i--; )
         {
             scale.matrixPtr[i * this->columns + i] = scaleArray[i];
         }
@@ -140,9 +144,10 @@ class Matrix
     {
         Matrix translate(this->rows, this->columns);
         // initialize translation matrix.
-        translate.matrixPtr[1 * this->columns - 1] = transX;
-        translate.matrixPtr[2 * this->columns - 1] = transY;
-        translate.matrixPtr[3 * this->columns - 1] = transZ;
+        int col = this->columns;
+        translate.matrixPtr[col - 1] = transX;
+        translate.matrixPtr[2 * col - 1] = transY;
+        translate.matrixPtr[3 * col - 1] = transZ;
 
         translate *= (*this);
         (*this) = translate;
@@ -177,12 +182,12 @@ class Matrix
      * perspective4x4
      * perspective transform
      *************************************************************************/
-    void perspective4x4(const double & fovYDegrees, const double & aspectRation, 
+    void perspective4x4(const double & fovYDegrees, const double & aspectRatio, 
                             const double & near, const double & far)
     {
         Matrix rt(4, 4);
         double top = near * tan((fovYDegrees * M_PI) / 180.0) / 2.0;
-        double right = aspectRation * top;
+        double right = aspectRatio * top;
 
         rt.matrixPtr[0] = near/right;
         rt.matrixPtr[5] = near/top;
@@ -231,7 +236,8 @@ class Matrix
             delete [] this->matrixPtr;
         }
         matrixPtr = new double[this->rows * this->columns];
-        for(int i = 0; i < (this->rows * this->columns); i++)
+        // for(int i = 0; i < (this->rows * this->columns); i++)
+        for(int i = (this->rows * this->columns); i--; )
         {
             this->matrixPtr[i] = rhs.matrixPtr[i];
         }
@@ -252,12 +258,15 @@ class Matrix
         }
 
         Matrix newMatrix(this->rows, rhs.columns);
-        for(int i = 0; i < this->rows; i++)
+        // for(int i = 0; i < this->rows; i++)
+        for(int i = this->rows; i--; )
         {
-            for(int j = 0; j < rhs.columns; j++)
+            // for(int j = 0; j < rhs.columns; j++)
+            for(int j = rhs.columns; j--; )
             {
                 double sum = 0;
-                for(int k = 0; k < rhs.rows; k++)
+                // for(int k = 0; k < rhs.rows; k++)
+                for(int k = rhs.rows; k--; )
                 {
                      sum += this->matrixPtr[i * this->columns + k] * 
                         rhs.matrixPtr[k * rhs.columns + j];

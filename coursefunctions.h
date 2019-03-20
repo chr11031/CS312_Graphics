@@ -2,6 +2,8 @@
 #include "ModelLoader.h"
 #include "shaders.h"
 #include "matrix.h"
+#include <vector>
+#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -789,16 +791,36 @@ void TestPipeline(Buffer2D<PIXEL> & target)
  ****************************************************************************/
 void TestModelLoader(Buffer2D<PIXEL> & target)
 {
-        //
-        // Create vectors of attributes and vertices to load the model into.
-        //
+        static Buffer2D<double> zBuf(target.width(), target.height());
 
-        BufferImage myImage("yoshi.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        // Create vectors of attributes and vertices to load the model into.
+        std::vector<Vertex> vertices;
+        std::vector<Vertex> triangles;
+
+        // BufferImage myImage;
+        void * myImage;
+        // handgun_obj/Handgun_obj.obj      **really slow. must use -O3 optimization
+        // spacebomber_obj/spacebomber.obj  **doesn't work with this one
+        // box.obj
+        // pyramid.obj
+        // shield.obj
+        // arwing.obj
+        ModelLoader imgModel("arwing.obj");    
+        vertices = imgModel.getVertices();
+        triangles = imgModel.getTriangles();
+
+        Attributes modelAttrs[3];
+        modelAttrs[0].insertDbl(1.0);
+        modelAttrs[0].insertDbl(0.0);
+        modelAttrs[0].insertDbl(0.0);
+        modelAttrs[1].insertDbl(0.0);
+        modelAttrs[1].insertDbl(1.0);
+        modelAttrs[1].insertDbl(0.0);
+        modelAttrs[2].insertDbl(0.0);
+        modelAttrs[2].insertDbl(0.0);
+        modelAttrs[2].insertDbl(1.0);
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
-        // imageUniforms.image = &myImage;
 
         // Initialize the matrices to 4x4 matrices
         Matrix model(4, 4);
@@ -808,7 +830,7 @@ void TestModelLoader(Buffer2D<PIXEL> & target)
         // add the transforms to the uniforms
         model.addTranslation(0, 0, 0);
         view.camera4x4(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
-        proj.perspective4x4(60, 1.0, 1, 200);
+        proj.perspective4x4(60, 1.0, .1, 200);
 
         imageUniforms.insertPtr((void*)&myImage);
         imageUniforms.insertPtr((void*)&model);
@@ -817,16 +839,20 @@ void TestModelLoader(Buffer2D<PIXEL> & target)
 
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
-        fragImg.setShader(imageFragShader);
+        fragImg.setShader(colorFragShader);
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
         vertImg.setShader(vertexShader2);
 
         // Loop through the vectors to print the pieces of the model to the screen.
+        int numTriangles = triangles.size();
+        while (numTriangles--)
+        {
+                Vertex verts[3] = {vertices[triangles[numTriangles].x - 1], 
+                                vertices[triangles[numTriangles].y - 1], 
+                                vertices[triangles[numTriangles].z - 1]};
+                DrawPrimitive(TRIANGLE, target, verts, modelAttrs, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        }
 }
 
 
