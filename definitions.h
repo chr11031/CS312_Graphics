@@ -46,6 +46,16 @@ struct Vertex
     double w;
 };
 
+
+inline bool operator==(const Vertex& lhs, const Vertex& rhs)
+{ 
+    return lhs.x == rhs.x &&
+           lhs.y == rhs.y &&
+           lhs.z == rhs.z &&
+           lhs.w == rhs.w;
+}
+
+
 struct camControls
 {
 	double x = 0;
@@ -130,6 +140,7 @@ class Matrix
         colLen = right.colLen;
         rowLen = right.rowLen;
         copyValues(right);
+        return *this;
     }
 
     // Dereference Matrix in 'mat[r][c]' format
@@ -414,11 +425,11 @@ class Buffer2D
         ~Buffer2D()
         {
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
-            {
-                free(grid[r]);
-            }
-            free(grid);
+     //       for(int r = 0; r < h; r++)
+       //     {
+         //       free(grid[r]);
+           // }
+            //free(grid);
         }
 
         // Size-Specified constructor, no data
@@ -592,6 +603,7 @@ class BufferImage : public Buffer2D<PIXEL>
             {
                 grid[i] = ib.grid[i];
             }
+            return *this;
         }
 
         // Constructor based on instantiated SDL_Surface
@@ -661,6 +673,12 @@ void avgColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Att
     color += (unsigned int)(vertAttr.values[2] * 0xFF) << 0;
 
     fragment = color;
+}
+
+void flatColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    fragment = vertAttr.color;
 }
 
 //Finds the color corresponding to the u/v values.

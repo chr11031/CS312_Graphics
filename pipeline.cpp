@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include "snake.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -59,8 +60,8 @@ void processUserInputs(bool & running)
 				double mouseX = e.motion.xrel;
 				double mouseY = e.motion.yrel;
 
-				myCam.yaw -= mouseX * 0.02;
-				myCam.pitch += mouseY * 0.02;
+				myCam.yaw -= mouseX * 0.1;
+				myCam.pitch += mouseY * 0.1;
 			}
 		}
 
@@ -82,23 +83,23 @@ void processUserInputs(bool & running)
 		// Translation 
 		if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
 		{
-			myCam.z += (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-			myCam.x -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+			myCam.z += (cos((myCam.yaw / 180.0) * M_PI)) * 0.25;
+			myCam.x -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.25;
 		}
 		if((e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN))
 		{
-			myCam.z -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-			myCam.x += (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+			myCam.z -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.25;
+			myCam.x += (sin((myCam.yaw / 180.0) * M_PI)) * 0.25;
 		}
 		if((e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN))
 		{
-			myCam.x -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-			myCam.z -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+			myCam.x -= (cos((myCam.yaw / 180.0) * M_PI)) * 0.25;
+			myCam.z -= (sin((myCam.yaw / 180.0) * M_PI)) * 0.25;
 		}
 		if((e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN))
 		{
-			myCam.x += (cos((myCam.yaw / 180.0) * M_PI)) * 0.05;
-			myCam.z += (sin((myCam.yaw / 180.0) * M_PI)) * 0.05;
+			myCam.x += (cos((myCam.yaw / 180.0) * M_PI)) * 0.25;
+			myCam.z += (sin((myCam.yaw / 180.0) * M_PI)) * 0.25;
 		}
     }
 }
@@ -120,7 +121,7 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
  ***************************************/
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    
 }
 
 /*************************************************************
@@ -179,13 +180,13 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             if (deta >= 0 && detb >= 0 && detc >= 0)
             {
                 //for if just sent empty pixels.
-                if (y < S_HEIGHT && y >= 0 && x < S_WIDTH && x >= 0)
-                    target[y][x] = attrs[0].color;
+                target[y][x] = attrs[0].color;
 
                 double z = 1 / interpolate(area, deta, detb, detc, triangle[0].w, triangle[1].w, triangle[2].w);
 
                 Attributes newattribs;
                 newattribs.numValues= attrs[0].numValues;
+                newattribs.color = attrs[0].color;
                 
                 for (int i = 0; i < newattribs.numValues; i++)
                     newattribs.values[i] = z * interpolate(area, deta, detb, detc, attrs[0].values[i], attrs[1].values[i], attrs[2].values[i]);
@@ -707,13 +708,13 @@ void viewportTransform( Buffer2D<PIXEL>& target,
 						const int & numClipped)
 {
 	// Move from -1 -> 1 space in X,Y to screen coordinates 
-	int w = target.width();
-	int h = target.height();
+	int w = target.width() -1;
+	int h = target.height() -1;
 
 	for(int i = 0; i < numClipped; i++)
 	{
-		clippedVertices[i].x = (round( (( (clippedVertices[i].x + 1) / 2.0 * w))));
-		clippedVertices[i].y = (round( (( (clippedVertices[i].y + 1) / 2.0 * h))));
+		clippedVertices[i].x = (round( (( (clippedVertices[i].x + 1) / 2.0 * (w)))));
+		clippedVertices[i].y = (round( (( (clippedVertices[i].y + 1) / 2.0 * (h)))));
 
 		/*	Let's say we have clipped, normalized vertex (-0.5, -1)		
 		*	Our Box is from -1 to 1 in X,Y 
@@ -828,17 +829,29 @@ int main()
     GPU_OUTPUT = SDL_CreateTextureFromSurface(REN, FRAME_BUF);
     BufferImage frame(FRAME_BUF);
 
-    // Draw loop 
-    bool running = true;
-    while(running) 
+    // Draw loop
+
+    Snake game;
+
+
+    while(game.running) 
     {           
-        // Handle user inputs
-        processUserInputs(running);
+        // Handle user inputs for not snake
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        if (game.counter != CPF)
+        {
+            game.counter += 1;
+        }
+        else
+        {
+            clearScreen(frame);
+            game.counter = 0;
+            game = PlaySnake(frame, game);
+        }
 
-        TestPipeline(frame);
+        //TestPipeline(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

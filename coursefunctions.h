@@ -1,5 +1,4 @@
 #include "definitions.h"
-
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
