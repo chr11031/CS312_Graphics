@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**",
                 "C:/MinGW\\bin",
                 "C:/MinGW\\include",
-                "C:Users\\jdmdo\\OneDrive\\Documents\\GitHub\\CS312_Graphics" 
+                "C:/Users/jdmdo/OneDrive/Documents/GitHub/CS312_Graphics"
             ],
             "defines": [
                 "_DEBUG",

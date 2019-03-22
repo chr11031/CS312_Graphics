@@ -222,7 +222,7 @@ class BufferImage : public Buffer2D<PIXEL>
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
 
             PIXEL* row = (PIXEL*)img->pixels;
-            row += (w*h);
+            row += (w*(h-1));
             for(int i = 0; i < h; i++)
             {
                 grid[i] = row;

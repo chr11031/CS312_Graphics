@@ -1,5 +1,4 @@
 #include <cmath>
-#include <iostream>
 using namespace std;
 
 #ifndef GRAPHICMATRIX_H
@@ -314,33 +313,16 @@ class Matrix
              + (this->matrixPtr[14] * rhs.matrixPtr[10]) + (this->matrixPtr[15] * rhs.matrixPtr[14])));
             newMatrix.setData(15,((this->matrixPtr[12] * rhs.matrixPtr[3]) + (this->matrixPtr[13] * rhs.matrixPtr[7])
              + (this->matrixPtr[14] * rhs.matrixPtr[11]) + (this->matrixPtr[15] * rhs.matrixPtr[15])));
-        /*}
         
-        else
-        {
-            for(int i = 0; i < this->col; i++)
-            {
-                for(int j = 0; j < rhs.row; j++)
-                {
-                    newMatrix.matrixPtr[i * newMatrix.col + j] += 
-                        this->matrixPtr[i * this->col + j] * 
-                        rhs.matrixPtr[j * rhs.col + i];
-                }
-            }
-        }*/
         return newMatrix;
     }
 
     // Multiply a 4-component vertex by this matrix, return vertex
     Vertex operator *(const Vertex & rhs) const 
     {
-        // Convert Vertex to Matrix 
-        //Matrix vl = Matrix(right);
-        
-        // Multiply
-        //Matrix out = Matrix(4,4);
-        //out = *this * vl;
-        
+        if(this == NULL){
+            return rhs;
+        }
         // Return in vertex format
         Vertex rv;
         rv.x = (this->matrixPtr[0]  * rhs.x)+(this->matrixPtr[1]  * 
@@ -352,29 +334,8 @@ class Matrix
         rv.w = (this->matrixPtr[12] * rhs.x)+(this->matrixPtr[13] * 
             rhs.y)+(this->matrixPtr[14] * rhs.z)+(this->matrixPtr[15] * rhs.w);
         return rv;
-}
-
-    //friend Vertex operator * (Matrix & rhs, Vertex & lhs);
-};
-/*
-//matrix * vertex operator
-Vertex operator * (Vertex & lhs, Matrix & rhs)
-{
-    if (rhs.col != 4 || rhs.row != 4)
-    {
-        // A vertex has 4 "rows" so the matrix must have 4 columns
-        Vertex vert;
-        return vert;
     }
 
-    Vertex newVertex;
-    newVertex.x = rhs.matrixPtr[0] * lhs.x + rhs.matrixPtr[1] * lhs.y + rhs.matrixPtr[2] * lhs.z + rhs.matrixPtr[3] * lhs.w;
-    newVertex.y = rhs.matrixPtr[4] * lhs.x + rhs.matrixPtr[5] * lhs.y + rhs.matrixPtr[6] * lhs.z + rhs.matrixPtr[7] * lhs.w;
-    newVertex.z = rhs.matrixPtr[8] * lhs.x + rhs.matrixPtr[9] * lhs.y + rhs.matrixPtr[10] * lhs.z + rhs.matrixPtr[11] * lhs.w;
-    newVertex.w = rhs.matrixPtr[12] * lhs.x + rhs.matrixPtr[13] * lhs.y + rhs.matrixPtr[14] * lhs.z + rhs.matrixPtr[15] * lhs.w;
-
-    return newVertex;
-}*/
-
+};
 
 #endif

@@ -58,12 +58,14 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
         ptr = (BufferImage*)uniforms.att[0].ptr;
     }
     
-
     int wid = ptr->width();
     int hgth = ptr->height();
 
     int x = vertAttr.att[0].d * (wid - 1);// U
     int y = vertAttr.att[1].d * (hgth - 1);// V
+
+    //Error check to avoid out of bounds draw
+    if (x < 0 || x >= ptr->width() || y < 0 || y >= ptr->height()){ return; }
 
     fragment = (*ptr)[y][x];
 
@@ -91,9 +93,17 @@ void ImageFragShader2(PIXEL & fragment, const Attributes & vertAttr, const Attri
  ******************************/
  void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
     PIXEL color = 0xff000000;
+
     color += (unsigned int)(vertAttr.att[0].d * 0xff) << 16;//16 R
     color += (unsigned int)(vertAttr.att[1].d * 0xff) << 8;//8 G
     color += (unsigned int)(vertAttr.att[2].d * 0xff) << 0;//0 B
+
+    fragment = color;
+}
+
+void ColorFragShader2(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms){
+    PIXEL color = 0xffff0000;
+
 
     fragment = color;
 }

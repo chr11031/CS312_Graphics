@@ -1,6 +1,7 @@
 #include "definitions.h"
 #include "graphicMatrix.h"
 #include "shaders.h"
+//#include "objLoader.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -166,15 +167,116 @@ void CADView(Buffer2D<PIXEL> & target)
         // Each CAD Quadrant
         static int halfWid = target.width()/2;
         static int halfHgt = target.height()/2;
-        static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);
-        static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
-        static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
-        static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
+        static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);  //top view
+        static Buffer2D<PIXEL> topRight(halfWid, halfHgt); //3d full pipeline
+        static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);  //right veiw
+        static Buffer2D<PIXEL> botRight(halfWid, halfHgt); //left view
 
+        static Buffer2D<double> zBuf(target.width(), target.height());
 
         // Your code goes here 
         // Feel free to copy from other test functions to get started!
+        /**************************************************
+        * 1. Image quad (2 TRIs) Code (texture interpolated)
+        **************************************************/
+        Vertex quad[] = { {-20,-20, 50, 1},
+                          {20, -20, 50, 1},
+                          {20, 20, 50, 1},
+                          {-20,20, 50, 1}};
 
+        Vertex verticesImgA[3];
+        Attributes imageAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
+
+        Vertex verticesImgB[3];        
+        Attributes imageAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
+
+        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+        
+
+        static BufferImage myImage("checker.bmp");
+        Attributes imageUniformsTopR;
+        Attributes imageUniformsTopL;
+        Attributes imageUniformsBottomR;
+        Attributes imageUniformsBottomL;
+
+        //uniforms
+        // 0 -> image reference
+        // 1 -> model transform
+        // 2 -> view transform
+        // 3 -> projection/orthographic
+
+        Matrix model = Matrix(4,4);
+
+        Matrix topLcamView = Matrix(4,4);
+        topLcamView.cameraTransform(0,0,0,90,0,0);//top view
+        Matrix topRcamView = Matrix(4,4);
+        topRcamView.cameraTransform(myCam.x,myCam.y,myCam.z,myCam.pitch,myCam.yaw,myCam.roll);//Moveable view
+        Matrix bottomRcamView = Matrix(4,4);
+        bottomRcamView.cameraTransform(0,0,0,0,0,0);//front view
+        Matrix bottomLcamView = Matrix(4,4);
+        bottomLcamView.cameraTransform(0,0,0,0,90,0);//right view
+        
+        Matrix projection = Matrix(4,4);
+        projection.transformPerspective(60.0, 1.0, 1, 200); //FOV, AspectRatio, Near, Far
+        
+        imageUniformsTopL.insertPtr((void*)&myImage);
+        imageUniformsTopL.insertPtr((void*)&model);
+        imageUniformsTopL.insertPtr((void*)&topLcamView);
+        imageUniformsTopL.insertPtr((void*)&projection);
+
+        imageUniformsTopR.insertPtr((void*)&myImage);
+        imageUniformsTopR.insertPtr((void*)&model);
+        imageUniformsTopR.insertPtr((void*)&topRcamView);
+        imageUniformsTopR.insertPtr((void*)&projection);
+
+        imageUniformsBottomL.insertPtr((void*)&myImage);
+        imageUniformsBottomL.insertPtr((void*)&model);
+        imageUniformsBottomL.insertPtr((void*)&bottomLcamView);
+        imageUniformsBottomL.insertPtr((void*)&projection);
+
+        imageUniformsBottomR.insertPtr((void*)&myImage);
+        imageUniformsBottomR.insertPtr((void*)&model);
+        imageUniformsBottomR.insertPtr((void*)&bottomRcamView);
+        imageUniformsBottomR.insertPtr((void*)&projection);
+
+        FragmentShader fragImg;
+        fragImg.FragShader = ImageFragShader;
+
+        VertexShader vertImg;
+        vertImg.VertShader = SimpleVertexShader2;
+
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, imageAttributesA, &imageUniformsTopL, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, imageAttributesB, &imageUniformsTopL, &fragImg, &vertImg, &zBuf);
+
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, imageAttributesA, &imageUniformsTopR, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, imageAttributesB, &imageUniformsTopR, &fragImg, &vertImg, &zBuf);
+
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, imageAttributesA, &imageUniformsBottomL, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, imageAttributesB, &imageUniformsBottomL, &fragImg, &vertImg, &zBuf);
+
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, imageAttributesA, &imageUniformsBottomR, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, imageAttributesB, &imageUniformsBottomR, &fragImg, &vertImg, &zBuf);
 
         // Blit four panels to target
         int yStartSrc = 0;
@@ -192,6 +294,8 @@ void CADView(Buffer2D<PIXEL> & target)
                 }
         }
 }
+
+
 
 /***************************************************
  * Demonstrate pixel drawing for project 01.
@@ -571,7 +675,8 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         //uniforms
         // 0 -> image reference
         // 1 -> model transform
-        // 2 -> view transform
+        // 2 -> view transform (camera)
+        // 3 -> perspective transform
 
         Matrix model = Matrix(4,4);
         Matrix camView = Matrix(4,4);
