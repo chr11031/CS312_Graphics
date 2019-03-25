@@ -156,7 +156,7 @@ Vertex subtractVert(Vertex a, Vertex b)
  * Interpolates data according to determinate
  * values
 ****************************************************/
-void interp(Vertex * triangle, Attributes* const attrs, double * interpBin, double const weights[3])
+void interp(Vertex * triangle, Attributes* const attrs, Attributes * interpAttr, double const weights[3])
 {
         // Weights to multiple attribute data determined by what percent of the
         // original triangle the smaller triangles (determinents) take up
@@ -173,6 +173,8 @@ void interp(Vertex * triangle, Attributes* const attrs, double * interpBin, doub
         double * d1 = (double*)(attrs[0]).data;
         double * d2 = (double*)(attrs[1]).data;
         double * d3 = (double*)(attrs[2]).data;
+        double * interpBin = (double*)interpAttr->data;
+        interpAttr->dLen = attrs[0].dLen;
 
         // interpolate according to how length of data in attributes
         for (int i = 0; i < attrs[0].dLen; i++)
@@ -337,12 +339,13 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
             ImageAttr(1, 1)
         };
 
-        // static BufferImage myImage = BufferImage("checker.bmp");
+        static BufferImage myImage = BufferImage("checker.bmp");
 
         Attributes imageUniforms;
+        imageUniforms.data = &myImage;
 
         FragmentShader myImageFragShader;
-        myImageFragShader.FragShader = FragShaderUVwithoutImage;
+        myImageFragShader.FragShader = ImageFragShader;
 
         DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
@@ -392,14 +395,15 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        // BufferImage myImage("checker.bmp");
+        BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
         // static BufferImage myImage = BufferImage("checker.bmp");
 
         Attributes imageUniforms;
+        imageUniforms.data = &myImage;
 
         FragmentShader fragImg;
-        fragImg.FragShader = FragShaderUVwithoutImage;
+        fragImg.FragShader = ImageFragShader;
 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
@@ -462,7 +466,7 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         
         // As per slack 30 degrees mirrors more closely with the provided visual
         // In my case 29.5 gives me a perfect rotation where as 30 does not leave the right side of the triangle flat
-        colorUniforms3.get().rotate(29.5);
+        colorUniforms3.get().rotate(Z, 29.5);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms3, &myColorFragShader, &myColorVertexShader);
 
@@ -473,16 +477,11 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         //         // Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
                 
         TransUni colorUniforms4 = TransUni();
-        colorUniforms4.get().scale(0.5, 0.5).translate(100, 50).rotate(29.5);
+        colorUniforms4.get().scale(0.5, 0.5).translate(100, 50).rotate(Z, 29.5);
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms4, &myColorFragShader, &myColorVertexShader);
 }
 
-/********************************************
- * Verify that the whole pipeline works. By
- * the end of week 07 you should be able to
- * run this code successfully.
- *******************************************/
 void TestPipeline(Buffer2D<PIXEL> & target)
 {
         // This is similar to TestDrawPerspectiveCorrect 
@@ -513,33 +512,49 @@ void TestPipeline(Buffer2D<PIXEL> & target)
                           {-20,20, 50, 1}};
 
         Vertex verticesImgA[3];
-        Attributes imageAttributesA[3];
         verticesImgA[0] = quad[0];
         verticesImgA[1] = quad[1];
         verticesImgA[2] = quad[2];
 
         Vertex verticesImgB[3];        
-        Attributes imageAttributesB[3];
         verticesImgB[0] = quad[2];
         verticesImgB[1] = quad[3];
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        Attributes imageAttributesA[3] = 
+        {
+            ImageAttr(coordinates[0][0], coordinates[0][1]),
+            ImageAttr(coordinates[1][0], coordinates[1][1]),
+            ImageAttr(coordinates[2][0], coordinates[2][1])
+        };
 
+        Attributes imageAttributesB[3] = 
+        {
+            ImageAttr(coordinates[2][0], coordinates[2][1]),
+            ImageAttr(coordinates[3][0], coordinates[3][1]),
+            ImageAttr(coordinates[0][0], coordinates[0][1])
+        };
+
+        static BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+
+        Transform mvp = Transform();
+        mvp.camera(myCam.x, myCam.y, myCam.z, 
+                   myCam.yaw, myCam.pitch, myCam.roll)
+           .perspective(60, 1.0, 1, 200);
+
+        ImgMvp uniData = { &myImage, &mvp };
+        imageUniforms.data = &uniData;
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+		fragImg.FragShader = ImageFragShader2;
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+		vertImg.VertShader = SimpleVertexShader2;
+		
+		
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
@@ -547,7 +562,5 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
-
-
 
 #endif
