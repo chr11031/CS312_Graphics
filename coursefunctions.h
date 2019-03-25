@@ -935,10 +935,10 @@ void TestVSD(Buffer2D<PIXEL> & target)
 
         Vertex wall3[]=
         {
-                {35, 0, 65, 1},
-                {110, 0,20, 1},
-                {110, 40, 20, 1},
-                {35, 40, 65, 1}
+                {45, 0, 85, 1},
+                {120, 0, 40, 1},
+                {120, 40, 40, 1},
+                {45, 40, 85, 1}
         };
 
 
@@ -952,23 +952,31 @@ void TestVSD(Buffer2D<PIXEL> & target)
 
         Vertex wall11[] =
         {
-                {8, 0, 6, 1},
-                {9, 0, 10, 1},
-                {9, 40, 10, 1},
-                {8, 40, 6, 1}
+                {9, 0, 7, 1},
+                {10, 0, 11, 1},
+                {10, 40, 11, 1},
+                {9, 40, 7, 1}
         };
 
-        Quad itsLitYo(wall10);
-        Quad isSplitterYo(wall11);
-        Node* firstNode = new Node(itsLitYo);
-        Node* secondNode = new Node(isSplitterYo);
-        firstNode = secondNode;
-        Node thirdNode(*firstNode);
+        Vertex wall12[]=
+        {
+                {2, 0, 6, 1},
+                {6, 0, 6, 1},
+                {6, 40, 6, 1},
+                {2, 40, 6, 1}
+        };
 
-        std::vector<Node*> all;
-        all.push_back(firstNode);
-        firstNode->partition(all, all, all);
-        std::cout << all.size() << std::endl;
+
+        Node* node1 = new Node(wall10);
+        Node* node2 = new Node(wall11);
+        Node* node3 = new Node(wall12);
+
+        std::vector<Node*> nodes;
+        nodes.push_back(node2);
+        nodes.push_back(node1);
+        nodes.push_back(node3);
+
+        BSPTree tree(nodes);
 
 
         // First wall vertices and attributes
@@ -1084,17 +1092,13 @@ void TestVSD(Buffer2D<PIXEL> & target)
         FragmentShader fragShader(imageFragShader);
         VertexShader vertShader(SimpleVertexShader2);
 
-        Matrix newModel;
-        newModel.addTrans(10, 0, 20);
 
         imageUniforms[0].ptr = (void*)&laputa;
-        imageUniforms[1].ptr = (void*)&newModel;
 
         DrawPrimitive(TRIANGLE, target, vertsImg3A, attrsImg3A, &imageUniforms, &fragShader, &vertShader);
         DrawPrimitive(TRIANGLE, target, vertsImg3B, attrsImg3B, &imageUniforms, &fragShader, &vertShader);
 
         imageUniforms[0].ptr = (void*)&totoro;
-        imageUniforms[1].ptr = (void*)&model;
 
         DrawPrimitive(TRIANGLE, target, vertsImg1A, attrsImg1A, &imageUniforms, &fragShader, &vertShader);
         DrawPrimitive(TRIANGLE, target, vertsImg1B, attrsImg1B, &imageUniforms, &fragShader, &vertShader);

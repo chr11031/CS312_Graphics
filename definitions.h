@@ -913,12 +913,12 @@ public:
 class Quad
 {
 public:
-    Quad() : verts(NULL), intersectionLine(NULL) {}
-    Quad(Vertex newVerts[4]) : verts(NULL), intersectionLine(NULL)
+    Quad() : verts(NULL), intersectionLine(NULL), distance(0.0) {}
+    Quad(Vertex newVerts[4]) : verts(NULL), intersectionLine(NULL), distance(0.0)
     {
         this->setVerts(newVerts);
     }
-    Quad(const Quad & newQuad) : verts(NULL), intersectionLine(NULL)
+    Quad(const Quad & newQuad) : verts(NULL), intersectionLine(NULL), distance(0.0)
     {
         *this = newQuad;
     }
@@ -930,7 +930,7 @@ public:
         if (NULL != this->intersectionLine)
             delete intersectionLine;
     }
-    bool isIntersected(Quad splitter);
+    bool isIntersected(const Quad & splitter);
 
     Quad* getQuad() { return (Quad*)&verts; }
     Vertex* getIntersectionLine() { return intersectionLine; }
@@ -955,6 +955,7 @@ public:
             this->verts[i] = newVerts[i];
 
         this->findNormal();
+        this->findDistance();
     }
 
     Quad & operator= (const Quad & rhs)
@@ -969,18 +970,33 @@ public:
         for(int i = 0; i < 4; i++)
             this->verts[i] = rhs.verts[i];
 
+        this->findNormal();
+        this->findDistance();
+
         return *this;
     }
 
+    Vertex getNormal() const   { return this->normal; }
+    double getDistance() const { return this->distance; }
+
 private:
     void findNormal();
+    void findDistance();
 
     Vertex* verts;
     Vertex* intersectionLine;
     Vertex normal;
+    double distance;
 };
 
-bool Quad::isIntersected(Quad splitter)
+void Quad::findDistance()
+{
+    this->distance = -((normal.x * this->verts[0].x) + 
+                       (normal.y * this->verts[0].y) +
+                       (normal.z * this->verts[0].z));
+}
+
+bool Quad::isIntersected(const Quad & splitter)
 {
     Vertex top = {this->verts[0].x - splitter.verts[0].x, 
                         this->verts[0].y - splitter.verts[0].y,
@@ -1019,6 +1035,10 @@ void Quad::findNormal()
         ((height.z * width.x) - (height.x * width.z)),
         ((height.x * width.y) - (height.y * width.x))
     };
+    double magnitude = sqrt((pow(norm.x, 2) + pow(norm.y, 2) + pow(norm.z, 2)));
+    norm.x /= magnitude;
+    norm.y /= magnitude;
+    norm.z /= magnitude;
 
     //std::cout << "{ " << norm.x << ", " << norm.y << ", " << norm.z << "}\n";
 
@@ -1059,8 +1079,8 @@ public:
     // All objects behind the node
     Node* rightChild;
 
-    bool isQuadIntersected(Node* splitter) { return quad.isIntersected(splitter->quad); }
-    void partition(std::vector<Node*> & allNodes, std::vector<Node*> & front, std::vector<Node*> & back);
+    bool isQuadIntersected(const Node* & splitter) { return quad.isIntersected(splitter->quad); }
+    bool isInFront(const Node* splitter);
     void split(Node* & node1, Node* & node2);
 
     Node & operator= (const Node & node)
@@ -1077,11 +1097,25 @@ private:
     Quad quad;
 };
 
-void Node::partition(std::vector<Node*> & allNodes, std::vector<Node*> & front, std::vector<Node*> & back)
+bool Node::isInFront(const Node* splitter)
 {
-    Node* newNode = new Node();
-    allNodes.push_back(newNode);
+    Vertex midpoint = 
+    {
+        (this->quad[0].x + this->quad[1].x) / 2,
+        (this->quad[0].y + this->quad[1].y) / 2,
+        (this->quad[0].z + this->quad[1].z) / 2
+    };
+
+    Vertex splitterNorm = splitter->quad.getNormal();
+    double splitterDist = splitter->quad.getDistance();
+    double result =  ((splitterNorm.x * midpoint.x) + 
+                      (splitterNorm.y * midpoint.y) + 
+                      (splitterNorm.z * midpoint.z) + splitterDist);
+
+    return (result > 0.0);
 }
+
+
 
 void Node::split(Node* & node1, Node* & node2)
 {
@@ -1123,11 +1157,61 @@ private:
     Node* root;
 
 public:
-    BSPTree();
+    BSPTree() :root(NULL) {}
+    BSPTree(std::vector<Node*> allNodes)
+    {
+        root = buildTree(allNodes);
+    }
+    ~BSPTree()
+    {
+        if (NULL != this->root)
+            delete root;
+    }
     Node* buildTree(std::vector<Node*> allNodes);
-
-
     
 };
+
+Node* BSPTree::buildTree(std::vector<Node*> allNodes)
+{
+    Node* current = NULL;
+    std::vector<Node*> back;
+    std::vector<Node*> front;
+
+    current = allNodes.front();
+    allNodes.erase(allNodes.begin());
+
+    std::vector<Node*>::iterator it;
+
+    // Loop through
+    for (it = allNodes.begin(); it != allNodes.end(); )
+    {
+        Node* newNode1 = NULL;
+        Node* newNode2 = NULL;
+        const Node* tmp = current;
+        if ((*it)->isQuadIntersected(tmp))
+        {
+            (*it)->split(newNode1, newNode2);
+            it = allNodes.erase(it);
+            allNodes.push_back(newNode1);
+            allNodes.push_back(newNode2);
+            
+        }
+        else
+            it++;
+    }
+
+    for (it = allNodes.begin(); it != allNodes.end(); it++)
+    {
+        if ((*it)->isInFront(current))
+            front.push_back(*it);
+        else
+            back.push_back(*it);
+    }
+
+    current->leftChild = buildTree(front);
+    current->rightChild = buildTree(back);
+    
+    return current;
+}
     
 #endif
