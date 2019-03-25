@@ -3,9 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
-#include <vector>
-
-#include <iostream>
+#include "trans.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -24,12 +22,22 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define MEMBERS_PER_ATTRIB
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
-// My definitions
-#define DEG_TO_RAD M_PI/180
+/****************************************************
+ * X, Y, Z, handy enums
+ ***************************************************/
+enum DIMENSION
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -39,136 +47,6 @@ enum PRIMITIVES
     TRIANGLE,
     LINE,
     POINT
-};
-
-/***************************************************
- * MATRIX
- * Holds a matrix and functions to manipulate it
- **************************************************/
-class Matrix
-{
-
-public:
-    double cell[4][4];
-
-    Matrix() {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-            {
-                if (i == j)
-                    cell[i][j] = 1;
-                else
-                    cell[i][j] = 0;
-            }
-    }
-
-    // *= operator overload for another 4x4 matrix
-    Matrix operator *= (const Matrix rhs) {
-        Matrix temp;
-        temp.clear();
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                for (int k = 0; k < 4; k++)
-                {
-                    temp.cell[i][j] += this->cell[i][k] * rhs.cell[k][j];
-                }
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-            {
-                this->cell[i][j]  = temp.cell[i][j];
-            }
-        // I think I have to return *this... but if I didn't have to, couldn't I get rid of the last for loop?
-        return *this;
-    }
-
-    // assignment operator overload for another 4x4 matrix
-    Matrix& operator = (const Matrix rhs) {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-            {
-                this->cell[i][j] = rhs.cell[i][j];
-            }
-        return *this;
-    }
-
-    // translates the triangle on the x, y, and/or z axis
-    void translate(double x, double y, double z)
-    {
-        Matrix temp;
-        temp.cell[0][3] += x;
-        temp.cell[1][3] += y;
-        temp.cell[2][3] += z;
-
-        *this *= temp;
-    }
-
-    // scales the triangle in the x, y, and/or z direction
-    void scale(double x, double y, double z)
-    {
-        Matrix temp;
-        temp.cell[0][0] = x;
-        temp.cell[1][1] = y;
-        temp.cell[2][2] = z;
-
-        *this *= temp;
-    }
-
-    // rotates the vertices around a user-selected axis
-    void rotate(double angle, const char axis)
-    {
-        angle *= DEG_TO_RAD;
-        Matrix temp;
-        switch (axis)
-        {
-            case 'x':
-            temp.cell[1][1] = cos(angle);
-            temp.cell[1][2] = -sin(angle);
-            temp.cell[2][1] = sin(angle);
-            temp.cell[2][2] = cos(angle);   
-            break;
-            case 'y':
-            temp.cell[0][0] = cos(angle);
-            temp.cell[0][2] = sin(angle);
-            temp.cell[2][0] = -sin(angle);
-            temp.cell[2][2] = cos(angle);
-            break;
-            case 'z':
-            temp.cell[0][0] = cos(angle);
-            temp.cell[0][1] = -sin(angle);
-            temp.cell[1][0] = sin(angle);
-            temp.cell[1][1] = cos(angle);
-            break;
-        }
-
-        *this *= temp;
-    }
-
-    // sets the matrix identity back to all 1s
-    void clear()
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                cell[i][j] = 0;
-            }
-        }
-    }
-
-    // sets the matrix identity back to all 1s
-    void reset()
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 4; j++)
-            {
-                    if (i == j)
-                            cell[i][j] = 1;
-                    else
-                            cell[i][j] = 0;
-            }
-        }
-    }
 };
 
 /****************************************************
@@ -181,60 +59,72 @@ struct Vertex
     double z;
     double w;
 
-    // the only time I need to multiply a 4x4 by a 4x1 is with a vertex, so I have overloaded the vertex *= operator
-    Vertex& operator *= (const Matrix &rhs);
-
-    // in case the user wants to use this version instead
-    Vertex& operator * (const Matrix &rhs) {
-        *this *= rhs;
-        return *this;
+    Vertex& operator = (const Vertex rhs)
+    {
+        this->x = rhs.x;
+        this->y = rhs.y;
+        this->z = rhs.z;
+        this->w = rhs.w;
     }
 
+    Vertex()
+    {
+        x = 0;
+        y = 0;
+        z = 0;
+        w = 0;
+    }
+
+    Vertex(const double x, const double y, const double z, const double w)
+    {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
 };
 
-// the full operator function
-Vertex& Vertex::operator *= (const Matrix &rhs) {
-    double copy[4] = {x, y, z, w};
-    double temp[4] = {0, 0, 0, 0};
-
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-        {
-            temp[i] += rhs.cell[i][j] * copy[j];
-        }
-    this->x = temp[0];
-    this->y = temp[1];
-    this->z = temp[2];
-    this->w = temp[3];
-
-    std::cout << std::endl;
-
-    return *this;
-}
-
-// variables needed for view/camera transform
+// Everything needed for the view/camera transform
 struct camControls
 {
-    double x = 0;
-    double y = 0;
-    double z = 0;
-    double yaw = 0;
-    double roll = 0;
-    double pitch = 0;
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	double yaw = 0;
+	double roll = 0;
+	double pitch = 0;
 };
-camControls myCam; // the global variable for view controls
+camControls myCam;
 
+// Global light source
+struct Light
+{
+    Vertex point = Vertex(0, 25, 0, 1);
+    double diffuse[3] = {0.4, 0.4, 0.4};
+    double ambient[3] = {0.1, 0.1, 0.1};
+    double intensity;
+
+    void clear()
+    {
+        point.x = 0;
+        point.y = 25;
+        point.z = 0;
+        point.w = 1;
+    }
+};
+Light myLight;
 
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
  * and depth buffers. Can be described as frames or 
- * 2D arrays of type 'T' encapsulated in an object.
+ * 2D arrays ot type 'T' encapsulated in an object.
  *****************************************************/
 template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -248,22 +138,29 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+	    baseAllocated = true;
         }
 
         // Empty Constructor
-        Buffer2D()
-        {}
+	Buffer2D() {}
+		  
 
     public:
         // Free dynamic memory
         ~Buffer2D()
         {
+            return; // don't do this because the optimizer crashes
+            
             // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
-            {
+            if(baseAllocated)	    
+                {
+                for(int r = 0; r < h; r++)
+                {
                 free(grid[r]);
-            }
-            free(grid);
+                }
+                free(grid);
+
+                }
         }
 
         // Size-Specified constructor, no data
@@ -314,6 +211,25 @@ class Buffer2D
 };
 
 
+// Struct used for reading in RGB values from a bitmap file
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+// The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
+
 /****************************************************
  * BUFFER_IMAGE:
  * PIXEL (Uint32) specific Buffer2D class with .BMP 
@@ -323,7 +239,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+    	bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
 
         // Private intialization setup
         void setupInternal()
@@ -342,12 +259,80 @@ class BufferImage : public Buffer2D<PIXEL>
             }
         }
 
+    private:
+
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+    
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] = 0xff000000 + 
+                                 ((pixelPtr->r) << 16) +
+                                 ((pixelPtr->g) << 8) +
+                                 ((pixelPtr->b));
+                                 ++pixelPtr;
+                }
+            }
+    
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
+
     public:
         // Free dynamic memory
         ~BufferImage()
         {
-            // De-Allocate pointers for column references
-            free(grid);
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+	        free(grid);
+		return;
+            }
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -383,55 +368,94 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            setupInternal();
+	  ourSurfaceInstance = false;
+	  if(!readBMP(path))
+	    {
+	      return;
+	    }	  
+	  ourBufferData = true;
         }
+};
+
+// Interpoaltes between 3 weighted points 3 different double values for barycentric
+inline double baryInterp(const double & firstWgt, const double & secndWgt, const double & thirdWgt,
+			 const double & firstVal, const double & secndVal, const double & thirdVal)
+{
+  return ((firstWgt * thirdVal) + (secndWgt * firstVal) + (thirdWgt * secndVal));
+}
+
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
 };
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
  * primitive as a whole OR per-vertex. Will be 
- * designed/implemented by the programmer.
+ * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
 {      
     public:
+        // Members
+    	int numMembers = 0;
+        attrib arr[16];
 
         // Obligatory empty constructor
-        Attributes() : numMembers(0) {}
+        Attributes() {numMembers = 0;}
+
+        // Interpolation Constructor
+        Attributes( const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third,
+		    const double & correctZ)
+        {
+            while(numMembers < first.numMembers)
+            {
+	         arr[numMembers].d = baryInterp(firstWgt, secndWgt, thirdWgt, first.arr[numMembers].d, secnd[numMembers].d, third.arr[numMembers].d);
+			 arr[numMembers].d = arr[numMembers].d * correctZ;
+			 numMembers += 1;
+            }
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
-            for(int i = 0; i < first.values.size(); i++)
-            {
-                arr[i].d = (first[i].d) // to be continued...
-            }
+				numMembers = first.numMembers;
+				for(int i = 0; i < numMembers; i++)
+				{
+					arr[i].d = (first[i].d) + ((second[i].d - first[i].d) * along);
+				}
         }
 
-        /// My Code
-        PIXEL color;
-        
-        void * ptrImg;  // points to the .bmp
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
 
-        std::vector<double> values; // vector to allow for as many as the user would like
-        // std::vector<void*> ptrImgs; // vector to allow for as many textures as the user would like
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
 
-        Matrix matrix;
-
-        // easier to add another value to the vector
-        void add(const double value) { values.push_back(value); }
-
-        // clears the vector for future use
-        void reset() { values.clear(); }
-};
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+};	
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -525,5 +549,66 @@ void DrawPrimitive(PRIMITIVES prim,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
                    Buffer2D<double>* zBuf = NULL);             
+
+/****************************************
+ * NORMALIZE finds the normals for each
+ * of three vertices
+ ***************************************/
+void normalize(double normalized[][3])
+{
+    // do this for each vector
+    for (int i = 0; i < 3; i++)
+    {
+        // find the square root of the sum of the squares of each part of a vertex
+        double tmp = sqrt(pow(normalized[i][0], 2) + pow(normalized[i][1], 2) + pow(normalized[i][2], 2));
+        // for each value, divide by the previous number
+        tmp = 1/tmp; // optimize
+        normalized[i][0] *= tmp;
+        normalized[i][1] *= tmp;
+        normalized[i][2] *= tmp;
+    }
+}
+
+/****************************************
+ * FIND_N finds N for each two vertices by
+ * performing a cross product of them
+ ***************************************/
+void findN(double firstVec[], double secondVec[], Attributes attrs)
+{
+    attrs.insertDbl(firstVec[1] * secondVec[2] - secondVec[1] * firstVec[2]);
+    attrs.insertDbl(firstVec[0] * secondVec[2] - secondVec[0] * firstVec[2]);
+    attrs.insertDbl(firstVec[0] * secondVec[1] - secondVec[0] * firstVec[1]);
+}
+
+/****************************************
+ * DOT_PRODUCT of two 1x3 matrices
+ ***************************************/
+double dotProduct(double a, double b, double c, double d, double e, double f)
+{
+    return (a*d + b*e + c*f);
+}
+
+/****************************************
+ * LIGHT_VEC finds Vector between light source and pixel,
+ * then normalizes it and returns it
+ ***************************************/
+Vertex lightVec(const double x, const double y, const double z)
+{
+    Vertex tmp(x - myLight.point.x, y - myLight.point.y, z - myLight.point.z, 1);
+    double sum = sqrt(pow(tmp.x, 2) + pow(tmp.y, 2) + pow(tmp.z, 2));
+    myLight.intensity = 1/(pow(sum, 2));
+    sum = 1/sum;
+    return { tmp.x * sum, tmp.y * sum, tmp.z * sum, 1 };
+}
+
+/****************************************
+ * DETERMINANT
+ * Find the determinant of a matrix with
+ * components A, B, C, D from 2 vectors.
+ ***************************************/
+inline double determinant(const double & A, const double & B, const double & C, const double & D)
+{
+  return (A*D - B*C);
+}
        
 #endif
