@@ -129,4 +129,25 @@ Matrix perspective(const double & fovy, const double & aspectRatio, const double
 
 }
 
+Matrix orthographic(const double & fovy, const double & aspectRatio, const double & near, const double far)
+{
+
+    // perspective(60, 1.0, 1, 200); 
+    Matrix rt = Matrix(4,4);
+
+    double top = near * tan((fovy * PI) / 180.0 /2.0);
+    double right = aspectRatio * top;
+
+    
+    rt.setElement(0,0,1 / right);
+    rt.setElement(1,1,1 / top);
+    rt.setElement(2,2,(2/(far - near)));
+    rt.setElement(2,3,-((far + near)/(far - near)));
+    rt.setElement(3,3,1);    
+    
+
+    return rt;
+
+}
+
 #endif

@@ -128,37 +128,168 @@ void GameOfLife(Buffer2D<PIXEL> & target)
  * NOTE: Assumes that the resolution is an even 
  * value in both dimensions.
  **************************************************/
-void CADView(Buffer2D<PIXEL> & target)
-{
-        // Each CAD Quadrant
-        static int halfWid = target.width()/2;
-        static int halfHgt = target.height()/2;
-        static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);
-        static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
-        static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
-        static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
+// void CADView(Buffer2D<PIXEL> & target)
+// {
+//         // Each CAD Quadrant
+//         static int halfWid = target.width()/2;
+//         static int halfHgt = target.height()/2;
+//         static Buffer2D<PIXEL> topLeft(halfWid, halfHgt);
+//         static Buffer2D<PIXEL> topRight(halfWid, halfHgt);
+//         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
+//         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
+
+//         topLeft.zeroOut();
+//         topRight.zeroOut();
+//         botLeft.zeroOut();
+//         botRight.zeroOut();
+        
+
+//         // Your code goes here 
+
+//         static Buffer2D<double> zBuf(target.width(), target.height());
+
+//         Vertex quad[] =   {{-20,-20, 150, 1},
+//                           {20, -20, 150, 1},
+//                           {20, 20, 150, 1},
+//                           {-20,20, 150, 1}};
+
+//         // Front
+//         Vertex verticesA1[3];
+//         verticesA1[0] = quad[0];
+//         verticesA1[1] = quad[1];
+//         verticesA1[2] = quad[2];
+//         Vertex verticesA2[3];        
+//         verticesA2[0] = quad[2];
+//         verticesA2[1] = quad[3];
+//         verticesA2[2] = quad[0];
+
+//         // Left
+//         Vertex verticesB1[3];
+//         verticesB1[0] = quad[0];
+//         verticesB1[1] = quad[1];
+//         verticesB1[2] = quad[2];
+//         Vertex verticesB2[3];        
+//         verticesB2[0] = quad[2];
+//         verticesB2[1] = quad[3];
+//         verticesB2[2] = quad[0];
+
+//         // Right
+//         Vertex verticesC1[3];
+//         verticesC1[0] = quad[0];
+//         verticesC1[1] = quad[1];
+//         verticesC1[2] = quad[2];
+//         Vertex verticesC2[3];        
+//         verticesC2[0] = quad[2];
+//         verticesC2[1] = quad[3];
+//         verticesC2[2] = quad[0];
+
+//         // Back
+//         Vertex verticesD1[3];
+//         verticesD1[0] = quad[0];
+//         verticesD1[1] = quad[1];
+//         verticesD1[2] = quad[2];
+//         Vertex verticesD2[3];        
+//         verticesD2[0] = quad[2];
+//         verticesD2[1] = quad[3];
+//         verticesD2[2] = quad[0];
+
+//         Attributes colorAttributesA[3];
+//         Attributes colorAttributesB[3];
+
+//         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
+//         colorAttributesA[0].insertDbl(1);
+//         colorAttributesA[0].insertDbl(0);
+//         colorAttributesA[0].insertDbl(0);
+
+//         colorAttributesA[1].insertDbl(0);
+//         colorAttributesA[1].insertDbl(1);
+//         colorAttributesA[1].insertDbl(0);
+
+//         colorAttributesA[2].insertDbl(0);
+//         colorAttributesA[2].insertDbl(0);
+//         colorAttributesA[2].insertDbl(1);
+
+//         colorAttributesB[0].insertDbl(0);
+//         colorAttributesB[0].insertDbl(0);
+//         colorAttributesB[0].insertDbl(1);
+
+//         colorAttributesB[1].insertDbl(0);
+//         colorAttributesB[1].insertDbl(1);
+//         colorAttributesB[1].insertDbl(0);
+
+//         colorAttributesB[2].insertDbl(1);
+//         colorAttributesB[2].insertDbl(0);
+//         colorAttributesB[2].insertDbl(0);
+
+//         Attributes imageUniforms;
+
+//         Matrix model = createTranslationMatrix(0,0,0);
+//         Matrix view = camera(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+//         Matrix orth = orthographic(90, 1.0, 40, 5000);
+//         Matrix pers = perspective(40, 1.0, 1, 200);
+
+//         //Uniforms
+//         //[0] Image/Color reference
+//         //[1] Model Transform
+//         //[2] View Transform
+
+//         imageUniforms.insertPtr((void*)NULL);
+
+//         // BufferImage myImage("checker.bmp");     
+//         // imageUniforms.insertPtr((void*)&myImage);
+//         // Attributes imageAttributesA[3];
+//         // double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+//         // imageAttributesA[0].insertDbl(coordinates[0][0]);
+//         // imageAttributesA[0].insertDbl(coordinates[0][1]);
+//         // imageAttributesA[1].insertDbl(coordinates[1][0]);
+//         // imageAttributesA[1].insertDbl(coordinates[1][1]);
+//         // imageAttributesA[2].insertDbl(coordinates[2][0]);
+//         // imageAttributesA[2].insertDbl(coordinates[2][1]);
 
 
-        // Your code goes here 
-        // Feel free to copy from other test functions to get started!
-        // DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+//         imageUniforms.insertPtr((void*)&model);
+//         imageUniforms.insertPtr((void*)&view); 
+//         imageUniforms.insertPtr((void*)&orth);  
 
-        // Blit four panels to target
-        int yStartSrc = 0;
-        int xStartSrc = 0;
-        int yLimitSrc = topLeft.height();
-        int xLimitSrc = topLeft.width();
-        for(int ySrc = yStartSrc; ySrc < yLimitSrc; ySrc++)
-        {
-                for(int xSrc = xStartSrc; xSrc < xLimitSrc; xSrc++)
-                {
-                        target[ySrc][xSrc]                 = botLeft[ySrc][xSrc];
-                        target[ySrc][xSrc+halfWid]         = botRight[ySrc][xSrc];
-                        target[ySrc+halfHgt][xSrc]         = topLeft[ySrc][xSrc];
-                        target[ySrc+halfHgt][xSrc+halfWid] = topRight[ySrc][xSrc];
-                }
-        }
-}
+//         FragmentShader fragCol;
+//         fragCol.FragShader = ColorFragShader;
+
+
+//         VertexShader vertImg;
+//         vertImg.VertShader = SimpleVertexShader2;
+
+//         // Feel free to copy from other test functions to get started!
+//         DrawPrimitive(TRIANGLE, botLeft, verticesA1, colorAttributesA, &imageUniforms, &fragCol, &vertImg, &zBuf);
+//         DrawPrimitive(TRIANGLE, botRight, verticesA1, colorAttributesA, &imageUniforms, &fragCol, &vertImg, &zBuf);
+//         DrawPrimitive(TRIANGLE, topLeft, verticesA1, colorAttributesA, &imageUniforms, &fragCol, &vertImg, &zBuf);
+
+//         DrawPrimitive(TRIANGLE, botLeft, verticesA2, colorAttributesB, &imageUniforms, &fragCol, &vertImg, &zBuf);
+//         DrawPrimitive(TRIANGLE, botRight, verticesA2, colorAttributesB, &imageUniforms, &fragCol, &vertImg, &zBuf);
+//         DrawPrimitive(TRIANGLE, topLeft, verticesA2, colorAttributesB, &imageUniforms, &fragCol, &vertImg, &zBuf);
+
+
+//         imageUniforms[3].ptr = ((void*)&pers); 
+
+//         DrawPrimitive(TRIANGLE, topRight, verticesA1, colorAttributesA, &imageUniforms, &fragCol, &vertImg, &zBuf);
+//         DrawPrimitive(TRIANGLE, topRight, verticesA2, colorAttributesB, &imageUniforms, &fragCol, &vertImg, &zBuf);
+
+
+//         // Blit four panels to target
+//         int yStartSrc = 0;
+//         int xStartSrc = 0;
+//         int yLimitSrc = topLeft.height();
+//         int xLimitSrc = topLeft.width();
+//         for(int ySrc = yStartSrc; ySrc < yLimitSrc; ySrc++)
+//         {
+//                 for(int xSrc = xStartSrc; xSrc < xLimitSrc; xSrc++)
+//                 {
+//                         target[ySrc][xSrc]                 = botLeft[ySrc][xSrc];
+//                         target[ySrc][xSrc+halfWid]         = botRight[ySrc][xSrc];
+//                         target[ySrc+halfHgt][xSrc]         = topLeft[ySrc][xSrc];
+//                         target[ySrc+halfHgt][xSrc+halfWid] = topRight[ySrc][xSrc];
+//                 }
+//         }
+// }
 
 /***************************************************
  * Demonstrate pixel drawing for project 01.
@@ -400,7 +531,6 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         colorTriangle[2] = { 300, 200, 1, 1};
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
-        // Your code for 'colorAttributes' goes here
         colorAttributes[0].insertDbl(1);
         colorAttributes[0].insertDbl(0);
         colorAttributes[0].insertDbl(0);
