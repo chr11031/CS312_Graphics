@@ -805,7 +805,7 @@ void TestModelLoader(Buffer2D<PIXEL> & target)
         // pyramid.obj
         // shield.obj
         // arwing.obj
-        ModelLoader imgModel("arwing.obj");    
+        ModelLoader imgModel("shield.obj");    
         vertices = imgModel.getVertices();
         triangles = imgModel.getTriangles();
 
@@ -839,7 +839,7 @@ void TestModelLoader(Buffer2D<PIXEL> & target)
 
 
         FragmentShader fragImg;
-        fragImg.setShader(colorFragShader);
+        fragImg.setShader(grayFragShader);
 
         VertexShader vertImg;
         vertImg.setShader(vertexShader2);
