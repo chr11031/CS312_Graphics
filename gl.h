@@ -44,14 +44,20 @@ struct userCamera
 	float roll;
 } myCam;
 
+bool isW = false;
+bool isA = false;
+bool isD = false;
+bool isS = false; 
+
 float threshold = 1.0;
 /**********************************************************
  * < END OF GLOBALS >
  *********************************************************/
 #define CAM_INCREMENT 0.05
-#define STEP_INCREMENT 0.05
+#define STEP_INCREMENT 0.035
 
 // Update state based on keyboard
+float magical = -10.0;
 bool processUserInputs(bool & running)
 {
 	SDL_Event e;
@@ -112,27 +118,43 @@ bool processUserInputs(bool & running)
         }
 
         // Translation
-        if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
+        if((e.key.keysym.sym == 'w'))
         {
+			isW = e.type == SDL_KEYDOWN;
+        }
+        if(e.key.keysym.sym == 's')
+        {
+			isS = e.type == SDL_KEYDOWN;
+        }
+        if(e.key.keysym.sym == 'a')
+        {
+			isA = e.type == SDL_KEYDOWN;
+        }
+        if(e.key.keysym.sym == 'd')
+        {
+			isD = e.type == SDL_KEYDOWN;
+        }
+	}
 
-            myCam.camZ -= (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            myCam.camX -= (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN)
-        {
-            myCam.camZ += (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            myCam.camX += (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN)
-        {
-            myCam.camX -= (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            myCam.camZ += (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
-        if(e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN)
-        {
-			myCam.camX += (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-            myCam.camZ -= (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
-        }
+	if(isA)
+	{
+		myCam.camX -= (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+		myCam.camZ += (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+	}
+	if(isW)
+	{
+		myCam.camZ -= (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+		myCam.camX -= (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+	}
+	if(isS)
+	{
+		myCam.camZ += (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+		myCam.camX += (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+	}
+	if(isD)
+	{
+		myCam.camX += (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
+		myCam.camZ -= (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
 	}
 }
 
@@ -318,7 +340,8 @@ bool loadTexture(char * fileName, int & handle)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)rgbaRef);
-	glBindTexture(GL_TEXTURE_2D, 0); // Unbind from current call
+	//glGenerateMipmap(GL_TEXTURE_2D);
+  	glBindTexture(GL_TEXTURE_2D, 0); // Unbind from current call
 	int err = glGetError();
 	if(err != GL_NO_ERROR)
 	{
@@ -331,15 +354,21 @@ bool loadTexture(char * fileName, int & handle)
 	return true;
 }
 
+
+float potRot = 0.0;
 void setupMVP(mat4 & mvp)
 {
 	mat4 proj = glm::perspective(glm::radians(60.0f), SCREEN_W / SCREEN_H, 0.1f, 100.0f);  // Perspective matrix
-	mat4 view = glm::mat4();
+	mat4 view = glm::mat4(1.0);
 	view = 		glm::rotate(view, 			glm::radians(-myCam.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 	view = 		glm::rotate(view, 			glm::radians(-myCam.yaw), glm::vec3(0.0, 1.0f, 0.0));
 	view = 		glm::translate(view, 		glm::vec3(-myCam.camX, -myCam.camY, -myCam.camZ));
-	mat4 model = glm::translate(glm::mat4(), glm::vec3(0, 0, -10));
-	mvp = proj * view * model; 
+	mat4 model = glm::mat4(1.0);
+	model = glm::translate(model, glm::vec3(0, 0, -10));
+	model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(3.0));
+	mvp = proj * view * model;
+	potRot += 0.05;
 }
 
 struct vertexData
@@ -362,7 +391,7 @@ struct material
 	char map_Kd[256];	
 };
 
-bool getData(const char* fileName, 
+bool getObjData(const char* fileName, 
 		vector<material> & materials,
 		vector<vertexData> & vertexBuffer, bool & hasUV, bool & hasNormals)
 {
@@ -421,26 +450,61 @@ bool getData(const char* fileName,
 			fscanf(fp, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
 			normalIndex.push_back(normal);
 		}
-		else if(strcmp(lineHeader, "vn") == 0) // Check for "VN" Normal data
-		{
-			vec3 normal;
-			fscanf(fp, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
-			normalIndex.push_back(normal);
-		}
 		else if(strcmp(lineHeader, "f") == 0) // Generate faces "F" to VBO buff
 		{
 			unsigned int vertexI[3], uvI[3], normalI[3];
-			
-			int matches = fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
-			&vertexI[0], &uvI[0], &normalI[0],
-			&vertexI[1], &uvI[1], &normalI[1],
-			&vertexI[2], &uvI[2], &normalI[2]);
-			if(matches != 9)
-			{
-				printf("File can't be read by our simple parser.... :(\n");
-				return false;	      
-			}
 
+			// Both Attributes are supplied			
+			if(uvIndex.size() > 0 && normalIndex.size() > 0)
+			{
+				int matches = fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%d\n",
+				&vertexI[0], &uvI[0], &normalI[0],
+				&vertexI[1], &uvI[1], &normalI[1],
+				&vertexI[2], &uvI[2], &normalI[2]);
+				if(matches != 9)
+				{
+					printf("File can't be read by our simple parser.... :(\n");
+					return false;	      
+				}
+			}
+			else if(uvIndex.size() > 0 && normalIndex.size() == 0)
+			{
+				int matches = fscanf(fp, "%d/%d %d/%d %d/%d\n",
+				&vertexI[0], &uvI[0], 
+				&vertexI[1], &uvI[1], 
+				&vertexI[2], &uvI[2]);
+				if(matches != 6)
+				{
+					printf("File can't be read by our simple parser.... :(\n");
+					return false;	      
+				}
+			}
+			else if(uvIndex.size() == 0 && normalIndex.size() > 0)
+			{
+				int matches = fscanf(fp, "%d//%d %d//%d %d//%d\n",
+				&vertexI[0], &normalI[0], 
+				&vertexI[1], &normalI[1], 
+				&vertexI[2], &normalI[2]);
+				if(matches != 6)
+				{
+					printf("File can't be read by our simple parser.... :(\n");
+					return false;	      
+				}				
+			}
+			else // Just vertices
+			{
+				int matches = fscanf(fp, "%d %d %d\n",
+				&vertexI[0], 
+				&vertexI[1], 
+				&vertexI[2]);
+				if(matches != 3)
+				{
+					printf("File can't be read by our simple parser.... :(\n");
+					return false;	      
+				}				
+			}
+			
+			// Build 3 'vertexData' instances for this face
 			for(int i = 0; i < 3; i++)
 			{
 				vertexData tmp;
@@ -459,7 +523,6 @@ bool getData(const char* fileName,
 					tmp.normal[1] = normalIndex[normalI[i]-1].y;
 					tmp.normal[2] = normalIndex[normalI[i]-1].z;
 				}
-
 				// No associated material so far
 				tmp.materialID = -1;
 			
