@@ -76,8 +76,8 @@ int main(int argc, char** argv)
     /**************************************************************
      *  Vertex Buffer Object
      * ***********************************************************/
-    int VBO;
-    glGenBuffers(1, (GLuint*)&VBO);
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     glBufferData(GL_ARRAY_BUFFER, vertexBufferNumBytes, vertexBufferData, GL_STATIC_DRAW);
