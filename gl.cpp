@@ -4,7 +4,7 @@
 #include "gl.h"
 
 // g++ gl.cpp -framework OpenGl -lglew -lSDL2
-// g++ gl.cpp 0lopengl32 -lglew32 -lSDL2
+// g++ gl.cpp 0lopengl32 -lglew32 -lSDL2 - old one
 
 int main(int argc, char** argv)
 {
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
     success &= getObjData("pot.obj", materials, vertexBuffer, hasUV, hasNormal);
 
-    // build out a signle array of floats
+    // build out a single array of floats
     int stride = 3 + (2 * hasUV);
     int vertexBufferNumBytes = stride * vertexBuffer.size() * sizeof(float);
     float * vertexBufferData = (float*)(malloc(vertexBufferNumBytes));

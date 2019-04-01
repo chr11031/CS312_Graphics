@@ -1,5 +1,5 @@
 uniform mat4 u_Matrix;
-attribue vec3 a_Position;
+attribute vec3 a_Position;
 attribute vec2 a_UV;
 
 varying vec2 v_UV;

@@ -1,6 +1,7 @@
 #ifndef OBJ_H
 #define OBJ_H
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -26,8 +27,6 @@ using std::vector;
 using std::string;
 using std::endl;
 using std::fstream;
-
-
 
 /**********************************************************
  * GLOBAL VARIABLES
@@ -58,7 +57,7 @@ float threshold = 1.0;
 
 // Update state based on keyboard
 float magical = -10.0;
-void processUserInputs(bool & running) // originally was a bool, but I was getting errors
+bool processUserInputs(bool & running)
 {
 	SDL_Event e;
 	while(SDL_PollEvent(&e)) 
@@ -74,7 +73,7 @@ void processUserInputs(bool & running) // originally was a bool, but I was getti
 		}
 		if(e.type == SDL_KEYDOWN && e.key.keysym.sym == 't') 
 		{
-			myCam.camY += 0.01;
+			threshold -= 0.01;
 			if(threshold < 0)
 			{
 				threshold = 0;
@@ -83,7 +82,7 @@ void processUserInputs(bool & running) // originally was a bool, but I was getti
 		}
 		if(e.type == SDL_KEYDOWN && e.key.keysym.sym == 'y') 
 		{
-			myCam.camY -= 0.01;
+			threshold += 0.01;
 			if(threshold > 1.0)
 			{
 				threshold = 1.0;
@@ -356,20 +355,18 @@ bool loadTexture(char * fileName, int & handle)
 
 
 float potRot = 0.0;
-void setupMVP(mat4 & mvp) //(mat4 & model, mat4 & view, mat4 & proj)
+void setupMVP(mat4 & mvp)
 {
 	mat4 proj = glm::perspective(glm::radians(60.0f), SCREEN_W / SCREEN_H, 0.1f, 100.0f);  // Perspective matrix
-	
 	mat4 view = glm::mat4(1.0);
-	view      = glm::rotate(view, glm::radians(-myCam.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-	view 	  = glm::rotate(view, glm::radians(-myCam.yaw), glm::vec3(0.0, 1.0f, 0.0));
-	view   	  = glm::translate(view, glm::vec3(-myCam.camX, -myCam.camY, -myCam.camZ));
-	
+	view = 		glm::rotate(view, 			glm::radians(-myCam.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	view = 		glm::rotate(view, 			glm::radians(-myCam.yaw), glm::vec3(0.0, 1.0f, 0.0));
+	view = 		glm::translate(view, 		glm::vec3(-myCam.camX, -myCam.camY, -myCam.camZ));
 	mat4 model = glm::mat4(1.0);
-	model      = glm::translate(model, glm::vec3(0, 0, -10));
-	model      = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
-	model      = glm::scale(model, glm::vec3(3.0));
-
+	model = glm::translate(model, glm::vec3(0, 0, -10));
+	model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(3.0));
+	mvp = proj * view * model;
 	potRot += 0.05;
 }
 
