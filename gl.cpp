@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     success &= getObjData("pot.obj", materials, vertexBuffer, hasUV, hasNormal);
     
     // Build a single array of floats
-    int stride = 3 + 2 * hasUV;
+    int stride = 3 + (2 * hasUV) + (3 * hasNormal);
     int vertexBufferNumBytes = stride * vertexBuffer.size() * sizeof(float);
     float* vertexBufferData = (float*)(malloc(vertexBufferNumBytes));
 
@@ -57,7 +57,13 @@ int main(int argc, char** argv)
             vertexBufferData[i++] = vertexBuffer[vb].uv[0];
             vertexBufferData[i++] = vertexBuffer[vb].uv[1];
         }
-        // Leave normal data for later...
+        
+        if (hasNormal)
+        {
+            vertexBufferData[i++] = vertexBuffer[vb].normal[0];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[1];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[2];
+        }
     }
 
     vector<int> textureIDs;

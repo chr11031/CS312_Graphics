@@ -47,7 +47,9 @@ struct userCamera
 bool isW = false;
 bool isA = false;
 bool isD = false;
-bool isS = false; 
+bool isS = false;
+bool isR = false;
+bool isF = false;
 
 float threshold = 1.0;
 /**********************************************************
@@ -134,6 +136,15 @@ bool processUserInputs(bool & running)
         {
 			isD = e.type == SDL_KEYDOWN;
         }
+		if(e.key.keysym.sym == 'r')
+		{
+			isR = e.type == SDL_KEYDOWN;
+		}
+		if(e.key.keysym.sym == 'f')
+		{
+			isF = e.type == SDL_KEYDOWN;
+		}
+
 	}
 
 	if(isA)
@@ -156,6 +167,17 @@ bool processUserInputs(bool & running)
 		myCam.camX += (cos((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
 		myCam.camZ -= (sin((myCam.yaw / 180.0) * M_PI)) * STEP_INCREMENT;
 	}
+	if(isR)
+	{
+		myCam.camY += STEP_INCREMENT;
+	}
+	if(isF)
+	{
+		myCam.camY -= STEP_INCREMENT;
+	}
+
+
+	return true;
 }
 
 
