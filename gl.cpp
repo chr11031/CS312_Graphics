@@ -41,10 +41,10 @@ int main(int argc, char** argv)
     bool hasUV;
     bool hasNormal;
 
-    success &= getObjData("pot.obj", materials, vertexBuffer, hasUV, hasNormal);
+    success &= getObjData("bunny.obj", materials, vertexBuffer, hasUV, hasNormal);
 
     // build out a single array of floats
-    int stride = 3 + (2 * hasUV);
+    int stride = 3 + (2 * hasUV) + (3 * hasNormal);
     int vertexBufferNumBytes = stride * vertexBuffer.size() * sizeof(float);
     float * vertexBufferData = (float*)(malloc(vertexBufferNumBytes));
     
@@ -62,7 +62,12 @@ int main(int argc, char** argv)
             vertexBufferData[i++] = vertexBuffer[vb].uv[1];
         }
 
-        // leave normal data for later...
+        if (hasNormal)
+        {
+            vertexBufferData[i++] = vertexBuffer[vb].normal[0];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[1];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[2];
+        }
     }
 
     vector <int> textureIDs;
@@ -89,17 +94,35 @@ int main(int argc, char** argv)
      **************************************************/
     int aPositionHandle = glGetAttribLocation(programHandle, "a_Position");
     int aUVHandle       = glGetAttribLocation(programHandle, "a_UV");
+    int aNormHandle     = glGetAttribLocation(programHandle, "a_Normal");
 
     /***************************************************
      * UNIFORMS HANDLES
      **************************************************/
-    int uMatrixHandle    = glGetUniformLocation(programHandle, "u_Matrix");
-    int uTextureHandle   = glGetUniformLocation(programHandle, "u_Texture");
-    int uThresholdHandle = glGetUniformLocation(programHandle, "u_Threshold");
+    int uModelHandle      = glGetUniformLocation(programHandle, "u_Model");
+    int uViewHandle       = glGetUniformLocation(programHandle, "u_View");
+    int uProjHandle       = glGetUniformLocation(programHandle, "u_Proj");
+
+    int uTextureHandle     = glGetUniformLocation(programHandle, "u_Texture");
+    int uThresholdHandle   = glGetUniformLocation(programHandle, "u_Threshold");
+    int uLightPosHandle    = glGetUniformLocation(programHandle, "u_LightPos");
+    int uLightColorHandle  = glGetUniformLocation(programHandle, "u_LightColor");
+    int uLightNormalHandle = glGetUniformLocation(programHandle, "u_LightNormal");
+
+    int uKaHandle  = glGetUniformLocation(programHandle, "u_Ka");
+    int uKdHandle  = glGetUniformLocation(programHandle, "u_Kd");
+    int uKsHandle  = glGetUniformLocation(programHandle, "u_Ks");
+    int uCamHandle = glGetUniformLocation(programHandle, "u_CamPos");
 
     // MVP matrix
-    mat4 mvp;
-    
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+
+    float lightPos[]    = {0, 10, 0};
+    float lightColor[]  = {1.0, 1.0, 1.0};
+    float lightNormal[] = {0, -1, -1};
+
     // camera data
     myCam.camX = myCam.camY = myCam.camZ = myCam.pitch = myCam.yaw = myCam.roll = 0.0;
 
@@ -128,9 +151,14 @@ int main(int argc, char** argv)
             glVertexAttribPointer(aUVHandle, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 + 3 * sizeof(float)));
             glEnableVertexAttribArray(aUVHandle);
 
+            glVertexAttribPointer(aNormHandle, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(0 + 5 * sizeof(float)));
+            glEnableVertexAttribArray(aNormHandle);
+
             /***************************************************
              * SET UP UNIFORMS
              **************************************************/
+            float camPositions[] = {myCam.camX, myCam.camY, myCam.camZ};
+
             // update texture
             glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, textureIDs[0]);
@@ -138,8 +166,20 @@ int main(int argc, char** argv)
             glUniform1i(uTextureHandle, 0);
             glUniform1f(uThresholdHandle, threshold);
 
-            setupMVP(mvp);
-            glUniformMatrix4fv(uMatrixHandle, 1, false, &mvp[0][0]);
+            // Settings up lighting
+            glUniform3fv(uLightPosHandle, 1, lightPos);
+            glUniform3fv(uLightColorHandle, 1, lightColor);
+            glUniform3fv(uLightNormalHandle, 1, lightNormal);
+
+            glUniform3fv(uKaHandle,  1, materials[0].Ka);
+            glUniform3fv(uKdHandle,  1, materials[0].Kd);
+            glUniform3fv(uKsHandle,  1, materials[0].Ks);
+            glUniform3fv(uCamHandle, 1, camPositions);
+
+            setupMVP(model, view, proj);
+            glUniformMatrix4fv(uModelHandle, 1, false, &model[0][0]);
+            glUniformMatrix4fv(uViewHandle,  1, false, &view[0][0]);
+            glUniformMatrix4fv(uProjHandle,  1, false, &proj[0][0]);
 
             glDrawArrays(GL_TRIANGLES, 0, numDraw);
         }

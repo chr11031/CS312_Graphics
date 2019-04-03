@@ -355,19 +355,26 @@ bool loadTexture(char * fileName, int & handle)
 
 
 float potRot = 0.0;
-void setupMVP(mat4 & mvp)
+
+void setupMVP(mat4 &model, mat4 &view, mat4 &proj)
 {
-	mat4 proj = glm::perspective(glm::radians(60.0f), SCREEN_W / SCREEN_H, 0.1f, 100.0f);  // Perspective matrix
-	mat4 view = glm::mat4(1.0);
+	proj = glm::perspective(glm::radians(60.0f), SCREEN_W / SCREEN_H, 0.1f, 100.0f);  // Perspective matrix
+	view = glm::mat4(1.0);
 	view = 		glm::rotate(view, 			glm::radians(-myCam.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
 	view = 		glm::rotate(view, 			glm::radians(-myCam.yaw), glm::vec3(0.0, 1.0f, 0.0));
 	view = 		glm::translate(view, 		glm::vec3(-myCam.camX, -myCam.camY, -myCam.camZ));
-	mat4 model = glm::mat4(1.0);
-	model = glm::translate(model, glm::vec3(0, 0, -10));
-	model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
-	model = glm::scale(model, glm::vec3(3.0));
-	mvp = proj * view * model;
-	potRot += 0.05;
+	model = glm::mat4(1.0);
+	
+    model = glm::translate(model, glm::vec3(0, -5, -10));
+    model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(40.0));
+
+	// For the Magical Pot
+	// model = glm::translate(model, glm::vec3(0, 0, -10));
+	// model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
+	// model = glm::scale(model, glm::vec3(3.0));
+	// mvp = proj * view * model;
+	potRot += 0.5;
 }
 
 struct vertexData
