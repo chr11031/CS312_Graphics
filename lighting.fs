@@ -14,9 +14,8 @@ varying vec3 v_Normal;
 
 void main()
 {
-    vec3 amb = u_Ambient * u_LightColor;
-    vec4 ambient = texture2D(u_Texture, v_UV);
-    ambient.xyz = ambient.xyz * amb.xyz;
+    vec3 ambient = u_Ambient * u_LightColor;
+
     vec3 lightDir = vec3(u_LightPos.xyz - v_Position.xyz);
     vec3 diffuse = max(dot(normalize(lightDir), normalize(v_Normal)), 0.0) * (u_Diffuse * u_LightColor);
 
@@ -24,5 +23,5 @@ void main()
     vec3 reflection = normalize(reflect(-u_LightPos, v_Normal));
     vec3 specular = pow(max(dot(viewDir, reflection), 0.0), u_Shiny) * (u_Specular * u_LightColor);
 
-    gl_FragColor = (ambient + vec4(diffuse.xyz, 0.0) + vec4(specular.xyz, 0.0));
+    gl_FragColor = (vec4(ambient, 0.0) + vec4(diffuse.xyz, 0.0) + vec4(specular.xyz, 0.0)) * texture2D(u_Texture, v_UV);
 }
