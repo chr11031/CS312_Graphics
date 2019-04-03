@@ -38,10 +38,10 @@ int main(int argc, char** argv)
    bool hasUV;
    bool hasNormal;
 
-   success &= getObjData("pot.obj", materials, vertexBuffer, hasUV, hasNormal);
+   success &= getObjData("bunny.obj", materials, vertexBuffer, hasUV, hasNormal);
 
    // Build out a signle array of floats
-    int stride = 3 + (2 * hasUV);
+    int stride = 3 + (2 * hasUV) + (3 * hasNormal);
     int vertexBufferNumBytes = stride * vertexBuffer.size() * sizeof(float);
     float* vertexBufferData = (float*)(malloc(vertexBufferNumBytes));
 
@@ -58,7 +58,13 @@ int main(int argc, char** argv)
             vertexBufferData[i++] = vertexBuffer[vb].uv[0];
             vertexBufferData[i++] = vertexBuffer[vb].uv[1];
         }
-        // Leave Normal Data for later...
+
+        if (hasNormal)
+        {
+            vertexBufferData[i++] = vertexBuffer[vb].normal[0];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[1];
+            vertexBufferData[i++] = vertexBuffer[vb].normal[2];
+        }
     }
 
     vector<int> textureIDs;
@@ -87,16 +93,30 @@ int main(int argc, char** argv)
      * ***********************************************************/
     int aPositionHandle = glGetAttribLocation(programHandle, "a_Position");
     int aUVHandle = glGetAttribLocation(programHandle, "a_UV");
+    int aNormHandle = glGetAttribLocation(programHandle, "a_Norm");
 
     /**************************************************************
      *  Uniforms Handle
      * ***********************************************************/
-    int uMatrixHandle = glGetUniformLocation(programHandle, "u_Matrix");
+    int uModelHandle = glGetUniformLocation(programHandle, "u_Model");
+    int uViewHandle = glGetUniformLocation(programHandle, "u_View");
+    int uProjHandle = glGetUniformLocation(programHandle, "u_Proj");
     int uTextureHandle = glGetUniformLocation(programHandle, "u_Texture");
     int uThresholdHandle = glGetUniformLocation(programHandle, "u_Threshold");
+    int uLightPositionHandle = glGetUniformLocation(programHandle, "u_LightPosition");
+    int uLightColorHandle = glGetUniformLocation(programHandle, "u_LightColor");
+    int uKaHandle = glGetUniformLocation(programHandle, "u_Ka");
+    int uKdHandle = glGetUniformLocation(programHandle, "u_Kd");
+    int uKsHandle = glGetUniformLocation(programHandle, "u_Ks");
+    int uCamHandle= glGetUniformLocation(programHandle, "u_Camera");
 
     // MVP MAtrix
-    mat4 mvp;
+    mat4 model;
+    mat4 proj;
+    mat4 view;
+
+    float lightPos[] = {0.0, 10.0, 30.0};
+    float lightColor[] = {1.0, 1.0, 1.0};
 
     // Setup Camera Data
     myCam.camX = myCam.camY = myCam.camZ = myCam.pitch = myCam.yaw = myCam.roll = 0.0;
@@ -125,6 +145,9 @@ int main(int argc, char** argv)
             glVertexAttribPointer(aUVHandle, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0 + 3*sizeof(float));
             glEnableVertexAttribArray(aUVHandle);
 
+            glVertexAttribPointer(aNormHandle, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0 + 5*sizeof(float));
+            glEnableVertexAttribArray(aNormHandle);
+
 
             /**********************************
              *  Setup Uniforms
@@ -135,8 +158,19 @@ int main(int argc, char** argv)
             glUniform1i(uTextureHandle, 0);
             glUniform1f(uThresholdHandle, threshold);
 
-            setupMVP(mvp);
-            glUniformMatrix4fv(uMatrixHandle, 1, false, &mvp[0][0]);
+            glUniform3fv(uLightPositionHandle, 1, lightPos);
+            glUniform3fv(uLightColorHandle, 1, lightColor);
+            glUniform3fv(uKaHandle, 1, (float*)&materials[0].Ka);
+            glUniform3fv(uKdHandle, 1, (float*)&materials[0].Kd);
+            glUniform3fv(uKsHandle, 1, (float*)&materials[0].Ks);
+
+            float cam[] = {myCam.camX, myCam.camY, myCam.camZ};
+            glUniform3fv(uCamHandle, 1, cam);
+
+            setupMVP(model, view, proj);
+            glUniformMatrix4fv(uModelHandle, 1, false, &model[0][0]);
+            glUniformMatrix4fv(uViewHandle, 1, false, &view[0][0]);
+            glUniformMatrix4fv(uProjHandle, 1, false, &proj[0][0]);
 
             glDrawArrays(GL_TRIANGLES, 0, numDraw);
 
