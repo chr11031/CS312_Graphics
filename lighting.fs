@@ -17,8 +17,8 @@ void main()
     vec3 amb = u_Ambient * u_LightColor;
     vec4 ambient = texture2D(u_Texture, v_UV);
     ambient.xyz = ambient.xyz * amb.xyz;
-
-    vec3 diffuse = max(dot(normalize(u_LightPos), normalize(v_Normal)), 0.0) * (u_Diffuse * u_LightColor);
+    vec3 lightDir = vec3(u_LightPos.xyz - v_Position.xyz);
+    vec3 diffuse = max(dot(normalize(lightDir), normalize(v_Normal)), 0.0) * (u_Diffuse * u_LightColor);
 
     vec3 viewDir = normalize(vec3(u_CameraPos.xyz - v_Position.xyz));
     vec3 reflection = normalize(reflect(-u_LightPos, v_Normal));
