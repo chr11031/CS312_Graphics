@@ -21,13 +21,13 @@ void main()
         discard;
     }
 
-    vec3 ambient = u_Ambience * u_LightColor;
+    vec3 ambient = 0.1 * u_Ambience * u_LightColor;
 
     vec3 norm = normalize(v_Normal);
     vec3 lightDir = normalize(u_LightPos - v_FragPos);
 
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * u_Diffuse * u_LightColor;
+    vec3 diffuse = diff * u_LightColor * u_Diffuse;
 
     vec3 viewDir = normalize(u_CameraPos - v_FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
