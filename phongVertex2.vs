@@ -9,9 +9,9 @@ varying vec3 v_Position;
 
 void main()
 {
-	v_UV = a_UV;
+    v_UV = a_UV;
     v_Normal = a_Normal;
     v_Position = vec3(u_Model * vec4(a_Position,0.0));
-	gl_Position = u_Matrix * vec4(a_Position, 1.0);
+    gl_Position = u_Matrix * vec4(a_Position, 1.0);
 }
 
