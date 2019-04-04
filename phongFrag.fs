@@ -7,6 +7,7 @@ uniform vec3 u_MaterialDiffuse;
 uniform vec3 u_MaterialSpecular;
 uniform vec3 u_MaterialShine;
 
+
 varying vec3 v_Position;
 varying vec2 v_UV;
 varying vec3 v_Normal;

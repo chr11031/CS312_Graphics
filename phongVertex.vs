@@ -10,6 +10,7 @@ varying vec3 v_Normal;
 
 void main()
 {
+	
 	v_Position = a_Position;
 	v_UV = a_UV;
 	v_Normal = a_Normal;

@@ -46,6 +46,7 @@ int main(int argc, char ** argv)
 	float *vertexBufferData = (float*)(malloc(vertexBufferNumBytes));
 
 	int i = 0;
+	
 	// Join data into an interleaved buffer
 	for(int vb = 0; vb < vertexBuffer.size(); vb++)
 	{
