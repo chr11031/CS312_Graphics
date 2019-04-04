@@ -312,7 +312,8 @@ void DrawTriangleScanlines(BufferImage & frame, Vertex* triangle, Attributes* at
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    /*This is used to get the triangle bounding box*/
+    //This is used to get the triangle bounding box whose dimensions are
+    // based on the max and min x and y values of the vertices
     int maxX = max(triangle[0].x, max(triangle[1].x, triangle[2].x));
     int minX = min(triangle[0].x, min(triangle[1].x, triangle[2].x));
     int maxY = max(triangle[0].y, max(triangle[1].y, triangle[2].y));
