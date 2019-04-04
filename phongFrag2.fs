@@ -5,7 +5,6 @@ uniform vec4 specularStrength;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec4 lightColor;
-
 varying vec2 v_UV;
 varying vec3 v_Normal;
 varying vec3 v_Position;
