@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "matrix.h"
+#include <iostream>
 
 #ifndef SHADERS_H
 #define SHADERS_H
@@ -13,8 +14,15 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int x = u * bf->width();
     int y = v * bf->height();
 
-    if(x < 0 || x >= bf->width() || y < 0 || y >= bf->height())
-        return;
+    if(x >= bf->width())
+        x = 255;
+    else if(x < 0)
+        x = 0;
+
+    if(y >= bf->height())
+        y= 255;
+    else if(y < 0)
+        y = 0;
 
     fragment = (*bf)[y][x];
 }
@@ -83,7 +91,7 @@ void ParticleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex &
     int deltaFrame = currentFrame - ((int) vertAttr[6].d);
 
     vertOut.x = dx * deltaFrame + vertIn.x;
-    vertOut.y = dy * deltaFrame + vertIn.y;
+    vertOut.y = ((dy * deltaFrame) - (0.0005 * deltaFrame * deltaFrame)) + vertIn.y;
     vertOut.z = dz * deltaFrame + vertIn.z;
     vertOut.w = vertIn.w;
 

@@ -134,7 +134,7 @@ class GameObject
             else if(mode == IMAGE)
                 frag.FragShader = ImageFragShader;
             else
-                frag.FragShader = ColorFragShader;
+                frag.FragShader = DefaultFragShader;
 
             VertexShader vert;
             vert.VertShader = SimpleVertexShader;
@@ -145,14 +145,17 @@ class GameObject
             {
                 if(mode == IMAGE)
                 {
+                    vAttr[2].clear();
                     tri[2] = model->vertices[model->vertexIndices[i]];
                     vAttr[2].insertDbl(model->uvs[model->uvIndices[i]].u);
                     vAttr[2].insertDbl(model->uvs[model->uvIndices[i++]].v);
 
+                    vAttr[1].clear();
                     tri[1] = model->vertices[model->vertexIndices[i]];
                     vAttr[1].insertDbl(model->uvs[model->uvIndices[i]].u);
                     vAttr[1].insertDbl(model->uvs[model->uvIndices[i++]].v);
 
+                    vAttr[0].clear();
                     tri[0] = model->vertices[model->vertexIndices[i]];
                     vAttr[0].insertDbl(model->uvs[model->uvIndices[i]].u);
                     vAttr[0].insertDbl(model->uvs[model->uvIndices[i++]].v);

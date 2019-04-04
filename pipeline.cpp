@@ -71,11 +71,12 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 
     int x = (int) v[0].x;
     int y = (int) v[0].y;
+    double w = v[0].w;
 
-    if(x < 0 || y < 0 || x >= target.width() || y >= target.height())
+    if(x < 0 || y < 0 || x >= target.width() || y >= target.height() || w <= 0)
         return;
 
-    double depth = 1 / v[0].w;
+    double depth = 1 / w;
 
     if(zBuf == nullptr)
         ;
@@ -119,6 +120,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
     // Compute area of the whole triangle
     double areaTriangle = determinant(firstVec[0], -thirdVec[0], firstVec[1], -thirdVec[1]);
+
+    Attributes interpolatedAttribs(areaTriangle, 0, areaTriangle, 0, attrs[0], attrs[1], attrs[2], 1 / triangle[0].w);
 
     for(int y = minY; y < maxY; y++)
     {
@@ -623,7 +626,7 @@ void normalizeVertices(Vertex clippedVerts[], Attributes clippedAttrs[], const i
         double zValue = clippedVerts[i].w;
         clippedVerts[i].w = 1.0 / zValue;
 
-        if(numClipped >= 3)
+        if(numClipped > 1)
         {
             //Setup Attributes
             for(int j = 0; j < clippedAttrs[i].numAttribs; j++)

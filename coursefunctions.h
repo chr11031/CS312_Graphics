@@ -601,12 +601,19 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 Model* cube;
 Model* sphere;
 Model* plane;
+Model* pawnModel;
+Model* kingModel;
 GameObject* box;
 GameObject* ball;
 GameObject* ground;
+GameObject* ground2;
+GameObject* pawn;
+GameObject* king;
 BufferImage* myImage;
-Matrix projection = PerspectiveMatrix(60, 1.0, 1, 200); 
+Matrix projection = PerspectiveMatrix(60, 1.0, 1, 200);
 ParticleSystem* ps;
+ParticleSystem* ps2;
+ParticleSystem* ps3;
 
 void SetupProject()
 {
@@ -624,11 +631,30 @@ void SetupProject()
         myImage = new BufferImage("checker.bmp");
         plane = loadOBJ("plane.obj");
         ground = new GameObject(plane, myImage);
+        ground->setScale(8, 0, 8);
+
+        ground2 = new GameObject(plane, myImage);
+        ground2->setScale(8, 0, 8);
+        ground2->setPosition(0, 0, 8);
+
+        pawnModel = loadOBJ("pawn.obj");
+        pawn = new GameObject(pawnModel, 0.2, 0.2, 0.2);
+        pawn->setPosition(7.5, 0, 14.5);
+
+        kingModel = loadOBJ("king.obj");
+        king = new GameObject(kingModel, 0.2, 0.2, 0.2);
+        king->setPosition(7.5, 0, 15.5);
 
         Vertex position = {3, 0, 3, 1};
         Vertex direction = {0, 1, 0, 0};
 
-        ps = new ParticleSystem(1000, position, direction, 30, 0.01, 0.0001);
+        ps = new ParticleSystem(1000, position, direction, 30, 0.1, 0.01);
+
+        position = {3, 0, 7, 1};
+        ps2 = new ParticleSystem(1000, position, direction, 30, 0.1, 0.01);
+
+        position = {7, 0, 3, 1};
+        ps3 = new ParticleSystem(1000, position, direction, 30, 0.1, 0.01);
 }
 
 /********************************************
@@ -642,11 +668,32 @@ void Project(Buffer2D<PIXEL> & target)
         Matrix view = CameraMatrix(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
 
         ps->addParticle(0, 1, 0);
+        ps->addParticle(0, 1, 0);
+        ps->addParticle(0, 1, 0);
+        ps->addParticle(0, 1, 0);
+        ps->addParticle(0, 1, 0);
+
+        ps2->addParticle(1, 0, 0);
+        ps2->addParticle(1, 0, 0);
+        ps2->addParticle(1, 0, 0);
+        ps2->addParticle(1, 0, 0);
+        ps2->addParticle(1, 0, 0);
+
+        ps3->addParticle(0, 0, 1);
+        ps3->addParticle(0, 0, 1);
+        ps3->addParticle(0, 0, 1);
+        ps3->addParticle(0, 0, 1);
+        ps3->addParticle(0, 0, 1);
 
         box->draw(target, view, projection, &zBuf);
         ball->draw(target, view, projection, &zBuf);
         ground->draw(target, view, projection, &zBuf);
+        ground2->draw(target, view, projection, &zBuf);
+        pawn->draw(target, view, projection, &zBuf);
+        king->draw(target, view, projection, &zBuf);
         ps->draw(target, view, projection, &zBuf);
+        ps2->draw(target, view, projection, &zBuf);
+        ps3->draw(target, view, projection, &zBuf);
 }
 
 void cleanupProject()
