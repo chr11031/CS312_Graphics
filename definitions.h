@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+//#include "matrix.h"
 #include <vector>
 #include <iostream>
 
@@ -12,6 +13,7 @@ using namespace std;
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+#define MAX_DIM_SIZE_MATRIX 4
 
 /******************************************************
  * DEFINES:
@@ -32,6 +34,16 @@ using namespace std;
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
+
+/****************************************************
+ * X, Y, Z, handy enums
+ ***************************************************/
+enum DIMENSION
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
 
 /******************************************************
  * Types of primitives our pipeline will render.
@@ -55,171 +67,278 @@ struct Vertex
 };
 
 /****************************************************
-* My Matrix class
-*****************************************************/
-class Matrix {
+ * Everything needed for the view/camera transform
+ ****************************************************/
+struct camControls
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+	double yaw = 0;
+	double roll = 0;
+	double pitch = 0;
+};
+camControls myCam;
 
-public:
 
-   int height = 0;
-   int width = 0;
-// Create a Generic Matrix, this will be useful later
-   double matrix[4][4] = { {1,0,0,0},
-                           {0,1,0,0},
-                           {0,0,1,0},
-                           {0,0,0,1} };
-
-// Some constructors
-   Matrix(){
-   }
-
-   Matrix(double fbf[4][4]){
-      height = 4;
-      width = 4;
-      
-      for (int i = 0; i < 4; i++)
-      {
-         for (int j = 0; j < 4; j++)
-         {
-            matrix[i][j] = fbf[i][j];
-         }        
-      }
-         
-   }
-
-// Initialise with size only.
-   Matrix(int h, int w){
-      this->height = h;
-      this->width = w;
-   }
-
-// Multiplication operator overload for matrix operations
-   Matrix operator*(const Matrix &rhs)
-   {
-      //check if you can actually multiply them
-      if(width == rhs.height)
-      { 
-         Matrix res(rhs.height,rhs.width);
-
-          int i, j, k; 
-            for (i = 0; i < height; i++) 
-            { 
-               for (j = 0; j < rhs.width; j++) 
-               { 
-                     res.matrix[i][j] = 0; 
-                     for (k = 0; k < rhs.height; k++) 
-                        res.matrix[i][j] += this->matrix[i][k] *  
-                                    rhs.matrix[k][j]; 
-               } 
-            }
-         return res;
-      }
-   }
-
-// For shader operations
-   Matrix operator*(const Vertex &rhs)
- 	{
-      Matrix res(4,1);
-
-      if(width == 4)
-      { 
-         double vertex[4][1] = { {rhs.x}, 
-                                 {rhs.y}, 
-                                 {rhs.z}, 
-                                 {rhs.w} };
-
-         for(int i = 0; i < height; i++){	
-            for(int j = 0; j < 1; j++){ 
-               for( int k = 0; k < 4; k++){  
-                  res.matrix[i][j] += this->matrix[i][k] * vertex[k][j];
-                  }
-               }
-            }
-            return res;
-         }
- 	}
-
-    Matrix operator*(const Vertex &rhs) const
- 	{
-      Matrix res(4,1);
-
-      if(width == 4)
-      { 
-         double vertex[4][1] = { {rhs.x}, 
-                                 {rhs.y}, 
-                                 {rhs.z}, 
-                                 {rhs.w} };
-
-         for(int i = 0; i < height; i++){	
-            for(int j = 0; j < 1; j++){ 
-               for( int k = 0; k < 4; k++){  
-                  res.matrix[i][j] += this->matrix[i][k] * vertex[k][j];
-                  }
-               }
-            }
-            return res;
-         }
- 	}
-
-    void print()
+/******************************************************
+ * Matrix class for world geometry, viewing.
+ *****************************************************/
+class Matrix
+{
+// 2D Array
+private:
+double mat[MAX_DIM_SIZE_MATRIX][MAX_DIM_SIZE_MATRIX];
+// Update Matrix values by array
+void copyValues(const Matrix & source)
     {
-        for(int i=0;i < height;i++) 
+if(rowLen != source.rowLen || colLen != source.colLen) return;
+for(int r = 0; r < rowLen; r++)
         {
-            for(int j=0;j < width;j++) 
+for(int c = 0; c < colLen; c++)
             {
-               cout << matrix[i][j] << ' ';
+                mat[r][c] = (source.get(r))[c];
             }
-            cout << endl;
         }
-        cout << endl;
     }
-
-    Matrix rotate(int angle){
-
-        double sin1 = sin(angle * PI/180.0);
-        double cos1 = cos(angle * PI/180.0);
-        
-        Matrix temp(4,4);
-        temp.matrix[0][0] = cos1;
-        temp.matrix[0][1] = -sin1;
-        temp.matrix[1][0] = sin1;
-        temp.matrix[1][1] = cos1;
-        temp.matrix[2][2] = temp.matrix[3][3] = 1;
-
-        return *this * temp;
+// Update Matrix values by array
+void setValues(double values[])
+    {
+int i = 0;
+for(int r = 0; r < rowLen; r++)
+        {
+for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = values[i++];
+            }
+        }
     }
-
-    /*************************************************
-     * TRANSLATE FUNCTION FOR MATRICES
-     *************************************************/
-    Matrix translate(double x, double y){
-
-        /*Create a new matrix with transformation and 
-        then proceed to the multiplication*/
-        
-        Matrix temp(4,4);
-        temp.matrix[0][3] = x;
-        temp.matrix[1][3] = y;
-
-        return *this * temp;
+// Matrix Dimensions
+public:
+int colLen;
+int rowLen;
+// Initialize size, setup identity matrix or set values to zero
+Matrix(int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
+    {
+        colLen = width;
+        rowLen = height;
+setIdentity();
     }
-
-    /*************************************************
-     * SCALE FUNCTION FOR MATRICES
-     *************************************************/
-    Matrix scale(double factor){
-        
-        /*Create a new matrix with transformation and 
-        then proceed to the multiplication*/
-
-        Matrix temp(4,4);
-        temp.matrix[0][0] = factor;
-        temp.matrix[1][1] = factor;
-
-        return *this * temp;
+// Initialize a vertex as a matrix
+Matrix(const Vertex & vert)
+    {
+        rowLen = 4;
+        colLen = 1;
+        mat[0][0] = vert.x;
+        mat[1][0] = vert.y;
+        mat[2][0] = vert.z;
+        mat[3][0] = vert.w;
     }
-
-};  
+// Initialize matrix to suggested values
+Matrix(double values[], int width = MAX_DIM_SIZE_MATRIX, int height = MAX_DIM_SIZE_MATRIX)
+    {
+        colLen = width;
+        rowLen = height;
+setValues(values);
+    }
+// Assignment operator 
+    Matrix& operator = (const Matrix & right)
+    {
+        colLen = right.colLen;
+        rowLen = right.rowLen;
+copyValues(right);
+    }
+// Dereference Matrix in 'mat[r][c]' format
+double* operator [](int i) { return (double*)mat[i]; }
+// Const version of '[]'
+const double* get(int i) const { return (double*)mat[i]; }
+// Is it?
+bool isQuare()
+    {
+return colLen == rowLen;
+    }
+// Set all entries to zero
+void setZero()
+    {
+for(int r = 0; r < rowLen; r++)
+        {
+for(int c = 0; c < colLen; c++)
+            {
+                mat[r][c] = 0.0f;
+            }
+        }
+    }
+// Setup the identity matrix if square
+bool setIdentity()
+    {
+setZero();
+if(!isQuare()) return false;
+for(int d = 0; d < colLen; d++)
+        {
+            mat[d][d] = 1.0f;
+        }
+    }
+// Multiply two matrices together, return the result
+    Matrix operator *(const Matrix & right) const
+    {
+        Matrix tr(right.rowLen, this->colLen);
+if(colLen != right.rowLen)
+        {
+return tr;
+        }
+int runLength = rowLen;
+for(int c = 0; c < right.colLen; c++)
+        {
+for(int r = 0; r < tr.rowLen; r++)
+            {
+                tr[r][c] = 0;
+for(int i = 0; i < runLength; i++)
+                {
+                    tr[r][c] += mat[r][i] * (right.get(i))[c];
+                }
+            }
+        }
+return tr;
+    } 
+// Multiply a 4-component vertex by this matrix, return vertex
+    Vertex operator *(const Vertex & right) const 
+    {
+// Convert Vertex to Matrix 
+        Matrix vl(right);
+// Multiply
+        Matrix out = (*this) * vl;
+// Return in vertex format
+        Vertex rv;
+        rv.x = out[0][0];
+        rv.y = out[1][0];
+        rv.z = out[2][0];
+        rv.w = out[3][0];
+return rv;
+    }
+};
+// Rotational helper (4x4)
+Matrix rotate(const DIMENSION & dim, const double & degs)
+{
+  Matrix tr(4, 4);
+double rads = degs * M_PI / 180.0;
+double cosT = cos(rads);
+double sinT = sin(rads);
+  tr[0][0] = 1;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = 0;
+  tr[1][0] = 0;
+  tr[1][1] = 1;
+  tr[1][2] = 0;
+  tr[1][3] = 0;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = 1;
+  tr[2][3] = 0;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+switch(dim)
+    {
+case X:
+      tr[1][1] = cosT;
+      tr[1][2] = -sinT;
+      tr[2][1] = sinT;
+      tr[2][2] = cosT;
+break;
+case Y:
+      tr[0][0] = cosT;
+      tr[0][2] = sinT;
+      tr[2][0] = -sinT;
+      tr[2][2] = cosT;
+break;
+case Z:
+      tr[0][0] = cosT;
+      tr[0][1] = -sinT;
+      tr[1][0] = sinT;
+      tr[1][1] = cosT;
+break;
+    }
+return tr;
+}
+// Uniform scaling helper (4x4)
+Matrix scaleMatrix(const double & scale)
+{
+  Matrix tr(4, 4);
+  tr[0][0] = scale;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = 0;
+  tr[1][0] = 0;
+  tr[1][1] = scale;
+  tr[1][2] = 0;
+  tr[1][3] = 0;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = scale;
+  tr[2][3] = 0;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+return tr;
+}
+Matrix perspective(const double & fovYDegrees, const double & aspectRatio, 
+const double & near, const double & far)
+{
+		Matrix rt;
+double top = near * tan((fovYDegrees * M_PI) / 180.0 /2.0);
+double right = aspectRatio * top;
+		rt[0][0] = near / right;
+		rt[0][2] = 0;
+		rt[0][1] = 0;
+		rt[0][3] = 0;
+		rt[1][0] = 0;
+		rt[1][1] = near / top;
+		rt[1][2] = 0;
+		rt[1][3] = 0;
+		rt[2][0] = 0;
+		rt[2][1] = 0;
+		rt[2][2] = (far + near) / (far - near);
+		rt[2][3] = (-2 * far * near) / (far - near);
+		rt[3][0] = 0;
+		rt[3][1] = 0;
+		rt[3][2] = 1;
+		rt[3][3] = 0;
+return rt;		
+}
+// Translation helper (4x4)
+Matrix translate(const double & offX, const double & offY, const double & offZ)
+{
+  Matrix tr(4, 4);
+  tr[0][0] = 1;
+  tr[0][1] = 0;
+  tr[0][2] = 0;
+  tr[0][3] = offX;
+  tr[1][0] = 0;
+  tr[1][1] = 1;
+  tr[1][2] = 0;
+  tr[1][3] = offY;
+  tr[2][0] = 0;
+  tr[2][1] = 0;
+  tr[2][2] = 1;
+  tr[2][3] = offZ;
+  tr[3][0] = 0;
+  tr[3][1] = 0;
+  tr[3][2] = 0;
+  tr[3][3] = 1;
+return tr;
+}
+Matrix camera(const double & offX, const double & offY, const double & offZ,
+const double & yaw, const double & pitch, const double & roll)
+{
+	Matrix trans = translate(-offX, -offY, -offZ);
+	Matrix rotX = rotate(X, -pitch);
+	Matrix rotY = rotate(Y, -yaw);
+	Matrix rt = rotX * rotY * trans;
+return rt;	
+}
 
 /******************************************************
  * BUFFER_2D:
@@ -231,6 +350,7 @@ template <class T>
 class Buffer2D 
 {
     protected:
+        bool baseAllocated = false;
         T** grid;
         int w;
         int h;
@@ -244,6 +364,7 @@ class Buffer2D
             {
                 grid[r] = (T*)malloc(sizeof(T) * w);
             }
+            baseAllocated = true;
         }
 
         // Empty Constructor
@@ -254,7 +375,15 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
-            free(grid);
+            if(baseAllocated)
+            {
+                for(int r = 0; r < h; r++)
+                {
+                    free(grid[r]);
+ 		        }
+
+ 	            free(grid);
+            }
         }
 
         // Size-Specified constructor, no data
@@ -385,6 +514,20 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+// Interpoaltes between 3 weighted points 3 different double values for barycentric
+inline double baryInterp(const double & firstWgt, const double & secndWgt, const double & thirdWgt,
+			 const double & firstVal, const double & secndVal, const double & thirdVal)
+{
+  return ((firstWgt * thirdVal) + (secndWgt * firstVal) + (thirdWgt * secndVal));
+}
+
+// Combine two datatypes in one
+union attrib
+{
+  double d;
+  void* ptr;
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -395,9 +538,11 @@ class Attributes
 {      
     public:
 
+        int count = 0;
+        attrib arr[16];
+        
         //Matrix transformations
-        Matrix matrix;
-
+        //Matrix matrix;
         //coordinates.
         double u;
         double v;
@@ -414,15 +559,59 @@ class Attributes
         PIXEL color;
 
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() {count = 0;}
 
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        // Interpolation Constructor
+        Attributes( const double & firstWgt, const double & secndWgt, const double & thirdWgt, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third,
+		    const double & correctZ)
         {
-            // Your code goes here when clipping is implemented
+            while(count < first.count)
+            {
+	         arr[count].d = baryInterp(firstWgt, secndWgt, thirdWgt, first.arr[count].d, secnd[count].d, third.arr[count].d);
+		 arr[count].d = arr[count].d * correctZ;
+		 count += 1;
+            }
         }
 
-        //Set the RGB values of pixel the attributes class using doubles.
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
+        {
+            // Your code goes here when clipping is implemented
+            count = first.count;
+ 				for(int i = 0; i < count; i++)
+ 				{
+ 					arr[i].d = (first[i].d) + ((second[i].d - first[i].d) * along);
+ 				}
+        }
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[count].d = d;
+            count += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[count].ptr = ptr;
+            count += 1;
+        }
+
+       //Set the RGB values of pixel the attributes class using doubles.
         void setRGB(const double R,const double G,const double B)
         {
             this->r = R;
@@ -467,35 +656,6 @@ class Attributes
             this->ptrImg = &myImage;
         }
 
-        void setFogCoord(double fogCoord)
-        {
-            //Your code goes here
-        }
-
-        void setCustomAttributes()
-        {
-            //Your code goes here
-        }
-
-        void setTransofmations(vector<double> &transformationMatrix)
-        {
-            //Your code goes here
-        }
-
-        void setLightSourceInfo(double light)
-        {
-            //Your code goes here
-        }
-
-        void mouseInfo(int x, int y)
-        {
-            //Your code goes here
-        }
-
-        void time(double time)
-        {
-            //Your code goes here
-        }
         
 };	
 
@@ -514,6 +674,29 @@ void GrayFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attribu
     avgChannel /= 3;
     fragment = 0xff000000 + (avgChannel << 16) + (avgChannel << 8) + avgChannel;
 }
+
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{ 
+  Matrix* trans = (Matrix*)uniforms[0].ptr;
+  vertOut = (*trans) * vertIn;
+
+  // Pass through attributes
+  attrOut = attrIn;
+}
+
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+ {
+  Matrix* model = (Matrix*)uniforms[1].ptr;
+  Matrix* view = (Matrix*)uniforms[2].ptr;
+  Matrix* proj = (Matrix*)uniforms[3].ptr;
+
+  vertOut = (*proj) * (*view) * (*model) * vertIn;
+
+  // Pass through attributes
+  attrOut = attrIn;
+ }
+
 
 // Image Fragment Shader 
  void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -576,25 +759,23 @@ void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, c
 void FragShaderUVwithoutImage2(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
 {
     // Figure out which X/Y square our UV would fall on
-    int xSquare = attributes.u * 8;
-    int ySquare = attributes.v * 8;
+    int xSquare = attributes[0].d * 8;
+    int ySquare = attributes[1].d * 8;
 
 	// Is the X square position even? The Y? 
     bool evenXSquare = (xSquare % 2) == 0;
     bool evenYSquare = (ySquare % 2) == 0;
-   
+
     // Both even or both odd - red square
     if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
     {
-        fragment = 0xffffff00;
+        fragment = 0xffff0000;
     }
-    //One even, one odd - white square
+    // One even, one odd - white square
     else
     {
         fragment = 0xffffffff;
-            
     }
-    
 }
 
 /*******************************************************
@@ -638,17 +819,13 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     attrOut = vertAttr;
 }
 
-// My vertex shader
-void transformShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
- {
-    Matrix transform(uniforms.matrix * vertIn);
-    //transform.print();
+// VERTEX SHADER FOR FULL PIPELINE
+void Week08VertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Nothing happens with this vertex, attribute
     vertOut = vertIn;
-    vertOut.x = transform.matrix[0][0];
-    vertOut.y = transform.matrix[1][0];
-    vertOut.z = transform.matrix[2][0];
-    attrOut = attrIn;
- }
+    attrOut = vertAttr;
+}
 
 /**********************************************************
  * VERTEX_SHADER

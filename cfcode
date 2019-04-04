@@ -1,0 +1,23 @@
+// Translation
+if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
+{
+   myCam.z += (cos((myCam.yaw /180.0) * M_PI)) * 0.5;
+   myCam.x -= (csin(myCam.yaw /180.0) * M_PI)) * 0.5;
+}
+if((e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN))
+{
+   myCam.z -= (cos((myCam.yaw /180.0) * M_PI)) * 0.5;
+   myCam.x += (sin((myCam.yaw /180.0) * M_PI)) * 0.5;
+}
+if((e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN))
+{
+   myCam.x -= (cos((myCam.yaw /180.0) * M_PI)) * 0.5;
+   myCam.z -= (sin((myCam.yaw /180.0) * M_PI)) * 0.5;
+}
+if((e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN))
+{
+   myCam.x += (cos((myCam.yaw /180.0) * M_PI)) * 0.5;
+   myCam.z += (sin((myCam.yaw /180.0) * M_PI)) * 0.5;
+}
+
+
