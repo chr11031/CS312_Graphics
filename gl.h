@@ -49,7 +49,7 @@ bool isA = false;
 bool isD = false;
 bool isS = false;
 bool isR = false;
-bool isF = false;
+bool isF = false; 
 
 float threshold = 1.0;
 /**********************************************************
@@ -59,7 +59,6 @@ float threshold = 1.0;
 #define STEP_INCREMENT 0.035
 
 // Update state based on keyboard
-float magical = -10.0;
 bool processUserInputs(bool & running)
 {
 	SDL_Event e;
@@ -144,7 +143,6 @@ bool processUserInputs(bool & running)
 		{
 			isF = e.type == SDL_KEYDOWN;
 		}
-
 	}
 
 	if(isA)
@@ -175,9 +173,6 @@ bool processUserInputs(bool & running)
 	{
 		myCam.camY -= STEP_INCREMENT;
 	}
-
-
-	return true;
 }
 
 
@@ -391,6 +386,23 @@ void setupMVP(mat4 & mvp)
 	model = glm::scale(model, glm::vec3(3.0));
 	mvp = proj * view * model;
 	potRot += 0.05;
+}
+
+void setupMVP(mat4 & model, mat4 & view, mat4 & proj)
+{
+	proj = glm::perspective(glm::radians(60.0f), SCREEN_W / SCREEN_H, 0.1f, 100.0f);  // Perspective matrix
+
+	view = glm::mat4(1.0);
+	view = 		glm::rotate(view, 			glm::radians(-myCam.pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+	view = 		glm::rotate(view, 			glm::radians(-myCam.yaw), glm::vec3(0.0, 1.0f, 0.0));
+	view = 		glm::translate(view, 		glm::vec3(-myCam.camX, -myCam.camY, -myCam.camZ));
+	
+	model = glm::mat4(1.0);
+	model = glm::translate(model, glm::vec3(0, -5, -30));
+	model = glm::rotate(model, glm::radians(-potRot), glm::vec3(0.0f, 1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(40.0));
+	
+	potRot += 2.0;
 }
 
 struct vertexData

@@ -1,9 +1,11 @@
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
 #include "gl.h"
-
 // Compile command: g++ gl.cpp -lopengl32 -lglew32 -lSDL2
 
+/********************************************
+ * My main function
+ ********************************************/
 int main(int argc, char** argv)
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -30,14 +32,14 @@ int main(int argc, char** argv)
 
     /**************************
      * Object Loader
-     * ***********************/
+     **************************/
     vector<material> materials;
     vector<vertexData> vertexBuffer;
 
     bool hasUV;
     bool hasNormal;
 
-    success &= getObjData("pot.obj", materials, vertexBuffer, hasUV, hasNormal);
+    success &= getObjData("bunny.obj", materials, vertexBuffer, hasUV, hasNormal);
     
     // Build a single array of floats
     int stride = 3 + (2 * hasUV) + (3 * hasNormal);
@@ -45,6 +47,7 @@ int main(int argc, char** argv)
     float* vertexBufferData = (float*)(malloc(vertexBufferNumBytes));
 
     int i = 0;
+
     // Join data into an interleaved buffer
     for (int vb = 0; vb < vertexBuffer.size(); vb++)
     {
@@ -66,6 +69,7 @@ int main(int argc, char** argv)
         }
     }
 
+    // Materials
     vector<int> textureIDs;
     for (int mat = 0; mat < materials.size(); mat++)
     {
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
 
     /**************************
      * Vertex Buffer Object
-     * ***********************/
+     **************************/
     GLuint VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -87,22 +91,36 @@ int main(int argc, char** argv)
 
     /**************************
      * Attribute Handles
-     * ***********************/
+     **************************/
     int aPositionHandle = glGetAttribLocation(programHandle, "a_Position");
     int aUVHandle = glGetAttribLocation(programHandle, "a_UV");
+    int aNormalHandle = glGetAttribLocation(programHandle, "a_Normal");
 
     /**************************
      * Uniform Handles
-     * ***********************/
-    int uMatrixHandle = glGetUniformLocation(programHandle, "u_Matrix");
+     **************************/
+    int uModelHandle = glGetUniformLocation(programHandle, "u_Model");
+    int uViewHandle = glGetUniformLocation(programHandle, "u_View");
+    int uProjHandle = glGetUniformLocation(programHandle, "u_Proj");
     int uTextureHandle = glGetUniformLocation(programHandle, "u_Texture");
     int uThresholdHandle = glGetUniformLocation(programHandle, "u_Threshold");
 
-    // MVP matrix
-    mat4 mvp;
+    // Lighting uniforms
+    int uAmbientHandle = glGetUniformLocation(programHandle, "ambientAmount");
+    int uDiffuesHandle = glGetUniformLocation(programHandle, "diffuseAmount");
+    int uSpecularHandle = glGetUniformLocation(programHandle, "specularAmount");
+    int uCamHandle = glGetUniformLocation(programHandle, "u_Cam");
+    int uShinyHandle = glGetUniformLocation(programHandle, "u_Shiny");
+
+    // MVP matrices
+    //mat4 mvp;
+    mat4 model;
+    mat4 view;
+    mat4 proj;
 
     // set up camera
-    myCam.camX = myCam.camY = myCam.camZ = myCam.pitch = myCam.yaw = myCam.roll = 0;
+    myCam.camZ = -9;
+    myCam.camX = myCam.camY = myCam.pitch = myCam.yaw = myCam.roll = 0;
     int numDraw = vertexBuffer.size();
     bool running = true;
 
@@ -110,7 +128,6 @@ int main(int argc, char** argv)
     while (running)
     {
         processUserInputs(running);
-
         {
             // Clear buffers
             glClearColor(0, 0, 0, 1.0);
@@ -128,6 +145,9 @@ int main(int argc, char** argv)
             glVertexAttribPointer(aUVHandle, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0 + 3 * sizeof(float));
             glEnableVertexAttribArray(aUVHandle);
 
+            glVertexAttribPointer(aNormalHandle, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0 + 5 * sizeof(float));
+            glEnableVertexAttribArray(aNormalHandle);
+
             /***************************
              * Set up uniforms
              **************************/
@@ -138,8 +158,20 @@ int main(int argc, char** argv)
             glUniform1i(uTextureHandle, 0);
             glUniform1f(uThresholdHandle, threshold);
 
-            setupMVP(mvp);
-            glUniformMatrix4fv(uMatrixHandle, 1, false, &mvp[0][0]);
+            // Lighting
+            glUniform3fv(uAmbientHandle, 1, (float*)&materials.back().Ka);
+            glUniform3fv(uDiffuesHandle, 1, (float*)&materials.back().Kd);
+            glUniform3fv(uSpecularHandle, 1, (float*)&materials.back().Ks);
+            glUniform1f(uShinyHandle, materials.back().Ns);
+
+            // Update camera
+            glUniform3f(uCamHandle, myCam.camX, myCam.camY, myCam.camZ);
+
+            setupMVP(model, view, proj);
+
+            glUniformMatrix4fv(uModelHandle, 1, false, &model[0][0]);
+            glUniformMatrix4fv(uViewHandle, 1, false, &view[0][0]);
+            glUniformMatrix4fv(uProjHandle, 1, false, &proj[0][0]);
 
             glDrawArrays(GL_TRIANGLES, 0, numDraw);
         }
@@ -148,5 +180,6 @@ int main(int argc, char** argv)
     }
     
     free(vertexBufferData);
+
     return 0;
 }
