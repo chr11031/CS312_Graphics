@@ -8,12 +8,13 @@
             "type": "shell",
             "command": "g++",
             "args":[
+                "${workspaceRoot}//gl.cpp",
+                "-lSDL2",
+                "-lopengl32",
+                "-lglew32",
                 "-w",
-                "-g",
-                "${workspaceRoot}//pipeline.cpp",
                 "-o",
-                "${workspaceRoot}//pipeline.exe",
-                "-lSDL2"
+                "${workspaceRoot}//a.exe",
                 ],
             "group": "build",
             "problemMatcher": []

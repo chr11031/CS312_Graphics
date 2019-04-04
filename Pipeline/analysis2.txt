@@ -1,0 +1,603 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 34.73      1.49     1.49  5680350     0.00     0.00  ImageFragShader(unsigned int&, Attributes const&, Attributes const&)
+ 25.87      2.60     1.11     3000     0.37     1.12  DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*)
+ 10.49      3.05     0.45 129325500     0.00     0.00  Buffer2D<unsigned int>::operator[](int)
+ 10.02      3.48     0.43 97175100     0.00     0.00  determinant(double const&, double const&, double const&, double const&)
+  4.90      3.69     0.21  5680350     0.00     0.00  Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&)
+  4.20      3.87     0.18      150     1.20     2.11  clearScreen(Buffer2D<unsigned int>&, unsigned int)
+  3.96      4.04     0.17      604     0.28     0.28  Buffer2D<unsigned int>::zeroOut()
+  3.03      4.17     0.13      150     0.87    26.49  CADView(Buffer2D<unsigned int>&)
+  1.40      4.23     0.06 17041050     0.00     0.00  baryInterp(double const&, double const&, double const&, double const&, double const&, double const&)
+  0.47      4.25     0.02 28429650     0.00     0.00  Attributes::operator[](int const&) const
+  0.23      4.26     0.01  5683355     0.00     0.00  Buffer2D<unsigned int>::height()
+  0.23      4.27     0.01    28500     0.00     0.00  Transform::isQuare()
+  0.23      4.28     0.01    25500     0.00     0.00  Transform::operator*(Transform const&) const
+  0.23      4.29     0.01     2700     0.00     0.00  clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&)
+  0.00      4.29     0.00  5683355     0.00     0.00  Buffer2D<unsigned int>::width()
+  0.00      4.29     0.00  1639200     0.00     0.00  Transform::operator[](int)
+  0.00      4.29     0.00  1243200     0.00     0.00  Transform::get(int) const
+  0.00      4.29     0.00    98700     0.00     0.00  Attributes::Attributes()
+  0.00      4.29     0.00    28500     0.00     0.00  Transform::setIdentity()
+  0.00      4.29     0.00    28500     0.00     0.00  Transform::setZero()
+  0.00      4.29     0.00    28500     0.00     0.00  Transform::Transform(int, int)
+  0.00      4.29     0.00    16800     0.00     0.00  Attributes::operator[](int const&)
+  0.00      4.29     0.00     8100     0.00     0.00  SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&)
+  0.00      4.29     0.00     8100     0.00     0.00  Transform::Transform(Vertex const&)
+  0.00      4.29     0.00     8100     0.00     0.00  Transform::operator*(Vertex const&) const
+  0.00      4.29     0.00     7200     0.00     0.00  Attributes::insertDbl(double const&)
+  0.00      4.29     0.00     2700     0.00     1.26  DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*)
+  0.00      4.29     0.00     2700     0.00     0.00  normalizeVertices(Vertex*, Attributes*, int const&)
+  0.00      4.29     0.00     2700     0.00     0.00  viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&)
+  0.00      4.29     0.00     2700     0.00     0.01  VertexShaderExecuteVertices(VertexShader const*, Vertex const*, Attributes const*, int const&, Attributes*, Vertex*, Attributes*)
+  0.00      4.29     0.00     2400     0.00     0.00  Attributes::insertPtr(void*)
+  0.00      4.29     0.00     1200     0.00     0.00  translate4x4(double const&, double const&, double const&)
+  0.00      4.29     0.00     1200     0.00     0.00  rotate4x4(DIMENSION const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  VertexBetweenVerts(Vertex const&, Vertex const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  intersectAtPositiveLine(double&, double const&, double const&, double const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  camera4x4(double const&, double const&, double const&, double const&, double const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  Attributes::Attributes(Attributes const&, Attributes const&, double const&)
+  0.00      4.29     0.00      600     0.00     0.00  VertexShader::VertexShader()
+  0.00      4.29     0.00      600     0.00     0.00  FragmentShader::FragmentShader()
+  0.00      4.29     0.00      150     0.00    15.10  testBox1Reg(Buffer2D<unsigned int>&)
+  0.00      4.29     0.00      150     0.00     2.52  testBox3Top(Buffer2D<unsigned int>&)
+  0.00      4.29     0.00      150     0.00     2.52  testBox4Left(Buffer2D<unsigned int>&)
+  0.00      4.29     0.00      150     0.00     2.52  testBox2Right(Buffer2D<unsigned int>&)
+  0.00      4.29     0.00      150     0.00     0.00  processUserInputs(bool&, bool&, int&)
+  0.00      4.29     0.00      150     0.00     0.00  SendFrame(SDL_Texture*, SDL_Renderer*, SDL_Surface*)
+  0.00      4.29     0.00        5     0.00     0.00  BufferImage::~BufferImage()
+  0.00      4.29     0.00        5     0.00     0.00  Buffer2D<unsigned int>::Buffer2D()
+  0.00      4.29     0.00        5     0.00     0.00  Buffer2D<unsigned int>::~Buffer2D()
+  0.00      4.29     0.00        4     0.00     0.00  BufferImage::readBMP(char const*)
+  0.00      4.29     0.00        4     0.00     0.00  BufferImage::BufferImage(char const*)
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<double>::setupInternal()
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<double>::zeroOut()
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<double>::Buffer2D(int const&, int const&)
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<double>::~Buffer2D()
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<unsigned int>::setupInternal()
+  0.00      4.29     0.00        4     0.00     0.28  Buffer2D<unsigned int>::Buffer2D(int const&, int const&)
+  0.00      4.29     0.00        4     0.00     0.00  Buffer2D<unsigned int>::~Buffer2D()
+  0.00      4.29     0.00        1     0.00     0.00  BufferImage::setupInternal()
+  0.00      4.29     0.00        1     0.00     0.00  BufferImage::BufferImage(SDL_Surface*)
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.23% of 4.29 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]    100.0    0.00    4.29                 main [1]
+                0.13    3.84     150/150         CADView(Buffer2D<unsigned int>&) [2]
+                0.18    0.14     150/150         clearScreen(Buffer2D<unsigned int>&, unsigned int) [12]
+                0.00    0.00     150/150         processUserInputs(bool&, bool&, int&) [48]
+                0.00    0.00     150/150         SendFrame(SDL_Texture*, SDL_Renderer*, SDL_Surface*) [49]
+                0.00    0.00       1/1           BufferImage::BufferImage(SDL_Surface*) [62]
+                0.00    0.00       1/5           BufferImage::~BufferImage() [50]
+-----------------------------------------------
+                0.13    3.84     150/150         main [1]
+[2]     92.6    0.13    3.84     150         CADView(Buffer2D<unsigned int>&) [2]
+                0.00    2.27     150/150         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.38     150/150         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.38     150/150         testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.38     150/150         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.27    0.00 78643200/129325500     Buffer2D<unsigned int>::operator[](int) [7]
+                0.17    0.00     600/604         Buffer2D<unsigned int>::zeroOut() [14]
+                0.00    0.00       4/4           Buffer2D<unsigned int>::Buffer2D(int const&, int const&) [27]
+                0.00    0.00     151/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00     151/5683355     Buffer2D<unsigned int>::width() [34]
+-----------------------------------------------
+                0.00    0.38     300/2700        testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.38     300/2700        testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.38     300/2700        testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    2.27    1800/2700        testBox1Reg(Buffer2D<unsigned int>&) [5]
+[3]     79.2    0.00    3.40    2700         DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+                1.11    2.26    3000/3000        DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+                0.00    0.02    2700/2700        VertexShaderExecuteVertices(VertexShader const*, Vertex const*, Attributes const*, int const&, Attributes*, Vertex*, Attributes*) [19]
+                0.01    0.00    2700/2700        clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+                0.00    0.00    2700/2700        viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&) [31]
+                0.00    0.00   51300/98700       Attributes::Attributes() [37]
+                0.00    0.00    2700/2700        normalizeVertices(Vertex*, Attributes*, int const&) [42]
+-----------------------------------------------
+                1.11    2.26    3000/3000        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[4]     78.5    1.11    2.26    3000         DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+                1.49    0.04 5680350/5680350     ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+                0.43    0.00 97175100/97175100     determinant(double const&, double const&, double const&, double const&) [8]
+                0.21    0.05 5680350/5680350     Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&) [13]
+                0.02    0.00 5680350/17041050     baryInterp(double const&, double const&, double const&, double const&, double const&, double const&) [15]
+                0.02    0.00 5680350/129325500     Buffer2D<unsigned int>::operator[](int) [7]
+-----------------------------------------------
+                0.00    2.27     150/150         CADView(Buffer2D<unsigned int>&) [2]
+[5]     52.8    0.00    2.27     150         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    2.27    1800/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+                0.00    0.00     150/600         camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00     150/1200        translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00     150/600         orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00    1800/7200        Attributes::insertDbl(double const&) [41]
+                0.00    0.00    1050/98700       Attributes::Attributes() [37]
+                0.00    0.00     600/2400        Attributes::insertPtr(void*) [43]
+                0.00    0.00     150/600         FragmentShader::FragmentShader() [47]
+                0.00    0.00     150/600         VertexShader::VertexShader() [46]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::width() [34]
+                0.00    0.00       1/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+                0.00    0.00       1/4           BufferImage::BufferImage(char const*) [54]
+-----------------------------------------------
+                1.49    0.04 5680350/5680350     DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+[6]     35.7    1.49    0.04 5680350         ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+                0.02    0.00 5680350/129325500     Buffer2D<unsigned int>::operator[](int) [7]
+                0.01    0.00 17041050/28429650     Attributes::operator[](int const&) const [16]
+                0.01    0.00 5680350/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00 5680350/5683355     Buffer2D<unsigned int>::width() [34]
+-----------------------------------------------
+                0.02    0.00 5680350/129325500     ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+                0.02    0.00 5680350/129325500     DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+                0.14    0.00 39321600/129325500     clearScreen(Buffer2D<unsigned int>&, unsigned int) [12]
+                0.27    0.00 78643200/129325500     CADView(Buffer2D<unsigned int>&) [2]
+[7]     10.5    0.45    0.00 129325500         Buffer2D<unsigned int>::operator[](int) [7]
+-----------------------------------------------
+                0.43    0.00 97175100/97175100     DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+[8]     10.0    0.43    0.00 97175100         determinant(double const&, double const&, double const&, double const&) [8]
+-----------------------------------------------
+                0.00    0.38     150/150         CADView(Buffer2D<unsigned int>&) [2]
+[9]      8.8    0.00    0.38     150         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.38     300/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+                0.00    0.00     150/600         camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00     150/1200        translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00     150/600         orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00    1800/7200        Attributes::insertDbl(double const&) [41]
+                0.00    0.00    1050/98700       Attributes::Attributes() [37]
+                0.00    0.00     600/2400        Attributes::insertPtr(void*) [43]
+                0.00    0.00     150/600         FragmentShader::FragmentShader() [47]
+                0.00    0.00     150/600         VertexShader::VertexShader() [46]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::width() [34]
+                0.00    0.00       1/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+                0.00    0.00       1/4           BufferImage::BufferImage(char const*) [54]
+-----------------------------------------------
+                0.00    0.38     150/150         CADView(Buffer2D<unsigned int>&) [2]
+[10]     8.8    0.00    0.38     150         testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.38     300/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+                0.00    0.00     150/600         camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00     150/1200        translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00     150/600         orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00    1800/7200        Attributes::insertDbl(double const&) [41]
+                0.00    0.00    1050/98700       Attributes::Attributes() [37]
+                0.00    0.00     600/2400        Attributes::insertPtr(void*) [43]
+                0.00    0.00     150/600         FragmentShader::FragmentShader() [47]
+                0.00    0.00     150/600         VertexShader::VertexShader() [46]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::width() [34]
+                0.00    0.00       1/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+                0.00    0.00       1/4           BufferImage::BufferImage(char const*) [54]
+-----------------------------------------------
+                0.00    0.38     150/150         CADView(Buffer2D<unsigned int>&) [2]
+[11]     8.8    0.00    0.38     150         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.38     300/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+                0.00    0.00     150/600         camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00     150/1200        translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00     150/600         orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00    1800/7200        Attributes::insertDbl(double const&) [41]
+                0.00    0.00    1050/98700       Attributes::Attributes() [37]
+                0.00    0.00     600/2400        Attributes::insertPtr(void*) [43]
+                0.00    0.00     150/600         FragmentShader::FragmentShader() [47]
+                0.00    0.00     150/600         VertexShader::VertexShader() [46]
+                0.00    0.00       1/5683355     Buffer2D<unsigned int>::width() [34]
+                0.00    0.00       1/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+                0.00    0.00       1/4           BufferImage::BufferImage(char const*) [54]
+-----------------------------------------------
+                0.18    0.14     150/150         main [1]
+[12]     7.4    0.18    0.14     150         clearScreen(Buffer2D<unsigned int>&, unsigned int) [12]
+                0.14    0.00 39321600/129325500     Buffer2D<unsigned int>::operator[](int) [7]
+                0.00    0.00     150/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00     150/5683355     Buffer2D<unsigned int>::width() [34]
+-----------------------------------------------
+                0.21    0.05 5680350/5680350     DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+[13]     6.0    0.21    0.05 5680350         Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&) [13]
+                0.04    0.00 11360700/17041050     baryInterp(double const&, double const&, double const&, double const&, double const&, double const&) [15]
+                0.01    0.00 11360700/28429650     Attributes::operator[](int const&) const [16]
+-----------------------------------------------
+                0.00    0.00       4/604         Buffer2D<unsigned int>::Buffer2D(int const&, int const&) [27]
+                0.17    0.00     600/604         CADView(Buffer2D<unsigned int>&) [2]
+[14]     4.0    0.17    0.00     604         Buffer2D<unsigned int>::zeroOut() [14]
+-----------------------------------------------
+                0.02    0.00 5680350/17041050     DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [4]
+                0.04    0.00 11360700/17041050     Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&) [13]
+[15]     1.4    0.06    0.00 17041050         baryInterp(double const&, double const&, double const&, double const&, double const&, double const&) [15]
+-----------------------------------------------
+                0.00    0.00    3600/28429650     Attributes::Attributes(Attributes const&, Attributes const&, double const&) [32]
+                0.00    0.00   24300/28429650     SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [18]
+                0.01    0.00 11360700/28429650     Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&) [13]
+                0.01    0.00 17041050/28429650     ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+[16]     0.5    0.02    0.00 28429650         Attributes::operator[](int const&) const [16]
+-----------------------------------------------
+                0.00    0.00    1200/25500       camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00    8100/25500       Transform::operator*(Vertex const&) const [25]
+                0.01    0.01   16200/25500       SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [18]
+[17]     0.4    0.01    0.01   25500         Transform::operator*(Transform const&) const [17]
+                0.00    0.01   25500/28500       Transform::Transform(int, int) [24]
+                0.00    0.00 1554000/1639200     Transform::operator[](int) [35]
+                0.00    0.00 1243200/1243200     Transform::get(int) const [36]
+-----------------------------------------------
+                0.00    0.02    8100/8100        VertexShaderExecuteVertices(VertexShader const*, Vertex const*, Attributes const*, int const&, Attributes*, Vertex*, Attributes*) [19]
+[18]     0.4    0.00    0.02    8100         SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [18]
+                0.01    0.01   16200/25500       Transform::operator*(Transform const&) const [17]
+                0.00    0.01    8100/8100        Transform::operator*(Vertex const&) const [25]
+                0.00    0.00   24300/28429650     Attributes::operator[](int const&) const [16]
+-----------------------------------------------
+                0.00    0.02    2700/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[19]     0.4    0.00    0.02    2700         VertexShaderExecuteVertices(VertexShader const*, Vertex const*, Attributes const*, int const&, Attributes*, Vertex*, Attributes*) [19]
+                0.00    0.02    8100/8100        SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [18]
+-----------------------------------------------
+                0.01    0.00    2700/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[20]     0.2    0.01    0.00    2700         clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+                0.00    0.00     600/600         Attributes::Attributes(Attributes const&, Attributes const&, double const&) [32]
+                0.00    0.00   43200/98700       Attributes::Attributes() [37]
+                0.00    0.00     600/600         intersectAtPositiveLine(double&, double const&, double const&, double const&, double const&) [45]
+                0.00    0.00     600/600         VertexBetweenVerts(Vertex const&, Vertex const&, double const&) [44]
+-----------------------------------------------
+                0.00    0.00       1/5683355     testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00       1/5683355     testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00       1/5683355     testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00       1/5683355     testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.00     150/5683355     clearScreen(Buffer2D<unsigned int>&, unsigned int) [12]
+                0.00    0.00     151/5683355     CADView(Buffer2D<unsigned int>&) [2]
+                0.00    0.00    2700/5683355     viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&) [31]
+                0.01    0.00 5680350/5683355     ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+[21]     0.2    0.01    0.00 5683355         Buffer2D<unsigned int>::height() [21]
+-----------------------------------------------
+                0.00    0.01   28500/28500       Transform::Transform(int, int) [24]
+[22]     0.2    0.00    0.01   28500         Transform::setIdentity() [22]
+                0.01    0.00   28500/28500       Transform::isQuare() [23]
+                0.00    0.00   28500/28500       Transform::setZero() [38]
+-----------------------------------------------
+                0.01    0.00   28500/28500       Transform::setIdentity() [22]
+[23]     0.2    0.01    0.00   28500         Transform::isQuare() [23]
+-----------------------------------------------
+                0.00    0.00     600/28500       orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00    1200/28500       rotate4x4(DIMENSION const&, double const&) [29]
+                0.00    0.00    1200/28500       translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.01   25500/28500       Transform::operator*(Transform const&) const [17]
+[24]     0.2    0.00    0.01   28500         Transform::Transform(int, int) [24]
+                0.00    0.01   28500/28500       Transform::setIdentity() [22]
+-----------------------------------------------
+                0.00    0.01    8100/8100        SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [18]
+[25]     0.1    0.00    0.01    8100         Transform::operator*(Vertex const&) const [25]
+                0.00    0.00    8100/25500       Transform::operator*(Transform const&) const [17]
+                0.00    0.00   32400/1639200     Transform::operator[](int) [35]
+                0.00    0.00    8100/8100        Transform::Transform(Vertex const&) [40]
+-----------------------------------------------
+                0.00    0.00     150/600         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     150/600         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     150/600         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     150/600         testBox4Left(Buffer2D<unsigned int>&) [10]
+[26]     0.0    0.00    0.00     600         camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+                0.00    0.00    1200/25500       Transform::operator*(Transform const&) const [17]
+                0.00    0.00    1200/1200        rotate4x4(DIMENSION const&, double const&) [29]
+                0.00    0.00     600/1200        translate4x4(double const&, double const&, double const&) [28]
+-----------------------------------------------
+                0.00    0.00       4/4           CADView(Buffer2D<unsigned int>&) [2]
+[27]     0.0    0.00    0.00       4         Buffer2D<unsigned int>::Buffer2D(int const&, int const&) [27]
+                0.00    0.00       4/604         Buffer2D<unsigned int>::zeroOut() [14]
+                0.00    0.00       4/4           Buffer2D<unsigned int>::setupInternal() [59]
+-----------------------------------------------
+                0.00    0.00     150/1200        testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     150/1200        testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     150/1200        testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     150/1200        testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.00     600/1200        camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+[28]     0.0    0.00    0.00    1200         translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00    1200/28500       Transform::Transform(int, int) [24]
+                0.00    0.00   19200/1639200     Transform::operator[](int) [35]
+-----------------------------------------------
+                0.00    0.00    1200/1200        camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [26]
+[29]     0.0    0.00    0.00    1200         rotate4x4(DIMENSION const&, double const&) [29]
+                0.00    0.00    1200/28500       Transform::Transform(int, int) [24]
+                0.00    0.00   24000/1639200     Transform::operator[](int) [35]
+-----------------------------------------------
+                0.00    0.00     150/600         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     150/600         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     150/600         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     150/600         testBox4Left(Buffer2D<unsigned int>&) [10]
+[30]     0.0    0.00    0.00     600         orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00     600/28500       Transform::Transform(int, int) [24]
+                0.00    0.00    9600/1639200     Transform::operator[](int) [35]
+-----------------------------------------------
+                0.00    0.00    2700/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[31]     0.0    0.00    0.00    2700         viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&) [31]
+                0.00    0.00    2700/5683355     Buffer2D<unsigned int>::height() [21]
+                0.00    0.00    2700/5683355     Buffer2D<unsigned int>::width() [34]
+-----------------------------------------------
+                0.00    0.00     600/600         clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+[32]     0.0    0.00    0.00     600         Attributes::Attributes(Attributes const&, Attributes const&, double const&) [32]
+                0.00    0.00    3600/28429650     Attributes::operator[](int const&) const [16]
+-----------------------------------------------
+                0.00    0.00       1/5683355     testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00       1/5683355     testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00       1/5683355     testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00       1/5683355     testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.00     150/5683355     clearScreen(Buffer2D<unsigned int>&, unsigned int) [12]
+                0.00    0.00     151/5683355     CADView(Buffer2D<unsigned int>&) [2]
+                0.00    0.00    2700/5683355     viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&) [31]
+                0.00    0.00 5680350/5683355     ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [6]
+[34]     0.0    0.00    0.00 5683355         Buffer2D<unsigned int>::width() [34]
+-----------------------------------------------
+                0.00    0.00    9600/1639200     orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [30]
+                0.00    0.00   19200/1639200     translate4x4(double const&, double const&, double const&) [28]
+                0.00    0.00   24000/1639200     rotate4x4(DIMENSION const&, double const&) [29]
+                0.00    0.00   32400/1639200     Transform::operator*(Vertex const&) const [25]
+                0.00    0.00 1554000/1639200     Transform::operator*(Transform const&) const [17]
+[35]     0.0    0.00    0.00 1639200         Transform::operator[](int) [35]
+-----------------------------------------------
+                0.00    0.00 1243200/1243200     Transform::operator*(Transform const&) const [17]
+[36]     0.0    0.00    0.00 1243200         Transform::get(int) const [36]
+-----------------------------------------------
+                0.00    0.00    1050/98700       testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00    1050/98700       testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00    1050/98700       testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00    1050/98700       testBox4Left(Buffer2D<unsigned int>&) [10]
+                0.00    0.00   43200/98700       clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+                0.00    0.00   51300/98700       DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[37]     0.0    0.00    0.00   98700         Attributes::Attributes() [37]
+-----------------------------------------------
+                0.00    0.00   28500/28500       Transform::setIdentity() [22]
+[38]     0.0    0.00    0.00   28500         Transform::setZero() [38]
+-----------------------------------------------
+                0.00    0.00   16800/16800       normalizeVertices(Vertex*, Attributes*, int const&) [42]
+[39]     0.0    0.00    0.00   16800         Attributes::operator[](int const&) [39]
+-----------------------------------------------
+                0.00    0.00    8100/8100        Transform::operator*(Vertex const&) const [25]
+[40]     0.0    0.00    0.00    8100         Transform::Transform(Vertex const&) [40]
+-----------------------------------------------
+                0.00    0.00    1800/7200        testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00    1800/7200        testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00    1800/7200        testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00    1800/7200        testBox4Left(Buffer2D<unsigned int>&) [10]
+[41]     0.0    0.00    0.00    7200         Attributes::insertDbl(double const&) [41]
+-----------------------------------------------
+                0.00    0.00    2700/2700        DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [3]
+[42]     0.0    0.00    0.00    2700         normalizeVertices(Vertex*, Attributes*, int const&) [42]
+                0.00    0.00   16800/16800       Attributes::operator[](int const&) [39]
+-----------------------------------------------
+                0.00    0.00     600/2400        testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     600/2400        testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     600/2400        testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     600/2400        testBox4Left(Buffer2D<unsigned int>&) [10]
+[43]     0.0    0.00    0.00    2400         Attributes::insertPtr(void*) [43]
+-----------------------------------------------
+                0.00    0.00     600/600         clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+[44]     0.0    0.00    0.00     600         VertexBetweenVerts(Vertex const&, Vertex const&, double const&) [44]
+-----------------------------------------------
+                0.00    0.00     600/600         clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [20]
+[45]     0.0    0.00    0.00     600         intersectAtPositiveLine(double&, double const&, double const&, double const&, double const&) [45]
+-----------------------------------------------
+                0.00    0.00     150/600         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     150/600         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     150/600         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     150/600         testBox4Left(Buffer2D<unsigned int>&) [10]
+[46]     0.0    0.00    0.00     600         VertexShader::VertexShader() [46]
+-----------------------------------------------
+                0.00    0.00     150/600         testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00     150/600         testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00     150/600         testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00     150/600         testBox4Left(Buffer2D<unsigned int>&) [10]
+[47]     0.0    0.00    0.00     600         FragmentShader::FragmentShader() [47]
+-----------------------------------------------
+                0.00    0.00     150/150         main [1]
+[48]     0.0    0.00    0.00     150         processUserInputs(bool&, bool&, int&) [48]
+-----------------------------------------------
+                0.00    0.00     150/150         main [1]
+[49]     0.0    0.00    0.00     150         SendFrame(SDL_Texture*, SDL_Renderer*, SDL_Surface*) [49]
+-----------------------------------------------
+                0.00    0.00       1/5           __tcf_19 [186]
+                0.00    0.00       1/5           __tcf_21 [189]
+                0.00    0.00       1/5           __tcf_23 [191]
+                0.00    0.00       1/5           __tcf_25 [193]
+                0.00    0.00       1/5           main [1]
+[50]     0.0    0.00    0.00       5         BufferImage::~BufferImage() [50]
+                0.00    0.00       5/5           Buffer2D<unsigned int>::~Buffer2D() [52]
+-----------------------------------------------
+                0.00    0.00       1/5           BufferImage::BufferImage(SDL_Surface*) [62]
+                0.00    0.00       4/5           BufferImage::BufferImage(char const*) [54]
+[51]     0.0    0.00    0.00       5         Buffer2D<unsigned int>::Buffer2D() [51]
+-----------------------------------------------
+                0.00    0.00       5/5           BufferImage::~BufferImage() [50]
+[52]     0.0    0.00    0.00       5         Buffer2D<unsigned int>::~Buffer2D() [52]
+-----------------------------------------------
+                0.00    0.00       4/4           BufferImage::BufferImage(char const*) [54]
+[53]     0.0    0.00    0.00       4         BufferImage::readBMP(char const*) [53]
+-----------------------------------------------
+                0.00    0.00       1/4           testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00       1/4           testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00       1/4           testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00       1/4           testBox4Left(Buffer2D<unsigned int>&) [10]
+[54]     0.0    0.00    0.00       4         BufferImage::BufferImage(char const*) [54]
+                0.00    0.00       4/5           Buffer2D<unsigned int>::Buffer2D() [51]
+                0.00    0.00       4/4           BufferImage::readBMP(char const*) [53]
+-----------------------------------------------
+                0.00    0.00       4/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+[55]     0.0    0.00    0.00       4         Buffer2D<double>::setupInternal() [55]
+-----------------------------------------------
+                0.00    0.00       4/4           Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+[56]     0.0    0.00    0.00       4         Buffer2D<double>::zeroOut() [56]
+-----------------------------------------------
+                0.00    0.00       1/4           testBox1Reg(Buffer2D<unsigned int>&) [5]
+                0.00    0.00       1/4           testBox2Right(Buffer2D<unsigned int>&) [11]
+                0.00    0.00       1/4           testBox3Top(Buffer2D<unsigned int>&) [9]
+                0.00    0.00       1/4           testBox4Left(Buffer2D<unsigned int>&) [10]
+[57]     0.0    0.00    0.00       4         Buffer2D<double>::Buffer2D(int const&, int const&) [57]
+                0.00    0.00       4/4           Buffer2D<double>::setupInternal() [55]
+                0.00    0.00       4/4           Buffer2D<double>::zeroOut() [56]
+-----------------------------------------------
+                0.00    0.00       1/4           __tcf_18 [185]
+                0.00    0.00       1/4           __tcf_20 [188]
+                0.00    0.00       1/4           __tcf_22 [190]
+                0.00    0.00       1/4           __tcf_24 [192]
+[58]     0.0    0.00    0.00       4         Buffer2D<double>::~Buffer2D() [58]
+-----------------------------------------------
+                0.00    0.00       4/4           Buffer2D<unsigned int>::Buffer2D(int const&, int const&) [27]
+[59]     0.0    0.00    0.00       4         Buffer2D<unsigned int>::setupInternal() [59]
+-----------------------------------------------
+                0.00    0.00       1/4           __tcf_0 [175]
+                0.00    0.00       1/4           __tcf_1 [176]
+                0.00    0.00       1/4           __tcf_2 [187]
+                0.00    0.00       1/4           __tcf_3 [194]
+[60]     0.0    0.00    0.00       4         Buffer2D<unsigned int>::~Buffer2D() [60]
+-----------------------------------------------
+                0.00    0.00       1/1           BufferImage::BufferImage(SDL_Surface*) [62]
+[61]     0.0    0.00    0.00       1         BufferImage::setupInternal() [61]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[62]     0.0    0.00    0.00       1         BufferImage::BufferImage(SDL_Surface*) [62]
+                0.00    0.00       1/5           Buffer2D<unsigned int>::Buffer2D() [51]
+                0.00    0.00       1/1           BufferImage::setupInternal() [61]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [15] baryInterp(double const&, double const&, double const&, double const&, double const&, double const&) [2] CADView(Buffer2D<unsigned int>&) [58] Buffer2D<double>::~Buffer2D()
+  [12] clearScreen(Buffer2D<unsigned int>&, unsigned int) [49] SendFrame(SDL_Texture*, SDL_Renderer*, SDL_Surface*) [59] Buffer2D<unsigned int>::setupInternal()
+   [8] determinant(double const&, double const&, double const&, double const&) [26] camera4x4(double const&, double const&, double const&, double const&, double const&, double const&) [34] Buffer2D<unsigned int>::width()
+  [30] orthgraphic(double const&, double const&, double const&, double const&, double const&, double const&) [29] rotate4x4(DIMENSION const&, double const&) [21] Buffer2D<unsigned int>::height()
+   [5] testBox1Reg(Buffer2D<unsigned int>&) [41] Attributes::insertDbl(double const&) [14] Buffer2D<unsigned int>::zeroOut()
+   [9] testBox3Top(Buffer2D<unsigned int>&) [43] Attributes::insertPtr(void*) [27] Buffer2D<unsigned int>::Buffer2D(int const&, int const&)
+   [4] DrawTriangle(Buffer2D<unsigned int>&, Vertex*, Attributes*, Attributes*, FragmentShader*) [32] Attributes::Attributes(Attributes const&, Attributes const&, double const&) [51] Buffer2D<unsigned int>::Buffer2D()
+  [20] clipVertices(Vertex const*, Attributes const*, int const&, Vertex*, Attributes*, int&) [13] Attributes::Attributes(double const&, double const&, double const&, Attributes const&, Attributes const&, Attributes const&, double const&) [60] Buffer2D<unsigned int>::~Buffer2D()
+  [10] testBox4Left(Buffer2D<unsigned int>&) [37] Attributes::Attributes() [52] Buffer2D<unsigned int>::~Buffer2D()
+  [28] translate4x4(double const&, double const&, double const&) [39] Attributes::operator[](int const&) [7] Buffer2D<unsigned int>::operator[](int)
+   [3] DrawPrimitive(PRIMITIVES, Buffer2D<unsigned int>&, Vertex const*, Attributes const*, Attributes*, FragmentShader*, VertexShader*, Buffer2D<double>*) [61] BufferImage::setupInternal() [22] Transform::setIdentity()
+  [11] testBox2Right(Buffer2D<unsigned int>&) [53] BufferImage::readBMP(char const*) [23] Transform::isQuare()
+   [6] ImageFragShader(unsigned int&, Attributes const&, Attributes const&) [62] BufferImage::BufferImage(SDL_Surface*) [38] Transform::setZero()
+  [42] normalizeVertices(Vertex*, Attributes*, int const&) [54] BufferImage::BufferImage(char const*) [40] Transform::Transform(Vertex const&)
+  [48] processUserInputs(bool&, bool&, int&) [50] BufferImage::~BufferImage() [24] Transform::Transform(int, int)
+  [31] viewportTransform(Buffer2D<unsigned int>&, Vertex*, int const&) [46] VertexShader::VertexShader() [35] Transform::operator[](int)
+  [44] VertexBetweenVerts(Vertex const&, Vertex const&, double const&) [47] FragmentShader::FragmentShader() [16] Attributes::operator[](int const&) const
+  [18] SimpleVertexShader2(Vertex&, Attributes&, Vertex const&, Attributes const&, Attributes const&) [55] Buffer2D<double>::setupInternal() [36] Transform::get(int) const
+  [45] intersectAtPositiveLine(double&, double const&, double const&, double const&, double const&) [56] Buffer2D<double>::zeroOut() [25] Transform::operator*(Vertex const&) const
+  [19] VertexShaderExecuteVertices(VertexShader const*, Vertex const*, Attributes const*, int const&, Attributes*, Vertex*, Attributes*) [57] Buffer2D<double>::Buffer2D(int const&, int const&) [17] Transform::operator*(Transform const&) const
