@@ -127,7 +127,7 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    // Your code goes here
+    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
 }
 
 /****************************************
@@ -144,7 +144,7 @@ void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* cons
  * Renders a triangle to the target buffer. Essential 
  * building block for most of drawing.
  ************************************************************/
-void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
+void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag) //changed Attributes* attrs
 {
     //Creating Bounding Box
     int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
@@ -159,6 +159,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 
     //Time to get the area of the whole triangle
     double areaTriangle = determinant(firstVector[X_KEY], -thirdVector[X_KEY], firstVector[Y_KEY], -thirdVector[Y_KEY]);
+
 
     //Everything up to the for loop is for computing perspective correct attributes
     Attributes correct [3];
@@ -194,6 +195,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     inverted_Zs [1] = 1 / triangle[1].z;
     inverted_Zs [2] = 1 / triangle[2].z;
 
+
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
@@ -206,6 +208,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
                 if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
                 {
+
                 //colors everything red in case I mess something up.
                 target[(int)y][(int)x] = attrs[0].color;
 
@@ -217,6 +220,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
                 interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
                 interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
 
                 //Now its time for image interpolation
                 //firstDet * u1 + secondDet * u2 + thirdDet * u3;
@@ -337,15 +341,16 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-        processUserInputs(running);
+        //processUserInputs(running);
 
         // Refresh Screen
-        clearScreen(frame);
+        //clearScreen(frame);
 
         // Your code goes here
         //TestDrawFragments(frame);
         //TestDrawPerspectiveCorrect(frame);
         TestVertexShader(frame);
+
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
