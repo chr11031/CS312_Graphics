@@ -49,6 +49,158 @@ struct Vertex
     double w;
 };
 
+/****************************************************
+ * Matrix class
+ ***************************************************/
+class Matrix
+{
+private:
+    double *neo;
+    int row;
+    int col;
+    bool init;
+
+public:
+
+    Matrix(): row(0), col(0), neo(NULL), init(false) {};
+
+    //non default constructor
+    Matrix(int row, int col) : init(false), row(row), col(col)
+    {
+        neo = new double[row * col];
+
+        for(int i =  0; i < (row * col); i++)
+            neo[i] = 0;
+    }
+    //destructor
+    ~Matrix()
+    {
+        if(neo!=NULL)
+        {
+            delete [] neo;
+            neo = NULL;
+        }
+    }
+
+    /****************************************************
+    * Scales the matrix by what ever is passed in for 
+    * x y and z
+    ***************************************************/
+    void scale(double x, double y, double z)
+    {
+        //acts as vert to multiply matrix by
+        double temp[4] = {x,y,z,1};
+
+        Matrix scaler(this->row, this->col);
+
+        for(int i = 0; i < this->row; i++)
+            scaler.neo[i * this->col + i] = temp[i];
+        
+        if(!init)
+        {
+            for(int i = 0; i < (this->row * this->col); i++)
+                this->neo[i] = scaler.neo[i];
+
+            init = true;
+        }
+        else
+            *this *= scaler;
+    }
+
+    /****************************************************
+    * translates the matrix
+    ***************************************************/
+    void translate(double x, double y, double z)
+    {
+        Matrix translator(this->row, this->col);
+        translator.neo[1 * this->col - 1] = x;
+        translator.neo[2 * this->col - 1] = y;
+        translator.neo[3 * this->col - 1] = z;
+
+        for(int i = 0; i < this->row; i++)
+            translator.neo[i * this->col + i] = 1;
+
+        if(!init)
+        {
+            for(int i = 0; i < (this->row * this->col); i++)
+                this->neo[i] = translator.neo[i];
+
+            init = true;
+        }
+        else
+            *this *= translator;
+
+    }
+
+    /****************************************************
+    * Rotates the matrix based on the "degree" passed in
+    ***************************************************/
+    void rotate(double r)
+    {
+        Matrix rotator(this->row, this->col);
+        double rsin = sin(r * M_PI/180.0);
+        double rcos = cos(r * M_PI/180.0);
+
+        rotator.neo[0] = rcos;
+        rotator.neo[1] = -rsin;
+        rotator.neo[1 * this->col] = rsin;
+        rotator.neo[1 * this->col + 1] = rcos;
+        rotator.neo[2 * this->col + 2] = 1;
+        rotator.neo[3 * this->col + 3] = 1;
+
+
+        if(init == false)
+        {
+            for(int i = 0; i < (this->row * this->col); i++)
+                this->neo[i] = rotator.neo[i];
+
+            init = true;
+        }
+        else
+            *this *= rotator;
+
+    }
+
+    //overloaded assignmed operator
+    Matrix & operator = (const Matrix & rhs)
+    {
+        this->row = rhs.row;
+        this->col = rhs.col;
+        this->init = rhs.init;
+        if(this->neo != NULL)
+            delete [] neo;
+
+        neo = new double[this->row * this->col];
+
+        for(int i = 0; i < (this->row * this->col); i++)
+            this->neo[i] = rhs.neo[i];
+
+        return *this;
+    }
+
+    //overloaded operator for matrix multiplication
+    Matrix & operator *= (const Matrix & rhs)
+    {
+        Matrix temp(this->row, rhs.col);
+
+        for(int i = 0; i < this->row; i++)
+            for(int j = 0; j < rhs.col; j++)
+            {
+                double total = 0;
+
+                for(int k = 0; k < rhs.row; k++)
+                     total += this->neo[i * this->col + k] * rhs.neo[k * rhs.col + j];
+
+                temp.neo[i * temp.col + j] = total;
+            }
+        temp.init = true;
+        *this = temp;
+        return *this;
+    }
+    //allows access to private variables
+    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
+};
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -248,6 +400,7 @@ class Attributes
 
         void* ptrImg;
         PIXEL color;
+        Matrix atMat;
         // Obligatory empty constructor
         Attributes() 
         {
@@ -389,7 +542,39 @@ class VertexShader
         {
             VertShader = VertSdr;
         }
+
+        
 };
+
+void changerShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+        {
+            vertOut = uniforms.atMat * vertIn;
+            attrOut = vertAttr;
+        }
+
+
+
+
+/**************************************************************
+ * overloaded * operator
+ *************************************************************/
+Vertex operator * (const Matrix & rhs, const Vertex & lhs)
+{
+    Vertex vert;
+    if(rhs.col !=4 || rhs.row !=4)
+    {
+        
+        return vert;
+    }
+    vert.x = rhs.neo[0] * lhs.x + rhs.neo[1] * lhs.y + rhs.neo[2] * lhs.z + rhs.neo[3] * lhs.w;
+    vert.y = rhs.neo[4] * lhs.x + rhs.neo[5] * lhs.y + rhs.neo[6] * lhs.z + rhs.neo[7] * lhs.w;
+    vert.z = rhs.neo[8] * lhs.x + rhs.neo[9] * lhs.y + rhs.neo[10] * lhs.z + rhs.neo[11] * lhs.w;
+    vert.w = rhs.neo[12] * lhs.x + rhs.neo[13] * lhs.y + rhs.neo[14] * lhs.z + rhs.neo[15] * lhs.w;
+
+    return vert;
+}
+
+
 /****************************************
  * CROSS_PRODUCT
  * returns the determinant 
