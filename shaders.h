@@ -34,3 +34,12 @@ void TriangleInterpolatedImageShader(PIXEL & fragment, const Attributes & vertAt
      fragment = (*bf)[(int)( ((vertAttr.vertexPoint.y - uniforms.minY)/(uniforms.quadHeight/(bf->height()-1))) /((1-((vertAttr.vertexPoint.y-uniforms.minY)/(uniforms.maxY - uniforms.minY)))*(uniforms.quadLengthBottom/uniforms.quadLengthTop-1)+1))]
     [(int)((vertAttr.vertexPoint.x - ((vertAttr.vertexPoint.y - uniforms.minY) / (uniforms.quadHeight/(abs(uniforms.quadLengthTop - uniforms.quadLengthBottom)/2)) + uniforms.minX) ) * bf->height()/((vertAttr.vertexPoint.y-uniforms.minY)*((uniforms.quadLengthTop - uniforms.quadLengthBottom)/uniforms.quadHeight)+uniforms.quadLengthBottom))];
 }
+
+void transformationVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+    Matrix matrixOut = (*(uniforms.matrix)) * vertIn;
+    vertOut.x = matrixOut.matrix[0][0];
+    vertOut.y = matrixOut.matrix[1][0];
+    vertOut.z = matrixOut.matrix[2][0];
+    attrOut = attrIn;
+}

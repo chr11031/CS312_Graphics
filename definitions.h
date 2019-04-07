@@ -7,6 +7,7 @@
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+#define PI 3.14159265
 
 /******************************************************
  * DEFINES:
@@ -26,16 +27,6 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
-/******************************************************
- * Types of primitives our pipeline will render.
- *****************************************************/
-enum PRIMITIVES 
-{
-    TRIANGLE,
-    LINE,
-    POINT
-};
-
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -45,6 +36,131 @@ struct Vertex
     double y;
     double z;
     double w;
+};
+
+/******************************************************
+ * CLass to take care of Matrices
+ *****************************************************/
+class Matrix
+{
+    public:
+    double matrix[4][4] = {{0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0},
+                           {0,0,0,0}};
+    int height = 0;
+    int width = 0;
+
+    Matrix(int height, int width){
+        this->height = height;
+        this->width = width;
+    }
+
+    Matrix(double fourbyone[4][1]){
+        height = 4;
+        width = 1;
+        for (int i = 0; i < 4; i++)
+            matrix[i][0] = fourbyone[i][0];
+    }
+
+    Matrix(double fourbyfour[4][4]){
+        height = 4;
+        width = 4;
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                matrix[i][j] = fourbyfour[i][j];
+    }
+
+    Matrix translate(int x, int y, int z)
+    {
+        Matrix temp1(4,4);
+        temp1.matrix[0][0] = temp1.matrix[1][1] = temp1.matrix[2][2] = temp1.matrix[3][3] = 1;
+        temp1.matrix[0][3] = x;
+        temp1.matrix[1][3] = y;
+        temp1.matrix[2][3] = z;
+
+        return *this * temp1;
+    }
+
+    Matrix scale(int x, int y, int z)
+    {
+        Matrix temp1(4,4);
+        temp1.matrix[0][0] = x;
+        temp1.matrix[1][1] = y;
+        temp1.matrix[2][2] = z;
+        temp1.matrix[3][3] = 1;
+
+        return *this * temp1;
+    }
+
+    Matrix rotate(int angle)
+    {
+        double sin1 = sin(angle * PI/180.0);
+        double cos1 = cos(angle * PI/180.0);
+        Matrix temp1(4,4);
+        temp1.matrix[0][0] = cos1;
+        temp1.matrix[0][1] = -sin1;
+        temp1.matrix[1][0] = sin1;
+        temp1.matrix[1][1] = cos1;
+        temp1.matrix[2][2] = temp1.matrix[3][3] = 1;
+        
+        return *this * temp1;
+    }
+
+	Matrix operator*(const Matrix &x)
+	{
+        if(width == x.height)
+        { 
+            Matrix Temp1(x.height,x.width);
+            
+            for(int i = 0; i < height; i++){	
+                for(int j = 0; j < x.width; j++){ 
+                    for( int k = 0; k < x.height; k++){  
+                     Temp1.matrix[i][j] += this->matrix[i][k] * x.matrix[k][j];
+                  }
+                }
+            }
+            return Temp1;
+        }
+        
+        else{std::cout<<"incorrect matrices dimensions"<<std::endl;
+        exit (1);}
+        
+        return x;
+	}
+
+    Matrix operator*(const Vertex &x)
+	{
+        Matrix Temp1(4,1);
+        if(width == 4)
+        { 
+            double vertex[4][1] = {{x.x}, {x.y}, {x.z}, {x.w}};
+            for(int i = 0; i < height; i++){	
+                for(int j = 0; j < 1; j++){ 
+                    for( int k = 0; k < 4; k++){  
+                     Temp1.matrix[i][j] += this->matrix[i][k] * vertex[k][j];
+                  }
+                }
+            }
+            return Temp1;
+        }
+        
+        else{std::cout<<"incorrect matrices dimensions"<<std::endl;
+        exit (1);}
+        
+        return Temp1;
+	}
+
+}; 
+
+/******************************************************
+ * Types of primitives our pipeline will render.
+ *****************************************************/
+enum PRIMITIVES 
+{
+    TRIANGLE,
+    LINE,
+    POINT
 };
 
 /******************************************************
@@ -236,6 +352,7 @@ class Attributes
         double maxY;
         double minX;
         double maxX;
+        Matrix * matrix;
 
         void * image; //TODO
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -336,6 +453,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
+                   Buffer2D<double>* zBuf = NULL);    
+        
        
 #endif

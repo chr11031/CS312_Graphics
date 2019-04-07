@@ -1,9 +1,11 @@
 #include "C:/MinGW/include/SDL2/SDL.h"
 #include "./definitions.h"
 #include "./shaders.h"
+#include <math.h>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
+#define PI 3.14159265
 
 /***************************************************
  * Team Activity for week #1.
@@ -361,26 +363,36 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
 
-        FragmentShader myColorFragShader;
+        FragmentShader myColorFragShader(TriangleColorShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
-        VertexShader myColorVertexShader;
+        VertexShader myColorVertexShader(transformationVertexShader);
         // Your code for the vertex shader goes here 
 
         /******************************************************************
-		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        double matrix1[4][4] =  {{1,0,0,0},
+                                 {0,1,0,0},
+                                 {0,0,1,0},
+                                 {0,0,0,1}};
+        Matrix matrix1f(matrix1);
+        matrix1f = matrix1f.translate(-230,250,0);
+        colorUniforms.matrix = &matrix1f;
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
+        Matrix matrix2f(matrix1);
+        matrix2f = matrix2f.translate(210,45,0);
+        matrix2f = matrix2f.scale(2,2,1);
+        colorUniforms.matrix = &matrix2f;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
@@ -388,14 +400,23 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
+        Matrix matrix3f(matrix1);
+        matrix3f = matrix3f.rotate(-30);
+        matrix3f = matrix3f.translate(-350,225,0);
+        colorUniforms.matrix = &matrix3f;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        
+        Matrix matrix4f(matrix1);
+        matrix4f = matrix4f.scale(2,2,1);
+        matrix4f = matrix4f.translate(-75,125,0);
+        matrix4f = matrix4f.rotate(-30);
+        colorUniforms.matrix = &matrix4f;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
