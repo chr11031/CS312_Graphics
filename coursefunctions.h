@@ -435,42 +435,84 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
-
+        colorAttributes[0].attrValues[0] = 1.0;
+        colorAttributes[0].attrValues[1] = 0.0;
+        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].numValues = 3;
+        colorAttributes[1].attrValues[0] = 0.0;
+        colorAttributes[1].attrValues[1] = 1.0;
+        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].numValues = 3;
+        colorAttributes[2].attrValues[0] = 0.0;
+        colorAttributes[2].attrValues[1] = 0.0;
+        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[2].numValues = 3;
         FragmentShader myColorFragShader;
+        myColorFragShader.setShader(ColorFragShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
         // Your code for the vertex shader goes here 
+        myColorVertexShader.setShader(TransformShader);
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+         double trans[4][4] = 
+        {
+                {1,0,100,0},
+                {0,1,50,0},
+                {0,0,1,0},
+                {0,0,0,0}
+        };
+        Matrix transM(trans, 4, 4);
+        colorUniforms.matrix = transM;
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+         double scale[4][4] =
+         {
+                {.5,0,0,0},
+                {0,.5,0,0},
+                {0,0,1,0},
+                {0,0,0,0}
+        };
+        Matrix scaleM(scale, 4, 4);
+        colorUniforms.matrix = scaleM;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
-         * ROTATE 45 degrees in the X-Y plane around Z
+         * ROTATE 30 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+        double rad = 29.9 * M_PI / 180;
+        double rotate[4][4] =
+        {
+                {cos(rad), -sin(rad),0,0},
+                {sin(rad),  cos(rad),0 ,0},
+                {0,0,0,0},
+                {0,0,0,0}
+        };
+        Matrix rotateM(rotate, 4, 4);
+        colorUniforms.matrix = rotateM;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        Matrix scaleTranslateRotate(scale, 4, 4);
+        scaleTranslateRotate *= transM;
+        scaleTranslateRotate *= rotateM;
+
+        colorUniforms.matrix = scaleTranslateRotate;	
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
