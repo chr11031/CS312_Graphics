@@ -5,6 +5,9 @@
 #include "math.h"
 #include <vector>
 #include <iostream>
+
+#define PI 3.14159265
+
 using namespace std;
 
 #ifndef DEFINITIONS_H
@@ -50,6 +53,173 @@ struct Vertex
     double z;
     double w;
 };
+
+/****************************************************
+* My Matrix class
+*****************************************************/
+class Matrix {
+
+public:
+
+   int height = 0;
+   int width = 0;
+// Create a Generic Matrix, this will be useful later
+   double matrix[4][4] = { {1,0,0,0},
+                           {0,1,0,0},
+                           {0,0,1,0},
+                           {0,0,0,1} };
+
+// Some constructors
+   Matrix(){
+   }
+
+   Matrix(double fbf[4][4]){
+      height = 4;
+      width = 4;
+      
+      for (int i = 0; i < 4; i++)
+      {
+         for (int j = 0; j < 4; j++)
+         {
+            matrix[i][j] = fbf[i][j];
+         }        
+      }
+         
+   }
+
+// Initialise with size only.
+   Matrix(int h, int w){
+      this->height = h;
+      this->width = w;
+   }
+
+// Multiplication operator overload for matrix operations
+   Matrix operator*(const Matrix &rhs)
+   {
+      //check if you can actually multiply them
+      if(width == rhs.height)
+      { 
+         Matrix res(rhs.height,rhs.width);
+
+          int i, j, k; 
+            for (i = 0; i < height; i++) 
+            { 
+               for (j = 0; j < rhs.width; j++) 
+               { 
+                     res.matrix[i][j] = 0; 
+                     for (k = 0; k < rhs.height; k++) 
+                        res.matrix[i][j] += this->matrix[i][k] *  
+                                    rhs.matrix[k][j]; 
+               } 
+            }
+         return res;
+      }
+   }
+
+// For shader operations
+   Matrix operator*(const Vertex &rhs)
+ 	{
+      Matrix res(4,1);
+
+      if(width == 4)
+      { 
+         double vertex[4][1] = { {rhs.x}, 
+                                 {rhs.y}, 
+                                 {rhs.z}, 
+                                 {rhs.w} };
+
+         for(int i = 0; i < height; i++){	
+            for(int j = 0; j < 1; j++){ 
+               for( int k = 0; k < 4; k++){  
+                  res.matrix[i][j] += this->matrix[i][k] * vertex[k][j];
+                  }
+               }
+            }
+            return res;
+         }
+ 	}
+
+    Matrix operator*(const Vertex &rhs) const
+ 	{
+      Matrix res(4,1);
+
+      if(width == 4)
+      { 
+         double vertex[4][1] = { {rhs.x}, 
+                                 {rhs.y}, 
+                                 {rhs.z}, 
+                                 {rhs.w} };
+
+         for(int i = 0; i < height; i++){	
+            for(int j = 0; j < 1; j++){ 
+               for( int k = 0; k < 4; k++){  
+                  res.matrix[i][j] += this->matrix[i][k] * vertex[k][j];
+                  }
+               }
+            }
+            return res;
+         }
+ 	}
+
+    void print()
+    {
+        for(int i=0;i < height;i++) 
+        {
+            for(int j=0;j < width;j++) 
+            {
+               cout << matrix[i][j] << ' ';
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+
+    Matrix rotate(int angle){
+
+        double sin1 = sin(angle * PI/180.0);
+        double cos1 = cos(angle * PI/180.0);
+        
+        Matrix temp(4,4);
+        temp.matrix[0][0] = cos1;
+        temp.matrix[0][1] = -sin1;
+        temp.matrix[1][0] = sin1;
+        temp.matrix[1][1] = cos1;
+        temp.matrix[2][2] = temp.matrix[3][3] = 1;
+
+        return *this * temp;
+    }
+
+    /*************************************************
+     * TRANSLATE FUNCTION FOR MATRICES
+     *************************************************/
+    Matrix translate(double x, double y){
+
+        /*Create a new matrix with transformation and 
+        then proceed to the multiplication*/
+        
+        Matrix temp(4,4);
+        temp.matrix[0][3] = x;
+        temp.matrix[1][3] = y;
+
+        return *this * temp;
+    }
+
+    /*************************************************
+     * SCALE FUNCTION FOR MATRICES
+     *************************************************/
+    Matrix scale(double factor){
+        
+        /*Create a new matrix with transformation and 
+        then proceed to the multiplication*/
+
+        Matrix temp(4,4);
+        temp.matrix[0][0] = factor;
+        temp.matrix[1][1] = factor;
+
+        return *this * temp;
+    }
+
+};  
 
 /******************************************************
  * BUFFER_2D:
@@ -224,6 +394,10 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+
+        //Matrix transformations
+        Matrix matrix;
+
         //coordinates.
         double u;
         double v;
@@ -384,7 +558,7 @@ void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, c
 	// Is the X square position even? The Y? 
     bool evenXSquare = (xSquare % 2) == 0;
     bool evenYSquare = (ySquare % 2) == 0;
-
+   
     // Both even or both odd - red square
     if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
     {
@@ -394,8 +568,33 @@ void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, c
     else
     {
         fragment = 0xffffffff;
-        
+            
     }
+    
+}
+
+void FragShaderUVwithoutImage2(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = attributes.u * 8;
+    int ySquare = attributes.v * 8;
+
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+   
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffffff00;
+    }
+    //One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+            
+    }
+    
 }
 
 /*******************************************************
@@ -438,6 +637,18 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
+
+// My vertex shader
+void transformShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+ {
+    Matrix transform(uniforms.matrix * vertIn);
+    //transform.print();
+    vertOut = vertIn;
+    vertOut.x = transform.matrix[0][0];
+    vertOut.y = transform.matrix[1][0];
+    vertOut.z = transform.matrix[2][0];
+    attrOut = attrIn;
+ }
 
 /**********************************************************
  * VERTEX_SHADER
@@ -483,6 +694,7 @@ void DrawPrimitive(PRIMITIVES prim,
                    Attributes* const uniforms = NULL,
                    FragmentShader* const frag = NULL,
                    VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
-       
+                   Buffer2D<double>* zBuf = NULL);                 
+
+
 #endif
