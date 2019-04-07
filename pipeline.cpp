@@ -1,9 +1,11 @@
 #include "definitions.h"
 #include "coursefunctions.h"
-#include <iostream>
-
+#include "myFunctions.h"
+#include "personalProject1.h"
 using namespace std;
 
+
+bool DEBUG = true;
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -45,14 +47,8 @@ void processUserInputs(bool & running)
     int mouseY;
     while(SDL_PollEvent(&e)) 
     {
-        if(e.type == SDL_QUIT) 
-        {
-            running = false;
-        }
-        if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) 
-        {
-            running = false;
-        }
+        if(e.type == SDL_QUIT) running = false;
+        if(e.key.keysym.sym == 'q' && e.type == SDL_KEYDOWN) running = false;
     }
 }
 
@@ -63,7 +59,10 @@ void processUserInputs(bool & running)
  ***************************************/
 void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attributes * const uniforms, FragmentShader* const frag)
 {
-    target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+    //target[(int)v[0].y][(int)v[0].x] = attrs[0].color;
+
+    //frag callback -> coloring the fragment(in this case pixel)
+    frag -> FragShader(target[(int)v[0].y][(int)v[0].x], *attrs, *uniforms);
 }
 
 /****************************************
@@ -73,29 +72,6 @@ void DrawPoint(Buffer2D<PIXEL> & target, Vertex* v, Attributes* attrs, Attribute
 void DrawLine(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
     // Your code goes here
-    //target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-}
-
-/*********************************************************************
- * CROSS_PRODUCT and INTER
- * helper functions to calculate the cross product of two vertecies,
- * helper function for calculating the interpolation of attributes over all points
- ********************************************************************/
-float crossProduct(double* v1, double* v2)
-{
-    return (v1[0] * v2[1]) - (v1[1] * v2[0]);
-}
-
-Attributes inter(Attributes* const attrs, double area0, double area1, double area2)
-{
-    Attributes interAtt;
-    for(int i = 0; i < attrs[0].colorAttr.size(); i++)
-    {
-        //determine attribute by adding each portion of vertex given by the corresponding area
-        interAtt.addDouble((attrs[0].colorAttr[i].d * area0) + (attrs[1].colorAttr[i].d * area1) 
-            + (attrs[2].colorAttr[i].d * area2));
-    }
-    return interAtt;
 }
 
 /*************************************************************
@@ -105,47 +81,36 @@ Attributes inter(Attributes* const attrs, double area0, double area1, double are
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-    //DrawPoint(target, triangle, attrs, uniforms, frag);
-    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0].color;
-    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1].color;
-    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2].color;
-
     //bounding box to limit the amount of checking
-    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-    int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
+    int maxX = MAX3(triangle[0].x,  triangle[1].x,  triangle[2].x);
+    int minX = MIN3(triangle[0].x,  triangle[1].x,  triangle[2].x);
+    int maxY = MAX3(triangle[0].y,  triangle[1].y,  triangle[2].y);
+    int minY = MIN3(triangle[0].y,  triangle[1].y,  triangle[2].y);
     
     /*bounding edges of the triangle
      *vectors that are a measuremtnt of the edge from triangle[0] to triangle[1] 
      *and from triangle[1] to triangle[2] and from triangle[2] to triangle[0] */
-    double edge0[] = {(triangle[2].x - triangle[1].x), (triangle[2].y - triangle[1].y)};
-    double edge1[] = {(triangle[0].x - triangle[2].x), (triangle[0].y - triangle[2].y)};
-    double edge2[] = {(triangle[1].x - triangle[0].x), (triangle[1].y - triangle[0].y)};
+    double edge0[] = {(triangle[2].x - triangle[1].x),  (triangle[2].y - triangle[1].y)};
+    double edge1[] = {(triangle[0].x - triangle[2].x),  (triangle[0].y - triangle[2].y)};
+    double edge2[] = {(triangle[1].x - triangle[0].x),  (triangle[1].y - triangle[0].y)};
 
     //area of the whole triangle
-    double negEdge1[] = {-edge1[0], -edge1[1]};
-    double area = crossProduct(negEdge1, edge0);
+    double area = determinant(-edge1[0], edge0[0], -edge1[1], edge0[1]);
 
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y ++)
         {
             //area of each segment
-            double temp0[] = {triangle[2].x - x, triangle[2].y - y};
-            double area0 = crossProduct(temp0, edge0)/area;
-            double temp1[] = {triangle[0].x - x, triangle[0].y - y};
-            double area1 = crossProduct(temp1, edge1)/area;
-            double temp2[] = {triangle[1].x - x, triangle[1].y - y};
-            double area2 = crossProduct(temp2, edge2)/area;
+            double area0 = determinant(triangle[2].x - x, edge0[0], triangle[2].y - y, edge0[1])/area;
+            double area1 = determinant(triangle[0].x - x, edge1[0], triangle[0].y - y, edge1[1])/area;
+            double area2 = determinant(triangle[1].x - x, edge2[0], triangle[1].y - y, edge2[1])/area;
 
             if ( (area0 >= 0) && (area1 >= 0) && (area2 >= 0) )
             {
-                //Converting areas into percentages of the whole area
                 //Interpolate attributes
-                Attributes interAttr = inter(attrs, area0, area1, area2);
                 double Z = 1/((triangle[0].w*area0) + (triangle[1].w*area1) + (triangle[2].w*area2));
-                interAttr.addDouble(Z);
+                Attributes interAttr(attrs, area0, area1, area2, Z);
 
                 //frag callback -> coloring the fragment(in this case pixel)
                 frag -> FragShader(target[y][x], interAttr, *uniforms);
@@ -169,6 +134,13 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    }
+    else 
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -257,9 +229,12 @@ int main()
         clearScreen(frame);
 
         // TODO Your code goes here
-            TestDrawPerspectiveCorrect(frame);
+            //TestMarshmallowFrag(frame);
+            TestVertexShader(frame);
+            //TestDrawPerspectiveCorrect(frame);
             //TestDrawFragments(frame);
             //TestDrawTriangle(frame);
+            //TestDrawPixel(frame);
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
     }
