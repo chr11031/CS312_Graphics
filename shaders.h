@@ -31,3 +31,13 @@ void ImageFragmentShader(PIXEL & fragment, const Attributes & vertAttr, const At
 
     fragment = (*ptr)[y][x];
 }
+
+/******************************************************* 
+ * TRANSFORMATION_VERTEX_SHADER
+ * Applies the transformations to the vertex
+ ******************************************************/
+void TransformationVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+    vertOut = (*uniforms.matrix).multiplyByVertex(vertIn);
+    attrOut = attrIn;
+}

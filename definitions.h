@@ -26,6 +26,11 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+// TransformationMatrix Types
+#define ROTATE 0
+#define SCALE 1
+#define TRANSLATE 2
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -45,6 +50,206 @@ struct Vertex
     double y;
     double z;
     double w;
+};
+
+/****************************************************
+ * A matrix used for 3D transformations
+ ****************************************************/
+class TransformationMatrix 
+{
+    private:
+        double base[4][4];
+
+        // Multiply a 1x4 and 4x1 (for easier matrix multiplication) choosing which rown and column to multiply
+        double multiplyRowColumn(const double row[4], const double column[4][4], const int columnNum) const
+        {
+            switch (columnNum)
+            {
+                case 0:
+                    return row[0] * column[0][0]
+                         + row[1] * column[1][0]
+                         + row[2] * column[2][0]
+                         + row[3] * column[3][0];
+                    break;
+                case 1:
+                    return row[0] * column[0][1]
+                         + row[1] * column[1][1]
+                         + row[2] * column[2][1]
+                         + row[3] * column[3][1];
+                    break;
+                case 2:
+                    return row[0] * column[0][2]
+                         + row[1] * column[1][2]
+                         + row[2] * column[2][2]
+                         + row[3] * column[3][2];
+                    break;
+                case 3:
+                    return row[0] * column[0][3]
+                         + row[1] * column[1][3]
+                         + row[2] * column[2][3]
+                         + row[3] * column[3][3];
+                    break;
+                default:
+                    return row[0] * column[0][0]
+                         + row[1] * column[1][0]
+                         + row[2] * column[2][0]
+                         + row[3] * column[3][0];
+                    break;
+            }
+        }
+
+        // Multiply a row by a Vertex onject (for easier 4x4 times 4x1)
+        double multiplyRowVertex(const double row[4], const Vertex vert) const
+        {
+            return row[0] * vert.x
+                 + row[1] * vert.y
+                 + row[2] * vert.z
+                 + row[3] * vert.w;
+        }
+
+        // Helper for making a rotation matrix (Roatates X, Y, then Z)
+        void createRotationMatrix(double x, double y, double z)
+        {
+            TransformationMatrix xMat;
+            TransformationMatrix yMat;
+            TransformationMatrix zMat;
+
+            // Rotation about X axis
+            (xMat).base[0][0] = 1;
+            (xMat).base[1][1] = cos(x * M_PI / 180.0);
+            (xMat).base[1][2] = -sin(x * M_PI / 180.0);
+            (xMat).base[2][1] = sin(x * M_PI / 180.0);
+            (xMat).base[2][2] = cos(x * M_PI / 180.0);
+
+            // Rotation about Y axis
+            (yMat).base[0][0] = cos(y * M_PI / 180.0);
+            (yMat).base[0][2] = sin(y * M_PI / 180.0);
+            (yMat).base[1][1] = 1;
+            (yMat).base[2][0] = -sin(y * M_PI / 180.0);
+            (yMat).base[2][2] = cos(y * M_PI / 180.0);
+
+            // Rotation about Z axis
+            (zMat).base[0][0] = cos(z * M_PI / 180.0);
+            (zMat).base[0][1] = -sin(z * M_PI / 180.0);
+            (zMat).base[1][0] = sin(z * M_PI / 180.0);
+            (zMat).base[1][1] = cos(z * M_PI / 180.0);
+            (zMat).base[2][2] = 1;
+
+            *this = (zMat) * (yMat) * (xMat);
+        }
+
+    public:
+        //Default constuctor makes an Identity TransformationMatrix
+        TransformationMatrix()
+        {
+            // Base TransformationMatrix (4x4 Identity matrix)
+            base[0][0] = 1;
+            base[0][1] = 0;
+            base[0][2] = 0;
+            base[0][3] = 0;
+            
+            base[1][0] = 0;
+            base[1][1] = 1;
+            base[1][2] = 0;
+            base[1][3] = 0;
+            
+            base[2][0] = 0;
+            base[2][1] = 0;
+            base[2][2] = 1;
+            base[2][3] = 0;
+            
+            base[3][0] = 0;
+            base[3][1] = 0;
+            base[3][2] = 0;
+            base[3][3] = 1;
+        }
+
+        // Constructor type:translate,rotate or scale and x,y,z values (degrees for rotation)
+        TransformationMatrix(const int type, const double x, const double y, const double z)
+        {
+            // Base TransformationMatrix (4x4 Identity Matrix)
+            base[0][0] = 1;
+            base[0][1] = 0;
+            base[0][2] = 0;
+            base[0][3] = 0;
+            
+            base[1][0] = 0;
+            base[1][1] = 1;
+            base[1][2] = 0;
+            base[1][3] = 0;
+            
+            base[2][0] = 0;
+            base[2][1] = 0;
+            base[2][2] = 1;
+            base[2][3] = 0;
+            
+            base[3][0] = 0;
+            base[3][1] = 0;
+            base[3][2] = 0;
+            base[3][3] = 1;
+
+            // Create a matrix based on the type given
+            switch (type)
+            {
+                case ROTATE:
+                    createRotationMatrix(x, y, z);
+                    break;
+            
+                case TRANSLATE:
+                    base[0][3] = x;
+                    base[1][3] = y;
+                    base[2][3] = z;
+                    break;
+            
+                case SCALE:
+                    base[0][0] = x;
+                    base[1][1] = y;
+                    base[2][2] = z;
+                    break;
+            
+                default:
+                    break;
+            }
+        }
+
+        // Multiply two 4X4 matrices
+        TransformationMatrix operator*(const TransformationMatrix& multiplier) const
+        {
+            TransformationMatrix temp;
+            // First Row
+            temp.base[0][0] = multiplyRowColumn(base[0], multiplier.base, 0);
+            temp.base[0][1] = multiplyRowColumn(base[0], multiplier.base, 1);
+            temp.base[0][2] = multiplyRowColumn(base[0], multiplier.base, 2);
+            temp.base[0][3] = multiplyRowColumn(base[0], multiplier.base, 3);
+            // Second Row
+            temp.base[1][0] = multiplyRowColumn(base[1], multiplier.base, 0);
+            temp.base[1][1] = multiplyRowColumn(base[1], multiplier.base, 1);
+            temp.base[1][2] = multiplyRowColumn(base[1], multiplier.base, 2);
+            temp.base[1][3] = multiplyRowColumn(base[1], multiplier.base, 3);
+            // Third Row
+            temp.base[2][0] = multiplyRowColumn(base[2], multiplier.base, 0);
+            temp.base[2][1] = multiplyRowColumn(base[2], multiplier.base, 1);
+            temp.base[2][2] = multiplyRowColumn(base[2], multiplier.base, 2);
+            temp.base[2][3] = multiplyRowColumn(base[2], multiplier.base, 3);
+            // Fourth Row
+            temp.base[3][0] = multiplyRowColumn(base[3], multiplier.base, 0);
+            temp.base[3][1] = multiplyRowColumn(base[3], multiplier.base, 1);
+            temp.base[3][2] = multiplyRowColumn(base[3], multiplier.base, 2);
+            temp.base[3][3] = multiplyRowColumn(base[3], multiplier.base, 3);
+            return temp;
+        }
+
+        // Multiply a 4x4 by a 4x1
+        Vertex multiplyByVertex(const Vertex& vert) const 
+        {
+            Vertex temp;
+            temp.x = multiplyRowVertex(base[0], vert);
+            temp.y = multiplyRowVertex(base[1], vert);
+            temp.z = multiplyRowVertex(base[2], vert);
+            temp.w = multiplyRowVertex(base[3], vert);
+            return temp;
+        }
+
 };
 
 /******************************************************
@@ -224,6 +429,8 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
+        // The Matrix used for transformations
+        TransformationMatrix* matrix;
         // Used for the color of the point or u=a v=r
         double argb[4];
         // For now points to the image, but can later point to other assets
