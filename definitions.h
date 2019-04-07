@@ -25,6 +25,13 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+// Pre-computed values of trig functions
+#define SIN45 0.707107
+#define COS45 0.707107
+
+#define SIN30 0.5
+#define COS30 0.866025
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -214,37 +221,234 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+union attrib
+{
+    double d;
+    void* ptr;
+};
+
+class Attributes; // forward declaration of Attributes
+
+/***************************************************
+ * MATRIX - Class to facilitate matrix operations
+ **************************************************/
+class Matrix {
+    public:
+    Matrix() { clear(); }               // initialize with identity matrix
+    Matrix(double* values);             // initialize with 16 values
+    Matrix(const Attributes& uniforms); // initialize with 16 values from the uniforms
+
+    double v[4][4];
+
+    void clear(); // set back to default state (identity matrix)
+
+    const double& operator[](const int i) const { return v[i/4][i%4]; } // array access
+    double& operator[](const int i) { return v[i/4][i%4]; }             // non-const array access
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
- * primitive as a whole OR per-vertex. Will be 
- * designed/implemented by the programmer. 
+ * primitive as a whole OR per-vertex. Refactoring
+ * done by Brother Christensen:
+ * https://github.com/dwc3993/CS312_Graphics/blob/dchristensen_pipeline/definitions.h
  **************************************************/
 class Attributes
 {      
     public:
+        // Members
+    	int numMembers = 0;
+        attrib arr[16];
+
+        Matrix matrix;
+
         // Obligatory empty constructor
-        Attributes() {}
+        Attributes() {numMembers = 0;}
 
-        // Initialize with colors
-        Attributes(double red, double green, double blue) : r(red), g(green), b(blue) {}
-
-        // Member variables
-        PIXEL color; // DEPRECATED - use r,g,b instead
-        double r;
-        double g;
-        double b;
-        // UV texture coordinates
-        double u;
-        double v;
-        void* ptrImg;
+        // Interpolation Constructor
+        Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
+                    const Attributes & first, const Attributes & secnd, const Attributes & third, const double interpZ)
+        {
+            while(numMembers < first.numMembers)
+            {
+                arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
+                arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
+                arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);
+                arr[numMembers].d *= interpZ;
+                numMembers += 1;
+            }
+        }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
             // Your code goes here when clipping is implemented
         }
-};
+
+        // Const Return operator
+        const attrib & operator[](const int & i) const
+        {
+            return arr[i];
+        }
+
+        // Return operator
+        attrib & operator[](const int & i) 
+        {
+            return arr[i];
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            arr[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            arr[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+}; 
+
+// Constructor that takes an array of 16 values for the matrix
+Matrix::Matrix(double* values) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = values[r*4 + c];
+}
+
+// Constructor that takes a uniforms object and gets 16 values from there
+Matrix::Matrix(const Attributes& uniforms) {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = uniforms[r*4 + c].d;
+}
+
+// Sets the values of the matrix to the identity matrix
+void Matrix::clear() {
+    for (int r = 0; r < 4; r++)
+    for (int c = 0; c < 4; c++)
+        this->v[r][c] = (r == c ? 1 : 0);
+}
+
+// Multiplication of 4x4 by 4x1 matrix
+Vertex operator* (const Matrix& lhs, const Vertex& rhs) {
+    Vertex result = {
+          lhs[0] * rhs.x
+        + lhs[1] * rhs.y
+        + lhs[2] * rhs.z
+        + lhs[3] * rhs.w,
+
+          lhs[4] * rhs.x
+        + lhs[5] * rhs.y
+        + lhs[6] * rhs.z
+        + lhs[7] * rhs.w,
+
+          lhs[8] * rhs.x
+        + lhs[9] * rhs.y
+        + lhs[10] * rhs.z
+        + lhs[11] * rhs.w,
+
+          lhs[12] * rhs.x
+        + lhs[13] * rhs.y
+        + lhs[14] * rhs.z
+        + lhs[15] * rhs.w,
+    };
+    return result;
+}
+
+// Multiplication of 4x4 by 4x4 matrix
+Matrix operator* (const Matrix& lhs, const Matrix& rhs) {
+    Matrix result;
+    
+    // Loop over every cell in result
+    for (int i = 0; i < 16; i++) {
+        int r = 4 * (i / 4);
+        int c = i % 4;
+        double sum = 0;
+
+        // Loop 4 times (row is 4 long, col is 4 long)
+        for (int j = 0; j < 4; j++) {
+            sum += (lhs[r] * rhs[c]);
+            r++;
+            c += 4;
+        }
+        result[i] = sum;
+    }
+
+    return result;
+}
+
+/***************************************************
+ * Matrix transformation functions - return a
+ * matrix that has the specified transformation
+ **************************************************/
+void translateMatrix(Attributes& attr, Vertex v) {
+    attr.matrix[3]  = v.x;
+    attr.matrix[7]  = v.y;
+    attr.matrix[11] = v.z;
+}
+
+void scaleMatrix(Attributes& attr, Vertex v) {
+    attr.matrix[0]  = v.x;
+    attr.matrix[5]  = v.y;
+    attr.matrix[10] = v.z;
+}
+
+// This function takes an angle in degrees and converts it to radians
+void rotateZMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[0] = cosangle;
+    attr.matrix[1] = -sinangle;
+    attr.matrix[4] = sinangle;
+    attr.matrix[5] = cosangle;
+}
+
+// These functions are not used in the week05 project, but they are still here
+void rotateXMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[5]  = cosangle;
+    attr.matrix[6]  = -sinangle;
+    attr.matrix[9]  = sinangle;
+    attr.matrix[10] = cosangle;
+}
+
+void rotateYMatrix(Attributes& attr, double angle) {
+    angle = angle * M_PI / 180.0;
+    // compute trig functions here so we dont have to do them twice
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
+
+    attr.matrix[0]  = cosangle;
+    attr.matrix[2]  = sinangle;
+    attr.matrix[8]  = -sinangle;
+    attr.matrix[10] = cosangle;
+}
+
+// Does all three previous operations at once in right to left order
+void STRMatrix(Attributes& attr, Vertex s, Vertex t, double r) {
+    Attributes sAttr;
+    sAttr.matrix.clear();
+    scaleMatrix(sAttr, s);
+    Attributes tAttr;
+    tAttr.matrix.clear();
+    translateMatrix(tAttr, t);
+    Attributes rAttr;
+    rAttr.matrix.clear();
+    rotateZMatrix(rAttr, r);
+
+    attr.matrix = rAttr.matrix * tAttr.matrix * sAttr.matrix;
+}
 
 /***************************************************
  * LERP = Find the value between two doubles that
@@ -261,34 +465,6 @@ inline double lerp(double a, double b, double amount) {
  **************************************************/
 inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
     return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
-}
-
-/***************************************************
- * Fragment shaders used in week 03 project
- **************************************************/
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    fragment = 0xff000000
-        | (((unsigned int)(vertAttr.r * 0xff)) << 16)
-        | (((unsigned int)(vertAttr.g * 0xff)) << 8)
-        |  ((unsigned int)(vertAttr.b * 0xff));
-}
-
-void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    BufferImage* ptr = (BufferImage*)uniforms.ptrImg;
-
-    int width = ptr->width();
-    int height = ptr->height();
-    int x = vertAttr.u * (width - 1);
-    int y = vertAttr.v * (height - 1);
-    fragment = (*ptr)[y][x];
-}
-
-// This makes the grid look like static
-void StaticShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms) {
-    fragment = 0xff000000
-        | (((unsigned int)(rand() * 0xff)) << 16)
-        | (((unsigned int)(rand() * 0xff)) << 8)
-        |  ((unsigned int)(rand() * 0xff));
 }
 
 // Example of a fragment shader

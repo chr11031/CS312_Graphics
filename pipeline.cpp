@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "coursefunctions.h"
+#include "shaders.h"
 
 /***********************************************
  * CLEAR_SCREEN
@@ -125,25 +126,24 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
             if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
             {
-                target[(int)y][(int)x] = attrs[0].color;
+                //target[(int)y][(int)x] = attrs[0].color;
 
                 // Interpolate by reciprocals of Z values and reciprocate again
                 // This calculates the correct interpolation of the texture (or
                 // other attributes) across a depth.
                 double interpZ = 1.0 / interp(areaTriangle, firstDet, secndDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
-                // Interpolate Attributes for this pixel - In this case the R,G,B values
-                // The interp function works the way that it does because the amount each
-                // vertex's attributes should contribute to the pixel is inversely proportional
-                // to the area (determinant) at that point.
-                Attributes interpolatedAttribs;                
-                
-                interpolatedAttribs.r = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
-                interpolatedAttribs.g = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
-                interpolatedAttribs.b = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
-
-                interpolatedAttribs.u = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
-                interpolatedAttribs.v = interpZ * interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                // Interpolate Attributes using constructor provided by Brother Christensen
+                Attributes interpolatedAttribs(
+                    areaTriangle,
+                    firstDet,
+                    secndDet,
+                    thirdDet,
+                    attrs[0],
+                    attrs[1],
+                    attrs[2],
+                    interpZ
+                );
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -167,6 +167,11 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    } else {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -254,7 +259,7 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
