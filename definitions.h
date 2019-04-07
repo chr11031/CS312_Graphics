@@ -246,6 +246,172 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+class Matrix
+{      
+    public:
+        // Public member variables
+        double mat[4][4];
+
+        // Default constructor
+        Matrix()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    mat[i][j] = 0;
+                }
+            }
+
+            mat[0][0] = 1;
+            mat[1][1] = 1; 
+            mat[2][2] = 1; 
+            mat[3][3] = 1; 
+        }
+
+        double & operator () (int row, int column)
+        {
+            return mat[row][column];
+        }
+
+        void translation(double transX, double transY, double transZ) 
+        {
+            this->mat[0][3] = transX;
+            this->mat[1][3] = transY;
+            this->mat[2][3] = transZ;
+        }
+
+        void rotation(double degree) 
+        {
+            this->mat[0][0] = cos(M_PI * degree / 180);
+            this->mat[0][1] = -sin(M_PI * degree / 180);
+            this->mat[1][0] = sin(M_PI * degree / 180);
+            this->mat[1][1] = cos(M_PI * degree / 180);
+        }
+
+        void scaling(double scale) 
+        {
+            this->mat[0][0] = scale;
+            this->mat[1][1] = scale;
+            this->mat[2][2] = 1;
+        }
+
+        void combined(double degree, double transX, double transY, double transZ, double scale) 
+        {
+            // R->T->S
+            Matrix mFinal;
+            double mTemp = 0;
+
+            Matrix mRot;
+            mRot(0, 0) = cos(M_PI * degree / 180);
+            mRot(0, 1) = -sin(M_PI * degree / 180);
+            mRot(1, 0) = sin(M_PI * degree / 180);
+            mRot(1, 1) = cos(M_PI * degree / 180);
+
+            Matrix mTrans;
+            mTrans(0, 3) = transX;
+            mTrans(1, 3) = transY;
+            mTrans(2, 3) = transZ;
+
+            Matrix mScale;
+            mScale(0, 0) = scale;
+            mScale(1, 1) = scale;
+            mScale(2, 2) = 1;
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        mTemp += mScale(j, k) * mRot(k, i);
+                    }
+
+                    mFinal(j, i) = mTemp;
+                    mTemp = 0;
+                }
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        mTemp += mFinal(j, k) * mTrans(k, i);
+                    }
+
+                    mFinal(j, i) = mTemp;
+                    mTemp = 0;
+                }
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                   this->mat[i][j] = mFinal(i, j);
+                }
+            }
+        }
+};	
+
+Vertex operator * (const Matrix & lhs, const Vertex & rhs)
+{
+    Vertex v; 
+
+    v.x = lhs.mat[0][0] * rhs.x 
+         + lhs.mat[0][1] * rhs.y 
+         + lhs.mat[0][2] * rhs.z 
+         + lhs.mat[0][3] * rhs.w;
+
+    v.y = lhs.mat[1][0] * rhs.x 
+         + lhs.mat[1][1] * rhs.y 
+         + lhs.mat[1][2] * rhs.z 
+         + lhs.mat[1][3] * rhs.w;
+
+    v.z = lhs.mat[2][0] * rhs.x 
+         + lhs.mat[2][1] * rhs.y 
+         + lhs.mat[2][2] * rhs.z 
+         + lhs.mat[2][3] * rhs.w;
+
+    v.w = lhs.mat[3][0] * rhs.x 
+         + lhs.mat[3][1] * rhs.y 
+         + lhs.mat[3][2] * rhs.z 
+         + lhs.mat[3][3] * rhs.w;
+
+    return v;
+}  
+
+/***************************************************
+ * ATTRIBUTES (shadows OpenGL VAO, VBO)
+ * The attributes associated with a rendered 
+ * primitive as a whole OR per-vertex. Will be 
+ * designed/implemented by the programmer. 
+ **************************************************/
+class Attributes
+{      
+    public:
+        // Public member variabels
+        PIXEL color;
+        double r, g, b, u, v;
+
+        vector<double> vAttr;
+
+        void* ptrImg;
+
+        Matrix matrix;
+
+        // Obligatory empty constructor
+        Attributes() {}
+
+        // Needed by clipping (linearly interpolated Attributes between two others)
+        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        {
+            // Your code goes here when clipping is implemented
+        }
+};
+
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     BufferImage* bf = (BufferImage*)uniforms.ptrImg;
@@ -315,6 +481,12 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void CustomVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
 

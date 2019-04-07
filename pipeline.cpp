@@ -312,12 +312,20 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
                                  Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
-    if(vert == NULL)
+    if (vert == NULL)
     {
         for(int i = 0; i < numIn; i++)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    }
+    else
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            transformedAttrs[i] = inputAttrs[i];
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -405,8 +413,8 @@ int main()
         // Refresh Screen
         clearScreen(frame);
 
-        // Tests perspective correction
-        TestDrawPerspectiveCorrect(frame);
+        // Tests the vertex shader
+        TestVertexShader(frame);
         
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
