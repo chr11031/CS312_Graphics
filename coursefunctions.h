@@ -1,4 +1,9 @@
 #include "definitions.h"
+#include "shaders.h"
+#include "controls.h"
+#include "model.h"
+#include "gameobject.h"
+#include "particlesystem.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -123,8 +128,83 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
 
 
-        // Your code goes here 
-        // Feel free to copy from other test functions to get started!
+        static Buffer2D<double> zBuf(halfWid, halfHgt);
+        clearZBuf(zBuf);
+
+        Vertex quad[] = { {-20,-20, -20, 1},
+                          { 20,-20,   0, 1},
+                          { 20, 20,  20, 1},
+                          {-20, 20,   0, 1}};
+
+        Vertex verticesImgA[3];
+        Attributes imageAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
+
+        Vertex verticesImgB[3];        
+        Attributes imageAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
+
+        double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
+
+        static BufferImage myImage("checker.bmp");
+        Attributes imageUniforms;
+        imageUniforms.insertPtr(&myImage); // Image [0]
+
+        Matrix model = IdentityMatrix();
+        Matrix view = CameraMatrix(0, 0, -50, 0, 0, 0);
+        Matrix projection = OrthographicMatrix(32, -32, -32, 32, 0.1, 200);
+
+        imageUniforms.insertPtr(&model); // Model Matrix [1]
+        imageUniforms.insertPtr(&view); // View Matrix [2]
+        imageUniforms.insertPtr(&projection); // Projection Matrix [3]
+
+        FragmentShader fragImg;
+        fragImg.FragShader = ImageFragShader;
+
+        VertexShader vertImg;
+        vertImg.VertShader = SimpleVertexShader;
+                
+        // Draw image triangle
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botLeft, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        view = CameraMatrix(0, 50, 0, 0, 90, 0);
+
+        clearZBuf(zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topLeft, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        view = CameraMatrix(50, 0, 0, -90, 0, 0);
+
+        clearZBuf(zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, botRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
+        view = CameraMatrix(50, 50, -50, -45, 45, 0);
+        projection = PerspectiveMatrix(60, 1.0, 1, 200);
+
+        clearZBuf(zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, topRight, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+
 
 
         // Blit four panels to target
@@ -140,6 +220,11 @@ void CADView(Buffer2D<PIXEL> & target)
                         target[ySrc][xSrc+halfWid]         = botRight[ySrc][xSrc];
                         target[ySrc+halfHgt][xSrc]         = topLeft[ySrc][xSrc];
                         target[ySrc+halfHgt][xSrc+halfWid] = topRight[ySrc][xSrc];
+
+                        botLeft[ySrc][xSrc]  = 0xff000000;
+                        botRight[ySrc][xSrc] = 0xff000000;
+                        topLeft[ySrc][xSrc]  = 0xff000000;
+                        topRight[ySrc][xSrc] = 0xff000000;
                 }
         }
 }
@@ -246,15 +331,15 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
 
         // Your color code goes here for 'colorAttributes'
-        colorAttributes[0].r = 1.0;
-	colorAttributes[0].g = 0.0;
-	colorAttributes[0].b = 0.0;
-	colorAttributes[1].r = 0.0;
-	colorAttributes[1].g = 1.0;
-	colorAttributes[1].b = 0.0;
-	colorAttributes[2].r = 0.0;
-	colorAttributes[2].g = 0.0;
-	colorAttributes[2].b = 1.0;
+        colorAttributes[0].insertDbl(1.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[1].insertDbl(1.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(1.0);
 
         FragmentShader myColorFragShader;
         // Your code for the color fragment shader goes here
@@ -276,19 +361,19 @@ void TestDrawFragments(Buffer2D<PIXEL> & target)
         double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
 
         // Your texture coordinate code goes here for 'imageAttributes'
-        imageAttributes[0].u = coordinates[0][0];
-        imageAttributes[0].v = coordinates[0][1];
-        imageAttributes[1].u = coordinates[1][0];
-        imageAttributes[1].v = coordinates[1][1];
-        imageAttributes[2].u = coordinates[2][0];
-        imageAttributes[2].v = coordinates[2][1];
+        imageAttributes[0].insertDbl(coordinates[0][0]);
+        imageAttributes[0].insertDbl(coordinates[0][1]);
+        imageAttributes[1].insertDbl(coordinates[1][0]);
+        imageAttributes[1].insertDbl(coordinates[1][1]);
+        imageAttributes[2].insertDbl(coordinates[2][0]);
+        imageAttributes[2].insertDbl(coordinates[2][1]);
 
         static BufferImage myImage("mario.bmp");
         // Provide an image in this directory that you would like to use (powers of 2 dimensions)
 
         Attributes imageUniforms;
         // Your code for the uniform goes here
-        imageUniforms.ptrImg = &myImage;
+        imageUniforms.insertPtr(&myImage);
 
         FragmentShader myImageFragShader;
         // Your code for the image fragment shader goes here
@@ -327,25 +412,25 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        imageAttributesA[0].u = coordinates[0][0];
-        imageAttributesA[0].v = coordinates[0][1];
-        imageAttributesA[1].u = coordinates[1][0];
-        imageAttributesA[1].v = coordinates[1][1];
-        imageAttributesA[2].u = coordinates[2][0];
-        imageAttributesA[2].v = coordinates[2][1];
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
         
-        imageAttributesB[0].u = coordinates[2][0];
-        imageAttributesB[0].v = coordinates[2][1];
-        imageAttributesB[1].u = coordinates[3][0];
-        imageAttributesB[1].v = coordinates[3][1];
-        imageAttributesB[2].u = coordinates[0][0];
-        imageAttributesB[2].v = coordinates[0][1];
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         static BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory
 
         Attributes imageUniforms;
-        imageUniforms.ptrImg = &myImage;
+        imageUniforms[0].ptr = &myImage;
 
         FragmentShader fragImg;
         fragImg.FragShader = ImageFragShader;
@@ -370,15 +455,15 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         colorTriangle[1] = { 400, 200, 1, 1};
         colorTriangle[2] = { 300, 200, 1, 1};
 
-        colorAttributes[0].r = 1.0;
-	colorAttributes[0].g = 0.0;
-	colorAttributes[0].b = 0.0;
-	colorAttributes[1].r = 0.0;
-	colorAttributes[1].g = 1.0;
-	colorAttributes[1].b = 0.0;
-	colorAttributes[2].r = 0.0;
-	colorAttributes[2].g = 0.0;
-	colorAttributes[2].b = 1.0;
+        colorAttributes[0].insertDbl(1.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[0].insertDbl(0.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[1].insertDbl(1.0);
+	colorAttributes[1].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(0.0);
+	colorAttributes[2].insertDbl(1.0);
 
         FragmentShader myColorFragShader;
         myColorFragShader.FragShader = ColorFragShader;
@@ -393,28 +478,29 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
         * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         Matrix translation = TranslationMatrix(100, 50, 0);
-        colorUniforms.transform = translation;
+        colorUniforms.insertPtr(&translation);
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         Matrix scale = ScaleMatrix(0.5, 0.5, 1);
-        colorUniforms.transform = scale;
+        colorUniforms[0].ptr = &scale;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         Matrix rotation = ZRotationMatrix(30.0 * DEG_TO_RAD);
-        colorUniforms.transform = rotation;
+        colorUniforms[0].ptr = &rotation;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-	colorUniforms.transform = rotation * translation * scale;
+        Matrix model = rotation * translation * scale;
+	colorUniforms[0].ptr = &model;
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
@@ -443,8 +529,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         //      To incorporate a view transform (add movement)
         
         static Buffer2D<double> zBuf(target.width(), target.height());
-        // Will need to be cleared every frame, like the screen
-
+        clearZBuf(zBuf);
         /**************************************************
         * 1. Image quad (2 TRIs) Code (texture interpolated)
         **************************************************/
@@ -467,26 +552,113 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
 
-        BufferImage myImage("checker.bmp");
-        // Ensure the checkboard image is in this directory, you can use another image though
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
+        static BufferImage myImage("checker.bmp");
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+        imageUniforms.insertPtr(&myImage); // Image [0]
+
+        Matrix model = IdentityMatrix();
+        Matrix view = CameraMatrix(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+        Matrix projection = PerspectiveMatrix(60, 1.0, 1, 200); 
+
+        imageUniforms.insertPtr(&model); // Model Matrix [1]
+        imageUniforms.insertPtr(&view); // View Matrix [2]
+        imageUniforms.insertPtr(&projection); // Projection Matrix [3]
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+        vertImg.VertShader = SimpleVertexShader;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
-        // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
+        model = TranslationMatrix(0, 10, 10);
+
+        static BufferImage marioImage("mario.bmp");
+        imageUniforms[0].ptr = &marioImage;
+
+        // Draw image triangle 
+        DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
+        DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
+}
+
+Model* cube;
+Model* sphere;
+Model* plane;
+GameObject* box;
+GameObject* ball;
+GameObject* ground;
+BufferImage* myImage;
+Matrix projection = PerspectiveMatrix(60, 1.0, 1, 200); 
+ParticleSystem* ps;
+
+void SetupProject()
+{
+        myCam.y = 1.6;
+        myCam.yaw = 45;
+
+        cube = loadOBJ("cube.obj");
+        box = new GameObject(cube, 1, 0, 0);
+        box->setPosition(5, 1, 5);
+
+        sphere = loadOBJ("sphere.obj");
+        ball = new GameObject(sphere, 0, 0, 1);
+        ball->setPosition(5, 3, 5);
+
+        myImage = new BufferImage("checker.bmp");
+        plane = loadOBJ("plane.obj");
+        ground = new GameObject(plane, myImage);
+
+        Vertex position = {3, 0, 3, 1};
+        Vertex direction = {0, 1, 0, 0};
+
+        ps = new ParticleSystem(1000, position, direction, 30, 0.01, 0.0001);
+}
+
+/********************************************
+ * 
+ *******************************************/
+void Project(Buffer2D<PIXEL> & target)
+{
+        static Buffer2D<double> zBuf(target.width(), target.height());
+        clearZBuf(zBuf);
+
+        Matrix view = CameraMatrix(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+
+        ps->addParticle(0, 1, 0);
+
+        box->draw(target, view, projection, &zBuf);
+        ball->draw(target, view, projection, &zBuf);
+        ground->draw(target, view, projection, &zBuf);
+        ps->draw(target, view, projection, &zBuf);
+}
+
+void cleanupProject()
+{
+        delete cube;
+        delete sphere;
+        delete plane;
+        delete box;
+        delete ball;
+        delete ground;
+        delete myImage;
+        delete ps;
 }
 
 
