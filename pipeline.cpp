@@ -145,6 +145,14 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+    } else {
+        for(int i = 0; i < numIn; i++)
+        {
+            // transformedVerts[i] = inputVerts[i];
+            // transformedAttrs[i] = inputAttrs[i];
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
+        
     }
 }
 
@@ -233,7 +241,8 @@ int main()
 
         // TestDrawTriangle(frame);
         // TestDrawFragments(frame);
-        TestDrawPerspectiveCorrect(frame);
+        // TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
