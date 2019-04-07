@@ -239,6 +239,37 @@ class Attributes
                          // double:
                          // color rgb, UV coordinates, normal vectors, fog coordinates, ECT.
         void* ptrImg;    // for the imgBuffer attribute, but may be re-purposed
+        //Matrix matrix;
+        void addAttributes(const double first, const double second = 0,
+                           const double third = 0, const double fourth = 0,
+                           const double fifth = 0, const double sixth = 0,
+                           const double seventh = 0, const double eighth = 0,
+                           const double ninth = 0, const double tenth = 0,
+                           const double eleventh = 0, const double twelfth = 0,
+                           const double thirteenth = 0, const double fourteenth = 0,
+                           const double fifteenth = 0, const double sixteenth = 0)
+
+        {
+            attr[0] = first;
+            attr[1] = second;
+            attr[2] = third;
+            attr[3] = fourth;
+            attr[4] = fifth;
+            attr[5] = sixth;
+            attr[6] = seventh;
+            attr[7] = eighth;
+            attr[8] = ninth;
+            attr[9] = tenth;
+            attr[10] = eleventh;
+            attr[11] = twelfth;
+            attr[12] = thirteenth;
+            attr[13] = fourteenth;
+            attr[14] = fifteenth;
+            attr[15] = sixteenth;                      
+        }
+
+
+
 };	
 
 // Example of a fragment shader
@@ -273,6 +304,98 @@ void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
     fragment = color;
 }
+
+// Helper function fo do matrix multiplication
+Vertex operator* (const Vertex& lhs,const Vertex * rhs)
+{
+    Vertex newVert;
+    newVert.x = ((lhs).x * (*rhs).x)
+    + ((lhs).y * (*rhs).y)
+    + ((lhs).z * (*rhs).z)
+    + ((lhs).w * (*rhs).w);
+
+    newVert.y = ((lhs).x * (*(rhs + 1)).x)
+    + ((lhs).y * (*(rhs + 1)).y)
+    + ((lhs).z * (*(rhs + 1)).z)
+    + ((lhs).w * (*(rhs + 1)).w);
+
+    newVert.z = ((lhs).x * (*(rhs + 2)).x)
+    + ((lhs).y * (*(rhs + 2)).y)
+    + ((lhs).z * (*(rhs + 2)).z)
+    + ((lhs).w * (*(rhs + 2)).w);
+
+    newVert.w = ((lhs).x * (*(rhs + 3)).x)
+    + ((lhs).y * (*(rhs + 3)).y)
+    + ((lhs).z * (*(rhs + 3)).z)
+    + ((lhs).w * (*(rhs + 3)).w);
+
+    return newVert;
+}
+
+/*******************************************************
+ * MATRIX
+ * Makes use of transformation matrices to transform
+ * each vertice provided
+ ******************************************************/
+class Matrix
+{
+    public:
+    Vertex rotateX(Vertex vert,double angle) 
+    {
+        Vertex transformMatrix[4] = {  {1, 0, 0, 0},
+                                       {0, cos(angle), -sin(angle), 0},
+                                       {0, sin(angle), cos(angle), 0},
+                                       {0, 0, 0, 1} };
+        Vertex * matrix = transformMatrix;
+        vert = vert * matrix;
+        return vert;
+    }
+
+    Vertex rotateY(Vertex vert,double angle)
+    {
+        Vertex transformMatrix[4] = {  {cos(angle), 0, sin(angle), 0},
+                                       {0, 1, 0, 0},
+                                       {-sin(angle), 0, cos(angle), 0},
+                                       {0, 0, 0, 1} };
+        Vertex * matrix = transformMatrix;
+        vert = vert * matrix;
+        return vert;
+    }
+
+    Vertex rotateZ(Vertex vert,double angle)
+    {
+        Vertex transformMatrix[4] = {  {cos(angle), -sin(angle), 0, 0},
+                                       {sin(angle), cos(angle), 0, 0},
+                                       {0, 0, 1, 0},
+                                       {0, 0, 0, 1} };
+        Vertex * matrix = transformMatrix;
+        vert = vert * matrix;
+        return vert;
+    }
+
+    Vertex translate(Vertex vert,double xShift, double yShift, double zShift)
+    {
+        Vertex transformMatrix[4] = {  {1, 0, 0, xShift},
+                                       {0, 1, 0, yShift},
+                                       {0, 0, 1, zShift},
+                                       {0, 0, 0, 1} };
+        Vertex * matrix = transformMatrix;
+        vert = vert * matrix;
+        return vert;
+    }
+
+    Vertex scale(Vertex vert, double xScale, double yScale, double zScale)
+    {
+        Vertex transformMatrix[4] = {  {xScale, 0, 0, 0},
+                                       {0, yScale, 0, 0},
+                                       {0, 0, zScale, 0},
+                                       {0, 0, 0, 1} };
+        Vertex * matrix = transformMatrix;
+        vert = vert * matrix;
+        return vert;
+    }
+};
+
 
 /*******************************************************
  * FRAGMENT_SHADER
@@ -315,6 +438,24 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     attrOut = vertAttr;
 }
 
+void TransformationVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+            // Scale
+            vertOut = vertIn;
+            if ((uniforms).attr[4] != 0)
+                vertOut = Matrix().scale(vertOut, 
+                (uniforms).attr[4], (uniforms).attr[5], (uniforms).attr[6]);
+            // Translate
+            if ((uniforms).attr[0] != 0)
+                vertOut = Matrix().translate(vertOut, 
+                (uniforms).attr[0], (uniforms).attr[1], (uniforms).attr[2]);  
+            // Rotate         
+            if ((uniforms).attr[3] != 0)
+                vertOut = Matrix().rotateZ(vertOut, 
+                (uniforms).attr[3]);
+            attrOut = vertAttr;
+}
+
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -345,6 +486,7 @@ class VertexShader
         {
             VertShader = VertSdr;
         }
+
 };
 
 // Stub for Primitive Drawing function
