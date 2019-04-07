@@ -3,6 +3,20 @@
 #define SHADERS_H
 
 /****************************************************
+ * MYVERTSHADER:
+ * Vertex shader for transformations, transfers inputting vertices,
+ * attributes, and matrices, then combines them appropriately
+ ***************************************************/
+void MyVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn;
+
+    vertOut *= uniforms.matrix;
+
+    attrOut = vertAttr;
+}
+
+/****************************************************
  * COLORFRAGSHADER:
  * The fragment shader when drawing pixels based off
  * of individual rgb values

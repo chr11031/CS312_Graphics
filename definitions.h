@@ -5,6 +5,8 @@
 #include "math.h"
 #include <vector>
 
+#include <iostream>
+
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
 
@@ -26,6 +28,9 @@
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
+// My definitions
+#define DEG_TO_RAD M_PI/180
+
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -34,6 +39,136 @@ enum PRIMITIVES
     TRIANGLE,
     LINE,
     POINT
+};
+
+/***************************************************
+ * MATRIX
+ * Holds a matrix and functions to manipulate it
+ **************************************************/
+class Matrix
+{
+
+public:
+    double cell[4][4];
+
+    Matrix() {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+            {
+                if (i == j)
+                    cell[i][j] = 1;
+                else
+                    cell[i][j] = 0;
+            }
+    }
+
+    // *= operator overload for another 4x4 matrix
+    Matrix operator *= (const Matrix rhs) {
+        Matrix temp;
+        temp.clear();
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                for (int k = 0; k < 4; k++)
+                {
+                    temp.cell[i][j] += this->cell[i][k] * rhs.cell[k][j];
+                }
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+            {
+                this->cell[i][j]  = temp.cell[i][j];
+            }
+        // I think I have to return *this... but if I didn't have to, couldn't I get rid of the last for loop?
+        return *this;
+    }
+
+    // assignment operator overload for another 4x4 matrix
+    Matrix& operator = (const Matrix rhs) {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+            {
+                this->cell[i][j] = rhs.cell[i][j];
+            }
+        return *this;
+    }
+
+    // translates the triangle on the x, y, and/or z axis
+    void translate(double x, double y, double z)
+    {
+        Matrix temp;
+        temp.cell[0][3] += x;
+        temp.cell[1][3] += y;
+        temp.cell[2][3] += z;
+
+        *this *= temp;
+    }
+
+    // scales the triangle in the x, y, and/or z direction
+    void scale(double x, double y, double z)
+    {
+        Matrix temp;
+        temp.cell[0][0] = x;
+        temp.cell[1][1] = y;
+        temp.cell[2][2] = z;
+
+        *this *= temp;
+    }
+
+    // rotates the vertices around a user-selected axis
+    void rotate(double angle, const char axis)
+    {
+        angle *= DEG_TO_RAD;
+        Matrix temp;
+        switch (axis)
+        {
+            case 'x':
+            temp.cell[1][1] = cos(angle);
+            temp.cell[1][2] = -sin(angle);
+            temp.cell[2][1] = sin(angle);
+            temp.cell[2][2] = cos(angle);   
+            break;
+            case 'y':
+            temp.cell[0][0] = cos(angle);
+            temp.cell[0][2] = sin(angle);
+            temp.cell[2][0] = -sin(angle);
+            temp.cell[2][2] = cos(angle);
+            break;
+            case 'z':
+            temp.cell[0][0] = cos(angle);
+            temp.cell[0][1] = -sin(angle);
+            temp.cell[1][0] = sin(angle);
+            temp.cell[1][1] = cos(angle);
+            break;
+        }
+
+        *this *= temp;
+    }
+
+    // sets the matrix identity back to all 1s
+    void clear()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                cell[i][j] = 0;
+            }
+        }
+    }
+
+    // sets the matrix identity back to all 1s
+    void reset()
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                    if (i == j)
+                            cell[i][j] = 1;
+                    else
+                            cell[i][j] = 0;
+            }
+        }
+    }
 };
 
 /****************************************************
@@ -45,13 +180,43 @@ struct Vertex
     double y;
     double z;
     double w;
+
+    // the only time I need to multiply a 4x4 by a 4x1 is with a vertex, so I have overloaded the vertex *= operator
+    Vertex& operator *= (const Matrix &rhs);
+
+    // in case the user wants to use this version instead
+    Vertex& operator * (const Matrix &rhs) {
+        *this *= rhs;
+        return *this;
+    }
+
 };
+
+// the full operator function
+Vertex& Vertex::operator *= (const Matrix &rhs) {
+    double copy[4] = {x, y, z, w};
+    double temp[4] = {0, 0, 0, 0};
+
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+        {
+            temp[i] += rhs.cell[i][j] * copy[j];
+        }
+    this->x = temp[0];
+    this->y = temp[1];
+    this->z = temp[2];
+    this->w = temp[3];
+
+    std::cout << std::endl;
+
+    return *this;
+}
 
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
  * and depth buffers. Can be described as frames or 
- * 2D arrays ot type 'T' encapsulated in an object.
+ * 2D arrays of type 'T' encapsulated in an object.
  *****************************************************/
 template <class T>
 class Buffer2D 
@@ -240,16 +405,15 @@ class Attributes
         void * ptrImg;  // points to the .bmp
 
         std::vector<double> values; // vector to allow for as many as the user would like
+        // std::vector<void*> ptrImgs; // vector to allow for as many textures as the user would like
+
+        Matrix matrix;
 
         // easier to add another value to the vector
         void add(const double value) { values.push_back(value); }
 
         // clears the vector for future use
         void reset() { values.clear(); }
-
-        // I'm confused about what the Attributes class needs to be able to do in the future,
-        //    does it need more vectors of other data types? Does it need methods to access it's
-        //    values instead of direct access? Are other data types needed?
 };
 
 // Example of a fragment shader
