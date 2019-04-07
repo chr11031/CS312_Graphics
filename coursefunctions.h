@@ -1,5 +1,6 @@
 #include "definitions.h"
 
+
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
 
@@ -417,7 +418,6 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
-        //double coordinates[4][2] = { {0, 0}, {1, 0}, {1, 1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
         //Attributes imageAttributesA[3];
@@ -470,20 +470,36 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        //different color attributes
+        colorAttributes[0].newColor[0] = 1.0;
+        colorAttributes[0].newColor[1] = 0.0;
+        colorAttributes[0].newColor[2] = 0.0;
+
+        colorAttributes[1].newColor[0] = 0.0;
+        colorAttributes[1].newColor[1] = 1.0;
+        colorAttributes[1].newColor[2] = 0.0;
+        
+        colorAttributes[2].newColor[0] = 0.0;
+        colorAttributes[2].newColor[1] = 0.0;
+        colorAttributes[2].newColor[2] = 1.0;
 
         FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        myColorVertexShader.VertShader = vertexShader;
 
         /******************************************************************
-		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+	* TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+       
+        Matrix transMatrix(4, 4);
+        transMatrix.translation(100, 50, 0);
+        colorUniforms.matrixAttributes = transMatrix;
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
@@ -491,21 +507,30 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
+        Matrix scaleMatrix(4, 4);
+        scaleMatrix.scaling(0.5, 0.5, 1);
+        colorUniforms.matrixAttributes = scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+      
+        Matrix rotMatrix(4, 4);
+        rotMatrix.rotation(M_PI/4);
+        colorUniforms.matrixAttributes = rotMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        
+        colorUniforms.matrixAttributes = rotMatrix;
+        colorUniforms.matrixAttributes *= transMatrix;
+        colorUniforms.matrixAttributes *= scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
