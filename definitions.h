@@ -1,13 +1,31 @@
 #define SDL_MAIN_HANDLED
-#include "/Users/jeremy/Desktop/SDL2-2.0.9/include/SDL.h"
+#include "/Users/jeremy/Desktop/Desktop Archive/SDL2-2.0.9/include/SDL.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "/Users/jeremy/Desktop/cs312/CS312_Graphics/matrix.h"
+#include "/Users/jeremy/Desktop/cs312/CS312_Graphics/mat4multiplier.h"
 
 #include "time.cpp"
 
+#define PI 3.14159265
+
+
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+
+// Everything needed for view/camera transforms
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double yaw = 0;
+    double roll = 0;
+    double pitch = 0;
+};
+camControls myCam;
+
 
 /******************************************************
  * DEFINES:
@@ -23,6 +41,9 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define MEMBERS_PER_ATTRIB
+#define X_KEY 0
+#define Y_KEY 1
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -137,6 +158,25 @@ class Buffer2D
 };
 
 
+// Struct used for reading in RGB values from a bitmap file
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+// The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
+
 /****************************************************
  * BUFFER_IMAGE:
  * PIXEL (Uint32) specific Buffer2D class with .BMP 
@@ -146,7 +186,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+    	bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
 
         // Private intialization setup
         void setupInternal()
@@ -165,10 +206,83 @@ class BufferImage : public Buffer2D<PIXEL>
             }
         }
 
+    private:
+
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+    
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] =    0xff000000 + 
+                                    ((pixelPtr->r) << 16) +
+                                    ((pixelPtr->g) << 8) +
+                                    ((pixelPtr->b));
+                                    ++pixelPtr;
+                }
+            }
+    
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
+
     public:
         // Free dynamic memory
         ~BufferImage()
         {
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+                for(int y = 0; y < h; y++)
+                {
+                    free(grid[y]);
+                }
+            }
+
             // De-Allocate pointers for column references
             free(grid);
 
@@ -206,14 +320,11 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            SDL_LockSurface(img);
-            setupInternal();
+	  ourSurfaceInstance = false;
+	  if(!readBMP(path))
+	    {
+	      return;
+	    }	  
         }
 };
 
@@ -240,6 +351,13 @@ class Attributes
 
         // Obligatory empty constructor
         Attributes() {numMembers = 0;}
+
+        Attributes(int numMembers){
+            this->numMembers = numMembers;
+            for(int i = 0; i < numMembers; i++){
+                insertDbl(0);
+            }
+        }
 
         Attributes(Vertex * colorTriangle, Vertex point)
         {
@@ -371,6 +489,57 @@ class FragmentShader
             FragShader = FragSdr;
         }
 };
+
+Vertex operator*(Matrix lhs, Vertex rhs){
+
+    double tempResult[] = {0,0,0,0};
+
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+
+            double vectorValue;
+            switch(j) {
+                case 0 : vectorValue = rhs.x; 
+                        break;       
+                case 1 : vectorValue = rhs.y;
+                        break;
+                case 2 : vectorValue = rhs.z;
+                        break;
+                case 3 : vectorValue = rhs.w;
+                        break;
+            }           
+            double matrixValue = lhs.getElement(i,j);
+            tempResult[i] += matrixValue * vectorValue;
+        }
+    }
+
+    Vertex result = {tempResult[0],tempResult[1],tempResult[2],tempResult[3]};
+
+    return result;
+}
+
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    
+    Matrix transformation = *(Matrix*)uniforms[0].ptr;
+
+    vertOut = transformation * vertIn;
+
+    attrOut = vertAttr;
+
+}
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+
+    Matrix model = *(Matrix*)uniforms[1].ptr;
+    Matrix view = *(Matrix*)uniforms[2].ptr;
+
+    vertOut = view * model * vertIn;
+
+    attrOut = vertAttr;
+
+}
 
 // Example of a vertex shader
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)

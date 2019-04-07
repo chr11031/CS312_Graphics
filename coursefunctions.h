@@ -348,7 +348,7 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         // Shifted up a 100th to fix problem with the bmp image
-        double coordinates[4][2] = { {0/divA,0.01/divA}, {1/divA,0.01/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
         imageAttributesA[0].insertDbl(coordinates[0][0]);
@@ -401,26 +401,56 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        colorAttributes[0].insertDbl(1);
+        colorAttributes[0].insertDbl(0);
+        colorAttributes[0].insertDbl(0);
+
+        colorAttributes[1].insertDbl(0);
+        colorAttributes[1].insertDbl(1);
+        colorAttributes[1].insertDbl(0);
+
+        colorAttributes[2].insertDbl(0);
+        colorAttributes[2].insertDbl(0);
+        colorAttributes[2].insertDbl(1);
 
         FragmentShader myColorFragShader;
+        myColorFragShader.FragShader = ColorFragShader;
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
-        // Your code for the vertex shader goes here 
+        // Your code for the vertex shader goes here
+        myColorVertexShader = SimpleVertexShader; 
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        Matrix scaleMatrix = createScaleMatrix(1,1,1);
+        Matrix rotationMatrix = createRotationMatrix(0,0,0);
+        Matrix translateMatrix = createTranslationMatrix(100,50,0);
+        Matrix finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
 
+        colorUniforms.insertPtr(&finalMatrix);
+
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+ 
+        // Clear the Attributes
+        colorUniforms = Attributes();
+
+        scaleMatrix = createScaleMatrix(.5,.5,.5);
+        rotationMatrix = createRotationMatrix(0,0,0);
+        translateMatrix = createTranslationMatrix(0,0,0);
+        finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
+
+        colorUniforms.insertPtr(&finalMatrix);        
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -429,13 +459,33 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
 
+        // Clear the Attributes
+        colorUniforms = Attributes();
+
+        scaleMatrix = createScaleMatrix(1,1,1);
+        rotationMatrix = createRotationMatrix(0,0,30);
+        translateMatrix = createTranslationMatrix(0,0,0);
+        finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
+
+        colorUniforms.insertPtr(&finalMatrix); 
+
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        // Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+
+        // Clear the Attributes
+        colorUniforms = Attributes();
+
+        scaleMatrix = createScaleMatrix(.5,.5,.5);
+        rotationMatrix = createRotationMatrix(0,0,30);
+        translateMatrix = createTranslationMatrix(100,50,0);
+        finalMatrix = (rotationMatrix * translateMatrix) * scaleMatrix;
+
+        colorUniforms.insertPtr(&finalMatrix); 
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
@@ -487,21 +537,46 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         verticesImgB[2] = quad[0];
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
-        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+
+        // First Group of Attributes 
+        imageAttributesA[0].insertDbl(coordinates[0][0]);
+        imageAttributesA[0].insertDbl(coordinates[0][1]);
+        imageAttributesA[1].insertDbl(coordinates[1][0]);
+        imageAttributesA[1].insertDbl(coordinates[1][1]);
+        imageAttributesA[2].insertDbl(coordinates[2][0]);
+        imageAttributesA[2].insertDbl(coordinates[2][1]);
+
+        // Second Group of Attributes 
+        imageAttributesB[0].insertDbl(coordinates[2][0]);
+        imageAttributesB[0].insertDbl(coordinates[2][1]);
+        imageAttributesB[1].insertDbl(coordinates[3][0]);
+        imageAttributesB[1].insertDbl(coordinates[3][1]);
+        imageAttributesB[2].insertDbl(coordinates[0][0]);
+        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
-        // Your code for the uniform goes here
+
+        Matrix model = createTranslationMatrix(0,0,0);
+        Matrix view = camera(myCam.x, myCam.y, myCam.z, myCam.yaw, myCam.pitch, myCam.roll);
+
+        //Uniforms
+        //[0] Image reference
+        //[1] Model Transform
+        //[2] View Transform
+
+        imageUniforms.insertPtr((void*)&myImage);
+        imageUniforms.insertPtr((void*)&model);
+        imageUniforms.insertPtr((void*)&view);        
 
         FragmentShader fragImg;
-        // Your code for the image fragment shader goes here
+        fragImg.FragShader = ImageFragShader;
+
 
         VertexShader vertImg;
-        // Your code for the image vertex shader goes here
-        // NOTE: This must include the at least the 
-        // projection matrix if not more transformations 
+        vertImg.VertShader = SimpleVertexShader2;
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);

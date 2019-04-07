@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 
+
 /***********************************************
  * CLEAR_SCREEN
  * Sets the screen to the indicated color value.
@@ -54,6 +55,59 @@ void processUserInputs(bool & running)
         {
             running = false;
         }
+
+        if(e.type == SDL_MOUSEMOTION)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if (cur == SDL_DISABLE)
+            {
+                double mouseX = e.motion.xrel;
+                double mouseY= e.motion.yrel;
+
+                myCam.yaw -= mouseX * 0.02;
+                myCam.pitch += mouseY * 0.02;
+            }
+        }
+        if(e.type == SDL_MOUSEBUTTONDOWN)
+        {
+            int cur = SDL_ShowCursor(SDL_QUERY);
+            if(cur == SDL_DISABLE)
+            {
+                SDL_ShowCursor(SDL_ENABLE);
+                SDL_SetRelativeMouseMode(SDL_FALSE);
+            }
+            else
+            {
+                SDL_ShowCursor(SDL_DISABLE);
+                SDL_SetRelativeMouseMode(SDL_TRUE);                
+            }
+        }
+
+        // Translation
+        if((e.key.keysym.sym == 'w' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z += (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.x -= (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 's' && e.type == SDL_KEYDOWN))
+        {
+            myCam.z -= (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.x += (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 'a' && e.type == SDL_KEYDOWN))
+        {
+            myCam.x -= (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.z -= (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+        if((e.key.keysym.sym == 'd' && e.type == SDL_KEYDOWN))
+        {
+            myCam.x += (cos((myCam.yaw/180.0) * M_PI)) * 0.05;
+            myCam.z += (sin((myCam.yaw/180.0) * M_PI)) * 0.05;
+        }
+
+
+        
+
     }
 }
 
@@ -114,10 +168,14 @@ double interp(double x, double y, Vertex* const triangle, double attr1, double a
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
 
-    target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0][0].d;
-    target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1][0].d;
-    target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2][0].d;
+    // target[(int)triangle[0].y][(int)triangle[0].x] = attrs[0][0].d;
+    // target[(int)triangle[1].y][(int)triangle[1].x] = attrs[1][0].d;
+    // target[(int)triangle[2].y][(int)triangle[2].x] = attrs[2][0].d;
 
+    // Testing
+    double r = attrs[2][0].d;
+    double g = attrs[2][1].d;
+    double b = attrs[2][2].d;
 
     /* get the bounding box of the triangle */
     int maxX = std::max(triangle[0].x, std::max(triangle[1].x, triangle[2].x));
@@ -159,6 +217,8 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                     interpolatedAttrs.insertDbl(interp(x,y,triangle,attrs[0][i].d,attrs[1][i].d,attrs[2][i].d)/interpolatedW);
                 }
 
+                interpolatedAttrs;
+
                 frag->FragShader(target[y][x],interpolatedAttrs,*uniforms);
 
 
@@ -175,14 +235,24 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
 void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVerts[], Attributes const inputAttrs[], const int& numIn, 
                                  Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
+
+    int i = 0;
     // Defaults to pass-through behavior
     if(vert == NULL)
     {
-        for(int i = 0; i < numIn; i++)
+        for(; i < numIn; i++)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
         }
+    }
+    else{
+        for(; i < numIn; i++)
+        {
+            (*vert).VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], (*uniforms));   
+            transformedAttrs[i] = inputAttrs[i];  
+        }
+ 
     }
 }
 
@@ -264,14 +334,15 @@ int main()
     while(running) 
     {           
         // Handle user inputs
-         processUserInputs(running);
+        processUserInputs(running);
 
         // Refresh Screen
-         clearScreen(frame);
+        clearScreen(frame);
 
         // Your code goes here
-        // TestDrawPixel(frame);
-        TestDrawPerspectiveCorrect(frame);
+        // TestDrawFragments(frame);
+        TestVertexShader(frame);
+        // TestPipeline(frame);
 
         //GameOfLife(frame);
 
