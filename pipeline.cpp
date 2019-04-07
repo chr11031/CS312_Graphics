@@ -28,10 +28,45 @@ double interp(double area, double determinate1, double determinate2, double dete
     double triArea3 = determinate3 / area;
 
     //Now is the time to relate the colors to the position in the triangle
-    double color = triArea1 * triColor1 + triArea2 * triColor2 + triArea3 * triColor3;
+    double color = triArea2 * triColor1 + triArea3 * triColor2 + triArea1 * triColor3;
     return color;
 }
 
+/************************************************
+ * CORRECTED PERSPECTIVE INTERPOLATION
+ * 
+ * interpolates the colors using the weighing
+ * method discussed in the reading.
+ * **********************************************/
+Attributes correctInterp(double area, double determinate1, double determinate2, double determinate3, Attributes* const attrs, double* inverted)
+{
+    Attributes correct;
+    double triArea1 = determinate1 / area;
+    double triArea2 = determinate2 / area;
+    double triArea3 = determinate3 / area;
+
+    //computing correct locations for colors based on depth
+    correct.r = triArea2 * attrs[0].r + triArea3 * attrs[1].r + triArea1 * attrs[2].r;
+    correct.g = triArea2 * attrs[0].g + triArea3 * attrs[1].g + triArea1 * attrs[2].g;
+    correct.b = triArea2 * attrs[0].b + triArea3 * attrs[1].b + triArea1 * attrs[2].b;
+
+    //computing correct places for texture based on depth
+    correct.u = triArea2 * attrs[0].u + triArea3 * attrs[1].u + triArea1 * attrs[2].u;
+    correct.v = triArea2 * attrs[0].v + triArea3 * attrs[1].v + triArea1 * attrs[2].v;
+
+    double z = 1 / (triArea2 * inverted[0] + triArea3 * inverted[1] + triArea1 * inverted[2]);
+
+    //color
+    correct.r *= z;
+    correct.g *= z;
+    correct.b *= z;
+
+    //texture
+    correct.u *= z;
+    correct.v *= z;
+
+    return correct;
+}
 
 /***********************************************
  * CLEAR_SCREEN
@@ -125,6 +160,40 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     //Time to get the area of the whole triangle
     double areaTriangle = determinant(firstVector[X_KEY], -thirdVector[X_KEY], firstVector[Y_KEY], -thirdVector[Y_KEY]);
 
+    //Everything up to the for loop is for computing perspective correct attributes
+    Attributes correct [3];
+    //divide attribute by the z coordinate this is for color
+    correct[0].r = attrs[0].r / triangle[0].z;
+    correct[0].g = attrs[0].g / triangle[0].z;
+    correct[0].b = attrs[0].b / triangle[0].z;
+
+    //Second Vertex
+    correct[1].r = attrs[1].r / triangle[1].z;
+    correct[1].g = attrs[1].g / triangle[1].z;
+    correct[1].b = attrs[1].b / triangle[1].z;
+
+    //Third Vertex
+    correct[2].r = attrs[2].r / triangle[2].z;
+    correct[2].g = attrs[2].g / triangle[2].z;
+    correct[2].b = attrs[2].b / triangle[2].z;
+
+    //Divide texture map by the Z axis u for X-axis and v for Y-axis
+    correct[0].u = attrs[0].u / triangle[0].z;
+    correct[1].u = attrs[1].u / triangle[1].z;
+    correct[2].u = attrs[2].u / triangle[2].z;
+
+    //Y-axis now
+    correct[0].v = attrs[0].v / triangle[0].z;
+    correct[1].v = attrs[1].v / triangle[1].z;
+    correct[2].v = attrs[2].v / triangle[2].z;
+
+    //inverses of all Z values
+    double inverted_Zs [3];
+
+    inverted_Zs [0] = 1 / triangle[0].z;
+    inverted_Zs [1] = 1 / triangle[1].z;
+    inverted_Zs [2] = 1 / triangle[2].z;
+
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
@@ -137,16 +206,28 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 // All 3 signs > 0 means the center point is inside, to the left of the 3 CCW vectors 
                 if(firstDet >= 0 && secndDet >= 0 && thirdDet >= 0)
                 {
+
+                //colors everything red in case I mess something up.
                 target[(int)y][(int)x] = attrs[0].color;
 
-                // Interpolate Attributes for this pixel - In this case the R,G,B values
+                //Place to store perspective attributes
                 Attributes interpolatedAttribs;
+
+                // Interpolate Attributes for this pixel - In this case the R,G,B values this is for affline
+                /*
+
                 interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
                 interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
                 interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
+                //Now its time for image interpolation
+                //firstDet * u1 + secondDet * u2 + thirdDet * u3;
                 interpolatedAttribs.u = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
                 interpolatedAttribs.v = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].v, attrs[1].v, attrs[2].v);
+                */
+                //This is for corrected perspective
+                interpolatedAttribs = correctInterp(areaTriangle, firstDet, secndDet, thirdDet, attrs, inverted_Zs);
+
 
                 // Call shader callback
                 frag->FragShader(target[y][x], interpolatedAttribs, *uniforms);
@@ -171,6 +252,14 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    else
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
+        }
+    }
+    
 }
 
 /***************************************************************************
@@ -257,7 +346,10 @@ int main()
         //clearScreen(frame);
 
         // Your code goes here
-        TestDrawFragments(frame);
+        //TestDrawFragments(frame);
+        //TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
+
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
