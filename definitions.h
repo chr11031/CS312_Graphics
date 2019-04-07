@@ -214,6 +214,119 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/*******************************************
+ * MatrixMult
+ * multiply 4X4 and 4X1 matrices
+*******************************************/
+class Transformer
+{
+    public:
+        int row;
+        int col;
+        double matrix[4][4]; 
+        
+        void initialize(double matrix[4][4])
+        {
+            for(int i = 0; i < 4; i++)
+                for(int j = 0; j < 4; j++)
+                    this->matrix[i][j] = matrix[i][j];
+        }
+
+        Transformer() 
+        {
+            this->row = 4;
+            this->col = 4;
+            double data[4][4] = {{1,0,0,0},
+                                 {0,1,0,0},
+                                 {0,0,1,0},
+                                 {0,0,0,1}};
+            initialize(data);
+        }
+
+        Transformer(double matrix[4][4])
+        {
+           initialize(matrix);
+        }
+
+        Transformer(double vertex[4][1])
+        {
+            this->row = 4;
+            this->col = 4;
+            for (int i = 0; i < 4; i++)
+                matrix[i][0] = vertex[i][0];
+        }
+
+        Transformer(Vertex vert)
+        {
+            this->row = 4;
+            this->col = 1;
+            this->matrix[0][0] = vert.x;
+            this->matrix[1][0] = vert.y;
+            this->matrix[2][0] = vert.z;
+            this->matrix[3][0] = vert.w;
+        }
+
+        Transformer scale(double x, double y, double z)
+        {
+            double matrix[4][4] = {{x,0,0,0},
+                                   {0,y,0,0},
+                                   {0,0,z,0},
+                                   {0,0,0,1}};
+            return Transformer(matrix);
+        }
+
+        Transformer translate(double x, double y, double z)
+        {
+            double matrix[4][4] = {{1,0,0,x},
+                                   {0,1,0,y},
+                                   {0,0,1,z},
+                                   {0,0,0,1}};
+            return Transformer(matrix);
+        }
+
+        Transformer zRotate(double angle)
+        {
+            double sinRot = sin(angle * M_PI / 180.0);
+            double cosRot = cos(angle * M_PI / 180.0);
+
+            double matrix[4][4] = {{cosRot,-sinRot,0,0},
+                                   {sinRot,cosRot,0,0},
+                                   {0,0,1,0},
+                                   {0,0,0,1}};
+
+            return Transformer(matrix);
+        }
+
+        double* operator[](int i)
+        {
+            return this->matrix[i];
+        }
+
+        const double* operator[](int i) const
+        {
+            return this->matrix[i];
+        }
+};
+
+Transformer operator*(const Transformer &lhs, const Transformer &rhs)
+        {
+            Transformer matrix;
+            for(int y = 0; y < 4; y++)
+                for(int x = 0; x < 4; x++)
+                    matrix[y][x] = lhs[y][0] * rhs[0][x] + lhs[y][1] * rhs[1][x] + lhs[y][2] * rhs[2][x] + lhs[y][3] * rhs[3][x];
+            return matrix;
+        }
+//matrix to vertex multiplication
+Vertex operator*(const Transformer &matrix, const Vertex &vertex)
+{
+    Vertex vert;
+    vert.x = vertex.x * matrix[0][0] + vertex.y * matrix[0][1] + vertex.z * matrix[0][2] + vertex.w * matrix[0][3];
+    vert.y = vertex.x * matrix[1][0] + vertex.y * matrix[1][1] + vertex.z * matrix[1][2] + vertex.w * matrix[1][3];
+    vert.z = vertex.x * matrix[2][0] + vertex.y * matrix[2][1] + vertex.z * matrix[2][2] + vertex.w * matrix[2][3];
+    vert.w = vertex.x * matrix[3][0] + vertex.y * matrix[3][1] + vertex.z * matrix[3][2] + vertex.w * matrix[3][3];
+    return vert;
+}
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -230,6 +343,7 @@ class Attributes
         // For image interpolation
         double size = 3;
         void* ptrImg;
+        Transformer matrix;
                
         // Obligatory empty constructor
         Attributes() {}
@@ -315,6 +429,15 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+/**************************
+ * vShader is the vertex shader 
+ *******************************/
+void vShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
 
