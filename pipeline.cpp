@@ -150,12 +150,17 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
                                  Attributes* const uniforms, Vertex transformedVerts[], Attributes transformedAttrs[])
 {
     // Defaults to pass-through behavior
-    if(vert == NULL)
+    for(int i = 0; i < numIn; i++)
     {
-        for(int i = 0; i < numIn; i++)
+        if(vert == NULL)
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+        // if vert does not equal NULL
+        else
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -244,11 +249,12 @@ int main()
         clearScreen(frame);
 
         // Your code goes here
-        // GameOfLife(frame);              // This will run the Game of Life
-        // TestDrawPixel(frame);           // This will draw a pixel 
-        // TestDrawTriangle(frame);        // This will draw a triangle
+        // GameOfLife(frame);              
+        // TestDrawPixel(frame);            
+        // TestDrawTriangle(frame);        
         // TestDrawFragments(frame);
-        TestDrawPerspectiveCorrect(frame);
+        // TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

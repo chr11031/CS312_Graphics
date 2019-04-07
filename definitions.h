@@ -47,6 +47,203 @@ struct Vertex
     double w;
 };
 
+/*****************************************************
+ * MATRIX:
+ * This class performs several matrix operations
+ * which includes: transform, scale, and rotate.
+ ****************************************************/
+class Matrix
+{
+    public:
+        // Constructor to pass in the default values
+        Matrix(): rows(0), cols(0), matrixPtr(NULL), init(false) {};
+
+        // Sets the matrix size
+        Matrix(int rows, int cols)
+        {
+            this->rows = rows;
+            this->cols = cols;
+
+            matrixPtr = new double[rows * cols];
+            for(int i = 0; i < (rows * cols); i++)
+            {
+                matrixPtr[i] = 0;
+            }
+            init = false;
+        }
+
+        // Matrix Pointer destructor
+        ~Matrix()
+        {
+            if(matrixPtr != NULL)
+            {
+                delete [] matrixPtr;
+                matrixPtr = NULL;
+            }
+        }
+
+        /**************************************************
+         * TRANSLATE
+         * Takes in matrix values to translate the triangle
+         **************************************************/
+        void translate(double x, double y, double z)
+        {
+            // sets the size of the matrix to be translated
+            Matrix mTranslate(this->rows, this->cols);
+
+            // assign the passed in values to the designated cells to translate
+            mTranslate.matrixPtr[1 * this->cols - 1] = x;
+            mTranslate.matrixPtr[2 * this->cols - 1] = y;
+            mTranslate.matrixPtr[3 * this->cols - 1] = z;
+
+            for(int i = 0; i < this->rows; i++)
+                mTranslate.matrixPtr[i * this->cols + i] = 1;
+   
+            // checks to see if the matrix has values, if not, this will be the default matrix
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                    this->matrixPtr[i] = mTranslate.matrixPtr[i];
+                
+                init = true;
+            }
+            // multiply what is in the matrix
+            else
+                *this *= mTranslate;
+        }
+
+        /***********************************************
+         * SCALE
+         * Takes in matrix values to scale the triangle
+         **********************************************/
+        void scale(double x, double y, double z)
+        {
+            // values are put into an array 
+            double scaleArray[4] = {x, y, z, 1};
+
+            // sets the size of the matrix to be scaled
+            Matrix mScale(this->rows, this->cols);
+
+            // insert values into the matrix to be scaled
+            for(int i = 0; i < this->rows; i++)
+                mScale.matrixPtr[i * this->cols + i] = scaleArray[i];
+            
+            // checks to see if the matrix has values, if not, this will be the default matrix
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                    this->matrixPtr[i] = mScale.matrixPtr[i];
+                
+                init = true;
+            }
+            // multiply what is in the matrix
+            else
+                *this *= mScale;
+        }
+
+        /*******************************************
+         * ROTATE
+         * Takes in the angle in radians
+         ******************************************/
+        void rotate(double angle)
+        {
+            // Converts the angle
+            double sinAngle = sin(angle * M_PI/180.0);
+            double cosAngle = cos(angle * M_PI/180.0);
+
+            // Sets the size of the matrix to be rotated
+            Matrix mRotate(this->rows, this->cols);
+
+            // Determine which cells the angle will be inserted into the matrix
+            mRotate.matrixPtr[0] = cosAngle;
+            mRotate.matrixPtr[1] = -sinAngle;
+            mRotate.matrixPtr[1 * this->cols] = sinAngle;
+            mRotate.matrixPtr[1 * this->cols + 1] = cosAngle;
+            mRotate.matrixPtr[2 * this->cols + 2] = 1;
+            mRotate.matrixPtr[3 * this->cols + 3] = 1;
+
+            // checks to see if the matrix has values, if not, this will be the default matrix
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                    this->matrixPtr[i] = mRotate.matrixPtr[i];
+            
+                init = true;
+            }
+            // multiply what is in the matrix
+            else
+                *this *= mRotate;
+        }
+
+    /*****************************************************************
+     * Equals operator.
+     * Copies and sets the rows, cols, and init
+     ****************************************************************/
+    Matrix & operator = (const Matrix & rhs)
+    {
+        this->rows = rhs.rows;
+        this->cols = rhs.cols;
+        this->init = rhs.init;
+        
+        if(this->matrixPtr != NULL)
+            delete [] matrixPtr;
+        
+        matrixPtr = new double[this->rows * this->cols];
+        for(int i = 0; i < (this->rows * this->cols); i++)
+            this->matrixPtr[i] = rhs.matrixPtr[i];
+        
+        return *this;
+    }
+
+    /*************************************************************************
+     * Multiplication operator
+     * Operator to multiply matrixies
+     ************************************************************************/
+    Matrix & operator *= (const Matrix & rhs)
+    {
+        // Set the size of the temporary matrix
+        Matrix tmpMatrix(this->rows, rhs.cols);
+        
+        for(int i = 0; i < this->rows; i++)
+        {
+            for(int j = 0; j < rhs.cols; j++)
+            {
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
+                     sum += this->matrixPtr[i * this->cols + k] * rhs.matrixPtr[k * rhs.cols + j];
+                
+                tmpMatrix.matrixPtr[i * tmpMatrix.cols + j] = sum;
+            }
+        }
+        tmpMatrix.init = true;
+        *this = tmpMatrix;
+        return *this;
+    }
+
+    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
+
+    private:
+        double *matrixPtr;
+        int rows;
+        int cols;
+        bool init;
+};
+
+/**************************************************************
+ * Multiplication Operator
+ * Operator to multiply verticies
+ *************************************************************/
+Vertex operator * (const Matrix & rhs, const Vertex & lhs)
+{
+    Vertex tmpVertex;
+    tmpVertex.x = rhs.matrixPtr[0] * lhs.x + rhs.matrixPtr[1] * lhs.y + rhs.matrixPtr[2] * lhs.z + rhs.matrixPtr[3] * lhs.w;
+    tmpVertex.y = rhs.matrixPtr[4] * lhs.x + rhs.matrixPtr[5] * lhs.y + rhs.matrixPtr[6] * lhs.z + rhs.matrixPtr[7] * lhs.w;
+    tmpVertex.z = rhs.matrixPtr[8] * lhs.x + rhs.matrixPtr[9] * lhs.y + rhs.matrixPtr[10] * lhs.z + rhs.matrixPtr[11] * lhs.w;
+    tmpVertex.w = rhs.matrixPtr[12] * lhs.x + rhs.matrixPtr[13] * lhs.y + rhs.matrixPtr[14] * lhs.z + rhs.matrixPtr[15] * lhs.w;
+
+    return tmpVertex;
+}
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -229,7 +426,8 @@ class Attributes
         Attributes() {}
         std::map<char, double> var;            // uses a map to store attribute values
         BufferImage *image;                    // Pointer attribute for images
-
+        Matrix transVertex;
+        
         // Needed by clipping (linearly interpolated Attributes between two others)
         Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
         {
