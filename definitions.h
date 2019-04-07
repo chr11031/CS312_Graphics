@@ -22,7 +22,8 @@
 #define X_KEY 0
 #define Y_KEY 1
 // Max # of vertices after clipping
-#define MAX_VERTICES 8 
+#define MAX_VERTICES 8
+#define PI 3.14159 
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
@@ -42,6 +43,92 @@ struct Vertex
     double z;
     double w;
 };
+
+
+/****************************************************
+ * Matrix class 
+ ****************************************************/
+class Matrix
+{
+private:
+public:
+
+    double matrix[4][4]  = {{1,0,0,0},
+                            {0,1,0,0},
+                            {0,0,1,0},
+                            {0,0,0,1}};
+
+    Matrix() {}
+
+    //setting the matrices
+    Matrix(double newMatrix[4][4])
+    {
+        for(int y = 0; y < 3; y++)
+        {
+            for(int x = 0; x < 3; x++)
+            { 
+                 this->matrix[y][x] = newMatrix[y][x];
+            }
+       }
+    }       
+
+    double * operator[](int i)
+    {
+        if(i == 1 || i == 2 || i == 3 || i ==4)
+        {
+            return matrix[i];
+        }
+    }
+
+    const double * operator[](int i) const
+    {
+        if(i == 1 || i == 2 || i == 3 || i ==4)
+        {
+            return matrix[i];
+        }
+    }
+
+};
+
+/****************************************************
+ * Multiplies any two 4x4 matrices 
+ ****************************************************/
+Matrix operator * (const Matrix & first, const Matrix & second)
+{
+    double sum = 0;
+    double resultMatrix[4][4];
+    for(int x = 0; x < 4; x++)
+    {
+        for(int k = 0; k < 4; k++)
+        {
+            sum = 0;
+            for(int y = 0; y < 4; y++)
+            {
+                sum = sum + (first[x][y] * second[y][k]);  
+            }
+            resultMatrix[x][k] = sum;      
+        }
+    }
+    return resultMatrix;
+}
+     
+
+/****************************************************
+ * Multiply the vertices
+ ****************************************************/
+Vertex operator * (const Matrix & first, const Vertex & second)
+{
+    Vertex resultVertex;
+
+    resultVertex.x = second.x * first[0][0] + second.y * first[0][1] + second.z * first[0][2] + second.w * first[0][3];
+    resultVertex.y = second.x * first[1][0] + second.y * first[1][1] + second.z * first[1][2] + second.w * first[1][3];
+    resultVertex.z = second.x * first[2][0] + second.y * first[2][1] + second.z * first[2][2] + second.w * first[2][3];
+    resultVertex.w = second.x * first[3][0] + second.y * first[3][1] + second.z * first[3][2] + second.w * first[3][3];
+
+    return resultVertex;
+}
+
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -210,6 +297,7 @@ class Attributes
 
     public:
         void* ptrImg;
+        Matrix aMatrix;
 
         // Obligatory empty constructor
         //Attributes() : r(0), g(0), b(0), u(0), v(0){}
@@ -308,6 +396,14 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void RealVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix vertMatrix = uniforms.aMatrix;
+    
+    vertOut = uniforms.aMatrix * vertIn;
     attrOut = vertAttr;
 }
 /**********************************************************
