@@ -21,6 +21,7 @@
 #define MAX(A,B) A > B ? A : B
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define PI 3.14159265
 
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
@@ -216,6 +217,101 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/****************************************************
+ * MATRIX
+ ***************************************************/
+class Matrix
+{
+    private:
+        int row;
+        int col;
+        double * m;
+
+    public:
+        // Default constructor (not used)
+        Matrix() {}
+
+        // Non-def constructor
+        Matrix(int r, int c)
+        {
+            m = new double[r * c];
+            row = r;
+            col = c;
+
+            for(int i = 0; i < row; i++){
+                for(int j = 0; j < col; j++)
+                {
+                    if(i==j)
+                        m[i * col + j] = 1;
+                    else
+                        m[i * col + j] = 0;
+                }
+            }
+        }
+
+        // Destructor
+        ~Matrix() { delete [] m; }
+
+        // Assignment operator overload
+        Matrix & operator =(const Matrix & rhs)
+        {
+            for (int i = 0; i < row * col; i++)
+                this->m[i] = rhs.m[i];
+        }
+
+        // Multiplication overload
+        Matrix operator *(const Matrix & rhs) const
+        {
+            if (this->col != rhs.row)
+            {
+                printf("ERROR! Wrong Matrix Multiplication!");
+                exit;
+            }
+            
+            Matrix ret = Matrix(this->row, rhs.col);
+            for (int i = 0; i < ret.row * ret.col; i++)
+            {
+                if (ret.m[i] != 0.0)
+                    ret.m[i] = 0.0;
+            }
+
+            for (int r = 0; r < this->row; r++)
+                for (int c = 0; c < rhs.col; c++)
+                    for (int k = 0; k < rhs.row; k++)
+                    {
+                        ret.m[(r * ret.col) + c] += this->m[(r * this->col) + k] * rhs.m[(k * rhs.col) + c];
+                    }
+            
+            return ret;
+        }
+        // Sets a value to the specified coordinates.
+        void setValue(const int r, const int c, const double val)
+        {
+            this->m[(r * this->col) + c] = val;
+        }
+
+        // Returns a value from the specified coordinates.
+        double getValue(const int r, const int c)
+        {
+            return this->m[(r * this->col) + c];
+        }
+
+        // Resets the matrix to the identity matrix.
+        void reset()
+        {
+            for(int i = 0; i < this->row; i++)
+            {
+                for(int j = 0; j < this->col; j++)
+                {
+                    if(i==j)
+                        m[i * this->col + j] = 1;
+                    else
+                        m[i * this->col + j] = 0;
+                }
+            }
+        }
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -241,12 +337,16 @@ class Attributes
         double mouseX;
         double mouseY;
 
-        // For matrix tranformations. Will possibly be changed later.
-        double transform[3];
+        // For matrix tranformations.
+        double translate[3];
+        double scale[3];
+        double rotate;
+
+        Matrix tMatrix = Matrix(4, 4);
 
         // Obligatory empty constructor
         Attributes() {
-            r, g, b, u, v = 0;
+            r, g, b, u, v, translate[0], translate[1], translate[2], scale[0], scale[1], scale[2], rotate = 0.0;
         }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
@@ -268,11 +368,6 @@ class Attributes
         {
             this->u = u;
             this->v = v;
-        }
-
-        Attributes(void * ptr)
-        {
-            this->ptrImg = ptr;
         }
 };	
 
@@ -315,6 +410,45 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = (*bf)[y][x];
 }
 
+// Custom Shader
+void tvStaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    // double c = (rand() % 11) / 10;
+    int c = rand() % 2;
+    color += (unsigned int)(c * 0xff) << 16;
+    color += (unsigned int)(c * 0xff) << 8;
+    color += (unsigned int)(c * 0xff) << 0;
+
+    fragment = color;
+}
+
+// Another custom shader
+void colorStaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    PIXEL color = 0xff000000;
+    int r = (rand() % 11) / 10;
+    int g = (rand() % 11) / 10;
+    int b = (rand() % 11) / 10;
+    color += (unsigned int)(r * 0xff) << 16;
+    color += (unsigned int)(g * 0xff) << 8;
+    color += (unsigned int)(b * 0xff) << 0;
+
+    fragment = color;
+}
+
+// Another another custom shader
+void greenFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.u * (bf->width()-1);
+    int y = vertAttr.v * (bf->height()-1);
+
+    PIXEL color = 0xff00ff00;
+
+    fragment = ((*bf)[y][x]) & color;
+}
+
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
@@ -352,6 +486,24 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void MatrixVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix temp = Matrix(4, 1);
+
+    temp.setValue(0, 0, vertIn.x);
+    temp.setValue(1, 0, vertIn.y);
+    temp.setValue(2, 0, vertIn.z);
+    temp.setValue(3, 0, vertIn.w);
+
+    temp = uniforms.tMatrix * temp;
+
+    vertOut.x = temp.getValue(0, 0);
+    vertOut.y = temp.getValue(1, 0);
+    vertOut.z = temp.getValue(2, 0);
+    vertOut.w = temp.getValue(3, 0);
     attrOut = vertAttr;
 }
 
