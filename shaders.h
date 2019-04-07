@@ -1,6 +1,7 @@
 #ifndef SHADERS_H
 #define SHADERS_H
 
+
 #include "definitions.h"
 
 void myBaryShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -22,6 +23,12 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int y = vertAttr.attrValues[1] * (myPointer->height() - 1);
 
     fragment = (*myPointer)[y][x];
+}
+
+void vertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vertOut = vertIn * uniforms.matrix;
+    attrOut = vertAttr;
 }
 
 #endif
