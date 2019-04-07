@@ -140,7 +140,6 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 lerpedAttrs.uv[0] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[0], attrs[1].uv[0], attrs[2].uv[0]);
                 lerpedAttrs.uv[1] = zt * lerp(totalArea, areaT1, areaT2, areaT3, attrs[0].uv[1], attrs[1].uv[1], attrs[2].uv[1]);
 
-
                 frag->FragShader(target[y][x], lerpedAttrs, *uniforms);
             }
         }
@@ -162,6 +161,13 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    }
+    else
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], *uniforms);
         }
     }
 }
@@ -253,7 +259,8 @@ int main()
         //GameOfLife(frame);
         // TestDrawTriangle(frame);
         // TestDrawFragments(frame);
-        TestDrawPerspectiveCorrect(frame);
+        // TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         //TestDrawPixel(frame);
         // GameOfLife(frame);

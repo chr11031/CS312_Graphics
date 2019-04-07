@@ -425,42 +425,64 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        colorAttributes[0].rgb[0] = 1.0;
+        colorAttributes[0].rgb[1] = 0.0;
+        colorAttributes[0].rgb[2] = 0.0;
+        colorAttributes[1].rgb[0] = 0.0;
+        colorAttributes[1].rgb[1] = 1.0;
+        colorAttributes[1].rgb[2] = 0.0;
+        colorAttributes[2].rgb[0] = 0.0;
+        colorAttributes[2].rgb[1] = 0.0;
+        colorAttributes[2].rgb[2] = 1.0;
 
         FragmentShader myColorFragShader;
+        myColorFragShader.setShader(colorFragShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
         // Your code for the vertex shader goes here 
+        myColorVertexShader.setShader(vertexShader);
+
+	// DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, NULL);
 
         /******************************************************************
 		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
-		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+        Matrix transMatrix(4, 4);
+        transMatrix.addTranslation(100, 50, 0);
+        colorUniforms.vertTransform = transMatrix;
+	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /***********************************
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+        Matrix scaleMatrix(4, 4);
+        scaleMatrix.addScaling(0.5, 0.5, 1);
+        colorUniforms.vertTransform = scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /**********************************************
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-
+        Matrix rotMatrix(4, 4);
+        rotMatrix.addRotation(M_PI/4);
+        colorUniforms.vertTransform = rotMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
         /*************************************************
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
-		
+	// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        // colorUniforms.vertTransform = rotMatrix * (transMatrix * scaleMatrix);
+        colorUniforms.vertTransform = rotMatrix;
+        colorUniforms.vertTransform *= transMatrix;
+        colorUniforms.vertTransform *= scaleMatrix;
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
@@ -513,7 +535,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
 
-        BufferImage myImage("checker.bmp");
+        BufferImage myImage("yoshi.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
@@ -531,7 +553,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
         DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg, &vertImg, &zBuf);
 
-        // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
+        // NOTE: To test the Z-Buffer additional draw calls/geometry need to be called into this scene
 }
 
 
