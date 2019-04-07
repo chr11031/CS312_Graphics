@@ -214,6 +214,140 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+    class Matrix
+    {
+        private:
+           int row;
+           int col;
+        public:
+           double container[4][4] = {{1,0,0,0},
+                               {0,1,0,0},
+                               {0,0,1,0},
+                               {0,0,0,1}};
+        
+        Matrix()
+        {
+            row = 4;
+            col = 4;
+            // for (int i = 0; i < 4; i++)
+            //    for (int j = 0; j < 4; i++)
+            //    {
+            //        if(i == j)
+            //        {
+            //            container[i][j] = 1;
+            //        }
+            //        else
+            //        container[i][j] = 0;
+            //    }
+            
+        }
+
+        Matrix scaleMatrix(double x, double y, double z)
+        {
+           this->container[0][0] = x;
+           this->container[1][1] = y; 
+           this->container[2][2] = z; 
+           this->container[0][1] = 0;
+           this->container[0][2] = 0; 
+           this->container[0][3] = 0; 
+           this->container[1][0] = 0;
+           this->container[1][2] = 0; 
+           this->container[1][3] = 0; 
+           this->container[2][0] = 0;
+           this->container[2][1] = 0; 
+           this->container[2][3] = 0; 
+           this->container[3][0] = 0;
+           this->container[3][1] = 0;
+           this->container[3][2] = 0; 
+           this->container[3][3] = 1; 
+           return (*this);
+        }        
+        
+        Matrix transMatrix(double x, double y, double z)
+        {
+           this->container[0][3] = x;
+           this->container[1][3] = y; 
+           this->container[2][3] = z; 
+           this->container[3][3] = 1;
+           this->container[0][0] = 1; 
+           this->container[0][1] = 0; 
+           this->container[0][2] = 0;
+           this->container[1][0] = 0; 
+           this->container[1][1] = 1; 
+           this->container[1][2] = 0; 
+           this->container[2][0] = 0;
+           this->container[2][1] = 0; 
+           this->container[2][2] = 1; 
+           this->container[3][0] = 0;
+           this->container[3][1] = 0; 
+           this->container[3][2] = 0; 
+           return (*this);
+        }
+
+        Matrix rotatZMatrix(double degrees)
+        {
+           double sina = sin(degrees * M_PI/180); 
+           double cosa = cos(degrees * M_PI/180); 
+           this->container[0][0] = cosa;
+           this->container[0][1] = -sina; 
+           this->container[1][0] = sina; 
+           this->container[1][1] = cosa; 
+           this->container[0][2] = 0;
+           this->container[0][3] = 0;
+           this->container[1][2] = 0;
+           this->container[1][3] = 0; 
+           this->container[2][0] = 0; 
+           this->container[2][1] = 0; 
+           this->container[2][2] = 1; 
+           this->container[2][3] = 0; 
+           this->container[3][1] = 0; 
+           this->container[3][2] = 0; 
+           this->container[3][3] = 1; 
+           this->container[3][0] = 0; 
+           return (*this);
+        } 
+      
+
+    };      
+
+    Matrix operator * (const Matrix &lhs, const Matrix &rhs)
+    {
+        Matrix m;
+        m.container[0][0] = 1;
+        m.container[1][1] = 1; 
+        m.container[2][2] = 1; 
+        m.container[0][1] = 0;
+        m.container[0][2] = 0; 
+        m.container[0][3] = 0; 
+        m.container[1][0] = 0;
+        m.container[1][2] = 0; 
+        m.container[1][3] = 0; 
+        m.container[2][0] = 0;
+        m.container[2][1] = 0; 
+        m.container[2][3] = 0; 
+        m.container[3][0] = 0;
+        m.container[3][1] = 0;
+        m.container[3][2] = 0; 
+        m.container[3][3] = 1; 
+   
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+            {
+                m.container[i][j] = lhs.container[i][0] * rhs.container[0][j] + lhs.container[i][1] * rhs.container[1][j] + lhs.container[i][2] * rhs.container[2][j] + lhs.container[i][3] * rhs.container[3][j]; 
+            }
+        
+        return m;
+    }
+    Vertex operator *(Matrix lhs, Vertex rhs)
+    {
+          Vertex v;
+          v.x = (lhs.container[0][0] * rhs.x) + (lhs.container[0][1] * rhs.y)+ (lhs.container[0][2] * rhs.z)+ (lhs.container[0][3] * rhs.w);
+          v.y = (lhs.container[1][0] * rhs.x) + (lhs.container[1][1] * rhs.y)+ (lhs.container[1][2] * rhs.z)+ (lhs.container[1][3] * rhs.w);
+          v.z = (lhs.container[2][0] * rhs.x) + (lhs.container[2][1] * rhs.y)+ (lhs.container[2][2] * rhs.z)+ (lhs.container[2][3] * rhs.w);
+          v.w = (lhs.container[3][0] * rhs.x) + (lhs.container[3][1] * rhs.y)+ (lhs.container[3][2] * rhs.z)+ (lhs.container[3][3] * rhs.w);
+        return v;
+    }
+    //  
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -225,6 +359,8 @@ class Attributes
     public:
         double collector[16];
         void* ptrImg;
+        Matrix matrix;
+
         PIXEL color;
         // Obligatory empty constructor
         Attributes() {}
@@ -262,6 +398,39 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 
     fragment = (*ptr)[y][x];
 }
+
+void FragShaderNightVision(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+{
+    PIXEL color = 0xff000000;
+    color += (unsigned int)(attributes.collector[0] *0xbb) << 16;
+    color += (unsigned int)(attributes.collector[1] *0xff) << 8;
+    color += (unsigned int)(attributes.collector[2] *0xbb) << 0;
+
+    fragment = color;
+
+}
+// Frag Shader for UV without image (due to SDL2 bug?)
+// void FragShaderUVwithoutImage(PIXEL & fragment, const Attributes & attributes, const Attributes & uniform)
+// {
+//     // Figure out which X/Y square our UV would fall on
+//     int xSquare = attributes[0].d * 8;
+//     int ySquare = attributes[1].d * 8;
+
+// 	// Is the X square position even? The Y? 
+//     bool evenXSquare = (xSquare % 2) == 0;
+//     bool evenYSquare = (ySquare % 2) == 0;
+
+//     // Both even or both odd - red square
+//     if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+//     {
+//         fragment = 0xffff0000;
+//     }
+//     // One even, one odd - white square
+//     else
+//     {
+//         fragment = 0xffffffff;
+//     }
+// }
 /*******************************************************
  * FRAGMENT_SHADER
  * Encapsulates a programmer-specified callback
@@ -301,7 +470,20 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
     vertOut = vertIn;
     attrOut = vertAttr;
 }
+void vShader(Vertex & vertOut, Attributes & attrOut,const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+   Matrix unif = uniforms.matrix;
+   vertOut = (unif * vertIn);
+   attrOut = vertAttr;
+//    Matrix matrixOut = unif * vertIn; 
+// //    matrixOut * vertIn;
+//    vertOut.x = matrixOut.matrix[0][0];
+//    vertOut.y = matrixOut.matrix[1][0];
+//    vertOut.z = matrixOut.matrix[2][0];
+//    vertOut.w = matrixOut.matrix[3][0];
+//    attrOut = vertAttr;
 
+}
 /**********************************************************
  * VERTEX_SHADER
  * Encapsulates a programmer-specified callback
@@ -319,6 +501,7 @@ class VertexShader
         VertexShader()
         {
             VertShader = DefaultVertShader;
+            // VertSkhader = vShader;
         }
 
         // Initialize with a fragment callback
@@ -332,6 +515,17 @@ class VertexShader
         {
             VertShader = VertSdr;
         }
+//         void vShader(void(*VertSdr)(Vertex & vertOut, Attributes & attrOut,const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
+//         {
+//            Matrix matrixOut = *uniforms.matrix;
+//            matrixOut * vertIn;
+//            vertOut.x = matrixOut.matrix[0][0];
+//            vertOut.y = matrixOut.matrix[1][1];
+//            vertOut.z = matrixOut.matrix[2][2];
+//            vertOut.w = matrixOut.matrix[3][3];
+//            attrOut = vertAttr;
+
+// }
 };
 
 // Stub for Primitive Drawing function
