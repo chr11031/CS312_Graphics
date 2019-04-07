@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "shaders.h"
+#include "math.h"
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
@@ -469,19 +470,44 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
 
         PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
         // Your code for 'colorAttributes' goes here
+        colorAttributes[0].attrValues[0] = 1.0;
+        colorAttributes[0].attrValues[1] = 0.0;
+        colorAttributes[0].attrValues[2] = 0.0;
+        colorAttributes[0].valuesToInterpolate = 3;
+
+        colorAttributes[1].attrValues[0] = 0.0;
+        colorAttributes[1].attrValues[1] = 1.0;
+        colorAttributes[1].attrValues[2] = 0.0;
+        colorAttributes[1].valuesToInterpolate = 3;
+
+        colorAttributes[2].attrValues[0] = 0.0;
+        colorAttributes[2].attrValues[1] = 0.0;
+        colorAttributes[2].attrValues[2] = 1.0;
+        colorAttributes[2].valuesToInterpolate = 3;
 
         FragmentShader myColorFragShader;
+        myColorFragShader.setShader(baryInterpolationShader);
 
         Attributes colorUniforms;
         // Your code for the uniform goes here, if any (don't pass NULL here)
         
         VertexShader myColorVertexShader;
         // Your code for the vertex shader goes here 
+        myColorVertexShader.setShader(TransformVertexShader);
 
         /******************************************************************
-		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+	 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
          *****************************************************************/
         // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        double translateData[4][4] = 
+        {
+                {1, 0, 100, 0},
+                {0, 1, 50,  0},
+                {0, 0, 1,   0},
+                {0, 0, 0,   0}
+        };
+        Matrix transMatrix(translateData, 3, 3);
+        colorUniforms.matrix = transMatrix;
 
 	DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -489,6 +515,15 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE (scale by a factor of 0.5)
          ***********************************/
         // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        double scaleData[4][4] =
+        {
+                {.5, 0, 0, 0},
+                {0, .5, 0, 0},
+                {0, 0, 1, 0},
+                {0, 0, 0, 0}
+        };
+        Matrix scaleMatrix(scaleData, 3, 3);
+        colorUniforms.matrix = scaleMatrix;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -496,6 +531,16 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * ROTATE 45 degrees in the X-Y plane around Z
          *********************************************/
         // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        double radians = 30 * M_PI / 180;
+        double rotData[4][4] =
+        {
+                {cos(radians), -sin(radians), 0, 0},
+                {sin(radians),  cos(radians), 0 , 0},
+                {0, 0, 1, 0},
+                {0, 0, 0, 0}
+        };
+        Matrix rotMatrix(rotData, 3, 3);
+        colorUniforms.matrix = rotMatrix;
 
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
 
@@ -503,7 +548,12 @@ void TestVertexShader(Buffer2D<PIXEL> & target)
          * SCALE-TRANSLATE-ROTATE in left-to-right order
          * the previous transformations concatenated.
          ************************************************/
-		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        //Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+        Matrix scaleTransRot(scaleData, 3, 3);
+        scaleTransRot *= transMatrix;
+        scaleTransRot *= rotMatrix;
+
+        colorUniforms.matrix = scaleTransRot;
 		
         DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
