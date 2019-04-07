@@ -3,6 +3,16 @@
 #ifndef SHADERS_H
 #define SHADERS_H
 
+// Simple Vertex Shader
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+  Transform* trans = (Transform*)uniforms[0].ptr;
+  vertOut = (*trans) * vertIn;
+
+  // Pass through attributes
+  attrOut = attrIn;
+}
+
 // Image Fragment Shader 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
