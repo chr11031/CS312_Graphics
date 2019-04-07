@@ -42,6 +42,12 @@ enum PRIMITIVES
     POINT
 };
 
+enum AXIS {
+    X,
+    Y,
+    Z
+};
+
 /****************************************************
  * Describes a geometric point in 3D space. 
  ****************************************************/
@@ -52,6 +58,18 @@ struct Vertex
     double z;
     double w;
 };
+
+// Needed for View transforms
+struct camControls {
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double pitch = 0;
+    double yaw = 0;
+    double roll = 0;
+};
+
+camControls myCam;
 
 /******************************************************
  * BUFFER_2D:
@@ -221,29 +239,27 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+/***************************************************
+ * LERP = Find the value between two doubles that
+ * is some specific amount in between
+ **************************************************/
+inline double lerp(double a, double b, double amount) {
+    return a + (b - a) * amount;
+}
+
+/***************************************************
+ * INTERP - Function used to interpolate values,
+ * taking advantage of the determinant's relationship
+ * to the area of the triangle
+ **************************************************/
+inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
+    return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
+}
+
 union attrib
 {
     double d;
     void* ptr;
-};
-
-class Attributes; // forward declaration of Attributes
-
-/***************************************************
- * MATRIX - Class to facilitate matrix operations
- **************************************************/
-class Matrix {
-    public:
-    Matrix() { clear(); }               // initialize with identity matrix
-    Matrix(double* values);             // initialize with 16 values
-    Matrix(const Attributes& uniforms); // initialize with 16 values from the uniforms
-
-    double v[4][4];
-
-    void clear(); // set back to default state (identity matrix)
-
-    const double& operator[](const int i) const { return v[i/4][i%4]; } // array access
-    double& operator[](const int i) { return v[i/4][i%4]; }             // non-const array access
 };
 
 /***************************************************
@@ -260,12 +276,11 @@ class Attributes
     	int numMembers = 0;
         attrib arr[16];
 
-        Matrix matrix;
-
         // Obligatory empty constructor
         Attributes() {numMembers = 0;}
 
         // Interpolation Constructor
+        
         Attributes( const double & areaTriangle, const double & firstDet, const double & secndDet, const double & thirdDet, 
                     const Attributes & first, const Attributes & secnd, const Attributes & third, const double interpZ)
         {
@@ -280,9 +295,11 @@ class Attributes
         }
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for (int i = 0; i < numMembers; i++)
+                arr[i].d = lerp(first[i].d, second[i].d, along);
         }
 
         // Const Return operator
@@ -311,161 +328,6 @@ class Attributes
             numMembers += 1;
         }
 }; 
-
-// Constructor that takes an array of 16 values for the matrix
-Matrix::Matrix(double* values) {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = values[r*4 + c];
-}
-
-// Constructor that takes a uniforms object and gets 16 values from there
-Matrix::Matrix(const Attributes& uniforms) {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = uniforms[r*4 + c].d;
-}
-
-// Sets the values of the matrix to the identity matrix
-void Matrix::clear() {
-    for (int r = 0; r < 4; r++)
-    for (int c = 0; c < 4; c++)
-        this->v[r][c] = (r == c ? 1 : 0);
-}
-
-// Multiplication of 4x4 by 4x1 matrix
-Vertex operator* (const Matrix& lhs, const Vertex& rhs) {
-    Vertex result = {
-          lhs[0] * rhs.x
-        + lhs[1] * rhs.y
-        + lhs[2] * rhs.z
-        + lhs[3] * rhs.w,
-
-          lhs[4] * rhs.x
-        + lhs[5] * rhs.y
-        + lhs[6] * rhs.z
-        + lhs[7] * rhs.w,
-
-          lhs[8] * rhs.x
-        + lhs[9] * rhs.y
-        + lhs[10] * rhs.z
-        + lhs[11] * rhs.w,
-
-          lhs[12] * rhs.x
-        + lhs[13] * rhs.y
-        + lhs[14] * rhs.z
-        + lhs[15] * rhs.w,
-    };
-    return result;
-}
-
-// Multiplication of 4x4 by 4x4 matrix
-Matrix operator* (const Matrix& lhs, const Matrix& rhs) {
-    Matrix result;
-    
-    // Loop over every cell in result
-    for (int i = 0; i < 16; i++) {
-        int r = 4 * (i / 4);
-        int c = i % 4;
-        double sum = 0;
-
-        // Loop 4 times (row is 4 long, col is 4 long)
-        for (int j = 0; j < 4; j++) {
-            sum += (lhs[r] * rhs[c]);
-            r++;
-            c += 4;
-        }
-        result[i] = sum;
-    }
-
-    return result;
-}
-
-/***************************************************
- * Matrix transformation functions - return a
- * matrix that has the specified transformation
- **************************************************/
-void translateMatrix(Attributes& attr, Vertex v) {
-    attr.matrix[3]  = v.x;
-    attr.matrix[7]  = v.y;
-    attr.matrix[11] = v.z;
-}
-
-void scaleMatrix(Attributes& attr, Vertex v) {
-    attr.matrix[0]  = v.x;
-    attr.matrix[5]  = v.y;
-    attr.matrix[10] = v.z;
-}
-
-// This function takes an angle in degrees and converts it to radians
-void rotateZMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
-    double sinangle = sin(angle);
-    double cosangle = cos(angle);
-
-    attr.matrix[0] = cosangle;
-    attr.matrix[1] = -sinangle;
-    attr.matrix[4] = sinangle;
-    attr.matrix[5] = cosangle;
-}
-
-// These functions are not used in the week05 project, but they are still here
-void rotateXMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
-    double sinangle = sin(angle);
-    double cosangle = cos(angle);
-
-    attr.matrix[5]  = cosangle;
-    attr.matrix[6]  = -sinangle;
-    attr.matrix[9]  = sinangle;
-    attr.matrix[10] = cosangle;
-}
-
-void rotateYMatrix(Attributes& attr, double angle) {
-    angle = angle * M_PI / 180.0;
-    // compute trig functions here so we dont have to do them twice
-    double sinangle = sin(angle);
-    double cosangle = cos(angle);
-
-    attr.matrix[0]  = cosangle;
-    attr.matrix[2]  = sinangle;
-    attr.matrix[8]  = -sinangle;
-    attr.matrix[10] = cosangle;
-}
-
-// Does all three previous operations at once in right to left order
-void STRMatrix(Attributes& attr, Vertex s, Vertex t, double r) {
-    Attributes sAttr;
-    sAttr.matrix.clear();
-    scaleMatrix(sAttr, s);
-    Attributes tAttr;
-    tAttr.matrix.clear();
-    translateMatrix(tAttr, t);
-    Attributes rAttr;
-    rAttr.matrix.clear();
-    rotateZMatrix(rAttr, r);
-
-    attr.matrix = rAttr.matrix * tAttr.matrix * sAttr.matrix;
-}
-
-/***************************************************
- * LERP = Find the value between two doubles that
- * is some specific amount in between
- **************************************************/
-inline double lerp(double a, double b, double amount) {
-    return a + (b - a) * amount;
-}
-
-/***************************************************
- * INTERP - Function used to interpolate values,
- * taking advantage of the determinant's relationship
- * to the area of the triangle
- **************************************************/
-inline double interp(double areaTriangle, double firstDet, double secndDet, double thirdDet, double attr0, double attr1, double attr2) {
-    return (attr2*firstDet + attr0*secndDet + attr1*thirdDet) / areaTriangle;
-}
 
 // Example of a fragment shader
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)

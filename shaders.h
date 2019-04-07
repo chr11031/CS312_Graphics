@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "matrix.h"
 
 #ifndef SHADERS_H
 #define SHADERS_H
@@ -35,9 +36,25 @@ void StaticShader(PIXEL & fragment, const Attributes & vertAttr, const Attribute
  * Vertex shaders used in week 05 project
  **************************************************/
 // Vertex shader that supports transformations of a set of verticies
+
+// Storing the matrix in a ptr of the uniforms object is smarter
+// than placing another variable in Attributes class to store matrix.
+// https://github.com/danebear/CS312_Graphics-1/blob/dchristensen_project_05_vertex_shaders/shaders.h
 void TransformVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    vertOut = uniforms.matrix * vertIn;
+    vertOut = *(Matrix*)uniforms[0].ptr * vertIn;
+    attrOut = vertAttr;
+}
+
+// Vertex shader that performs model-view-projection calculations
+void MVPVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    Matrix* model = (Matrix*)uniforms[1].ptr;
+    Matrix* view = (Matrix*)uniforms[2].ptr;
+    Matrix* proj = (Matrix*)uniforms[3].ptr;
+
+    vertOut = (*proj) * (*view) * (*model) * vertIn;
+
     attrOut = vertAttr;
 }
 
