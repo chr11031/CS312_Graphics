@@ -13,25 +13,30 @@
  * Macros for universal variables/hook-ups.
  *****************************************************/
 #define WINDOW_NAME "Pipeline"
-#define S_WIDTH     512
-#define S_HEIGHT    512
-#define PIXEL       Uint32
+#define S_WIDTH 512
+#define S_HEIGHT 512
+#define PIXEL Uint32
 #define ABS(in) (in > 0 ? (in) : -(in))
-#define SWAP(TYPE, FIRST, SECOND) { TYPE tmp = FIRST; FIRST = SECOND; SECOND = tmp; }
-#define MIN(A,B) A < B ? A : B
-#define MAX(A,B) A > B ? A : B
-#define MIN3(A,B,C) MIN((MIN(A,B)),C)
-#define MAX3(A,B,C) MAX((MAX(A,B)),C)
+#define SWAP(TYPE, FIRST, SECOND) \
+    {                             \
+        TYPE tmp = FIRST;         \
+        FIRST = SECOND;           \
+        SECOND = tmp;             \
+    }
+#define MIN(A, B) A < B ? A : B
+#define MAX(A, B) A > B ? A : B
+#define MIN3(A, B, C) MIN((MIN(A, B)), C)
+#define MAX3(A, B, C) MAX((MAX(A, B)), C)
 #define X_KEY 0
 #define Y_KEY 1
 
 // Max # of vertices after clipping
-#define MAX_VERTICES 8 
+#define MAX_VERTICES 8
 
 /******************************************************
  * Types of primitives our pipeline will render.
  *****************************************************/
-enum PRIMITIVES 
+enum PRIMITIVES
 {
     TRIANGLE,
     LINE,
@@ -56,87 +61,87 @@ struct Vertex
  * 2D arrays ot type 'T' encapsulated in an object.
  *****************************************************/
 template <class T>
-class Buffer2D 
+class Buffer2D
 {
-    protected:
-        T** grid;
-        int w;
-        int h;
+  protected:
+    T **grid;
+    int w;
+    int h;
 
-        // Private intialization setup
-        void setupInternal()
+    // Private intialization setup
+    void setupInternal()
+    {
+        // Allocate pointers for column references
+        grid = (T **)malloc(sizeof(T *) * h);
+        for (int r = 0; r < h; r++)
         {
-            // Allocate pointers for column references
-            grid = (T**)malloc(sizeof(T*) * h);                
-            for(int r = 0; r < h; r++)
+            grid[r] = (T *)malloc(sizeof(T) * w);
+        }
+    }
+
+    // Empty Constructor
+    Buffer2D()
+    {
+    }
+
+  public:
+    // Free dynamic memory
+    ~Buffer2D()
+    {
+        // De-Allocate pointers for column references
+        for (int r = 0; r < h; r++)
+        {
+            free(grid[r]);
+        }
+        free(grid);
+    }
+
+    // Size-Specified constructor, no data
+    Buffer2D(const int &wid, const int &hgt)
+    {
+        h = hgt;
+        w = wid;
+        setupInternal();
+        zeroOut();
+    }
+
+    // Assignment constructor
+    Buffer2D &operator=(const Buffer2D &ib)
+    {
+        w = ib.width();
+        h = ib.height();
+        setupInternal();
+        for (int r = 0; r < h; r++)
+        {
+            for (int c = 0; c < w; c++)
             {
-                grid[r] = (T*)malloc(sizeof(T) * w);
+                grid[r][c] = ib[r][c];
             }
         }
+    }
 
-        // Empty Constructor
-        Buffer2D()
-        {}
-
-    public:
-        // Free dynamic memory
-        ~Buffer2D()
+    // Set each member to zero
+    void zeroOut()
+    {
+        for (int r = 0; r < h; r++)
         {
-            // De-Allocate pointers for column references
-            for(int r = 0; r < h; r++)
+            for (int c = 0; c < w; c++)
             {
-                free(grid[r]);
-            }
-            free(grid);
-        }
-
-        // Size-Specified constructor, no data
-        Buffer2D(const int & wid, const int & hgt)
-        {
-            h = hgt;
-            w = wid;
-            setupInternal();
-            zeroOut();
-        }
-
-        // Assignment constructor
-        Buffer2D& operator=(const Buffer2D & ib)
-        {
-            w = ib.width();
-            h = ib.height();
-            setupInternal();
-            for(int r = 0; r < h; r++)
-            {
-                for(int c = 0; c < w; c++)
-                {
-                    grid[r][c] = ib[r][c];
-                }
+                grid[r][c] = 0;
             }
         }
+    }
 
-        // Set each member to zero 
-        void zeroOut()
-        {
-            for(int r = 0; r < h; r++)
-            {
-                for(int c = 0; c < w; c++)
-                {
-                    grid[r][c] = 0;
-                }
-            }
-        }
+    // Width, height
+    const int &width() { return w; }
+    const int &height() { return h; }
 
-        // Width, height
-        const int & width()  { return w; }
-        const int & height() { return h; }
-
-        // The frequented operator for grabbing pixels
-        inline T* & operator[] (int i)
-        {
-            return grid[i];
-        }
+    // The frequented operator for grabbing pixels
+    inline T *&operator[](int i)
+    {
+        return grid[i];
+    }
 };
-
 
 /****************************************************
  * BUFFER_IMAGE:
@@ -145,78 +150,287 @@ class Buffer2D
  ***************************************************/
 class BufferImage : public Buffer2D<PIXEL>
 {
-    protected:       
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+  protected:
+    bool ourSurfaceInstance = false; // Do we need to de-allocate?
 
-        // Private intialization setup
-        void setupInternal()
+    // Private intialization setup
+    void setupInternal()
+    {
+        // Allocate pointers for column references
+        h = img->h;
+        w = img->w;
+        grid = (PIXEL **)malloc(sizeof(PIXEL *) * h);
+
+        PIXEL *row = (PIXEL *)img->pixels;
+        row += (w * h);
+        for (int i = 0; i < h; ++i)
         {
-            // Allocate pointers for column references
-            h = img->h;
-            w = img->w;
-            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
-
-            PIXEL* row = (PIXEL*)img->pixels;
-            row += (w*h);
-            for(int i = 0; i < h; i++)
-            {
-                grid[i] = row;
-                row -= w;                    
-            }
+            grid[i] = row;
+            row -= w;
         }
+    }
+
+  public:
+    // Free dynamic memory
+    ~BufferImage()
+    {
+        // De-Allocate pointers for column references
+        free(grid);
+
+        // De-Allocate this image plane if necessary
+        if (ourSurfaceInstance)
+        {
+            SDL_FreeSurface(img);
+        }
+    }
+
+    // Assignment constructor
+    BufferImage &operator=(const BufferImage &ib)
+    {
+        img = ib.img;
+        w = ib.w;
+        h = ib.h;
+        ourSurfaceInstance = false;
+        grid = (PIXEL **)malloc(sizeof(PIXEL *) * img->h);
+        for (int i = 0; i < img->w; ++i)
+        {
+            grid[i] = ib.grid[i];
+        }
+    }
+
+    // Constructor based on instantiated SDL_Surface
+    BufferImage(SDL_Surface *src)
+    {
+        img = src;
+        w = src->w;
+        h = src->h;
+        ourSurfaceInstance = false;
+        setupInternal();
+    }
+
+    // Constructor based on reading in an image - only meant for UINT32 type
+    BufferImage(const char *path)
+    {
+        ourSurfaceInstance = true;
+        SDL_Surface *tmp = SDL_LoadBMP(path);
+        SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
+        img = SDL_ConvertSurface(tmp, format, 0);
+        SDL_FreeSurface(tmp);
+        SDL_FreeFormat(format);
+        setupInternal();
+    }
+
+    SDL_Surface *img; // Reference to the Surface in question
+};
+
+/*****************************************************
+ * MATRIX:
+ * This class does the several required matrix 
+ * operations: transform, scale, and rotate.
+ ****************************************************/
+class Matrix
+{
+    private:
+        double *matrixPtr;
+        int rows;
+        int cols;
+        bool init;
 
     public:
-        // Free dynamic memory
-        ~BufferImage()
-        {
-            // De-Allocate pointers for column references
-            free(grid);
+        Matrix(): rows(0), cols(0), matrixPtr(NULL), init(false) {};
 
-            // De-Allocate this image plane if necessary
-            if(ourSurfaceInstance)
+        Matrix(int rows, int cols)
+        {
+            this->rows = rows;
+            this->cols = cols;
+
+            matrixPtr = new double[rows * cols];
+            for(int i = 0; i < (rows * cols); i++)
             {
-                SDL_FreeSurface(img);
+                matrixPtr[i] = 0;
+            }
+            init = false;
+        }
+
+        ~Matrix()
+        {
+            if(matrixPtr != NULL)
+            {
+                delete [] matrixPtr;
+                matrixPtr = NULL;
             }
         }
 
-        // Assignment constructor
-        BufferImage& operator=(const BufferImage & ib)
+        void translate(double x, double y, double z)
         {
-            img = ib.img;
-            w = ib.w;
-            h = ib.h;
-            ourSurfaceInstance = false;
-            grid = (PIXEL**)malloc(sizeof(PIXEL*) * img->h);                
-            for(int i = 0; i < img->w; i++)
+            Matrix mTranslate(this->rows, this->cols);
+            mTranslate.matrixPtr[1 * this->cols - 1] = x;
+            mTranslate.matrixPtr[2 * this->cols - 1] = y;
+            mTranslate.matrixPtr[3 * this->cols - 1] = z;
+            for(int i = 0; i < this->rows; i++)
             {
-                grid[i] = ib.grid[i];
+                mTranslate.matrixPtr[i * this->cols + i] = 1;
+            }
+   
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                {
+                    this->matrixPtr[i] = mTranslate.matrixPtr[i];
+                }
+                init = true;
+            }
+            
+            else
+            {
+                *this *= mTranslate;
             }
         }
 
-        // Constructor based on instantiated SDL_Surface
-        BufferImage(SDL_Surface* src) 
-        { 
-            img = src; 
-            w = src->w;
-            h = src->h;
-            ourSurfaceInstance = false;
-            setupInternal();
+        void scale(double x, double y, double z)
+        {
+            double scaleArray[4] = {x, y, z, 1};
+
+            Matrix scale(this->rows, this->cols);
+            for(int i = 0; i < this->rows; i++)
+            {
+                scale.matrixPtr[i * this->cols + i] = scaleArray[i];
+            }
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                {
+                    this->matrixPtr[i] = scale.matrixPtr[i];
+                }
+                init = true;
+            }
+            else
+            {
+                *this = scale * (*this);
+            }
+            
         }
 
-        // Constructor based on reading in an image - only meant for UINT32 type
-        BufferImage(const char* path) 
+        void rotate(double angle)
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            setupInternal();
+            double sinAngle = sin(angle * M_PI/180.0);
+            double cosAngle = cos(angle * M_PI/180.0);
+
+            Matrix mRotate(this->rows, this->cols);
+            mRotate.matrixPtr[0] = cosAngle;
+            mRotate.matrixPtr[1] = -sinAngle;
+            mRotate.matrixPtr[1 * this->cols] = sinAngle;
+            mRotate.matrixPtr[1 * this->cols + 1] = cosAngle;
+            mRotate.matrixPtr[2 * this->cols + 2] = 1;
+            mRotate.matrixPtr[3 * this->cols + 3] = 1;
+
+            if (init == false)
+            {
+                for(int i = 0; i < (this->rows * this->cols); i++)
+                {
+                    this->matrixPtr[i] = mRotate.matrixPtr[i];
+                }
+                init = true;
+            }
+            else
+            {
+                *this *= mRotate;
+            }
         }
+
+    Matrix & operator = (const Matrix & rhs)
+    {
+        this->rows = rhs.rows;
+        this->cols = rhs.cols;
+        this->init = rhs.init;
+        if (this->matrixPtr != NULL)
+        {
+            delete [] matrixPtr;
+        }
+
+        matrixPtr = new double[this->rows * this->cols];
         
-        SDL_Surface* img; // Reference to the Surface in question
+        for (int i = 0; i < (this->rows * this->cols); i++)
+        {
+            this->matrixPtr[i] = rhs.matrixPtr[i];
+        }
+
+        return *this;
+    }
+
+    Matrix & operator *= (const Matrix & rhs)
+    {
+        if (this->cols != rhs.rows)
+        {
+            Matrix mat;
+            return mat;
+        }
+
+        Matrix newMatrix(this->rows, rhs.cols);
+        for(int i = 0; i < this->rows; i++)
+        {
+            for(int j = 0; j < rhs.cols; j++)
+            {
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
+                {
+                     sum += this->matrixPtr[i * this->cols + k] * rhs.matrixPtr[k * rhs.cols + j];
+                }
+                newMatrix.matrixPtr[i * newMatrix.cols + j] = sum;
+            }
+        }
+        newMatrix.init = true;
+        *this = newMatrix;
+        return *this;
+    }
+
+    friend Matrix operator * (const Matrix & lhs, const Matrix & rhs);
+    friend Vertex operator * (const Matrix & rhs, const Vertex & lhs);
 };
+
+    Matrix operator * (const Matrix & lhs, const Matrix & rhs)
+    {
+        if (lhs.cols != rhs.rows)
+        {
+            Matrix mat;
+            return mat;
+        }
+
+        Matrix newMatrix(lhs.rows, rhs.cols);
+        for(int i = 0; i < lhs.rows; i++)
+        {
+            for(int j = 0; j < rhs.cols; j++)
+            {
+                double sum = 0;
+                for(int k = 0; k < rhs.rows; k++)
+                {
+                     sum += lhs.matrixPtr[i * lhs.cols + k] * 
+                        rhs.matrixPtr[k * rhs.cols + j];
+                }
+                newMatrix.matrixPtr[i * newMatrix.cols + j] = sum;
+            }
+        }
+        newMatrix.init = true;
+
+        return newMatrix; 
+    }
+
+Vertex operator * (const Matrix & rhs, const Vertex & lhs)
+{
+    if (rhs.cols != 4 || rhs.rows != 4)
+    {
+        Vertex vert;
+        return vert;
+    }
+
+    Vertex newVertex;
+    newVertex.x = rhs.matrixPtr[0] * lhs.x + rhs.matrixPtr[1] * lhs.y + rhs.matrixPtr[2] * lhs.z + rhs.matrixPtr[3] * lhs.w;
+    newVertex.y = rhs.matrixPtr[4] * lhs.x + rhs.matrixPtr[5] * lhs.y + rhs.matrixPtr[6] * lhs.z + rhs.matrixPtr[7] * lhs.w;
+    newVertex.z = rhs.matrixPtr[8] * lhs.x + rhs.matrixPtr[9] * lhs.y + rhs.matrixPtr[10] * lhs.z + rhs.matrixPtr[11] * lhs.w;
+    newVertex.w = rhs.matrixPtr[12] * lhs.x + rhs.matrixPtr[13] * lhs.y + rhs.matrixPtr[14] * lhs.z + rhs.matrixPtr[15] * lhs.w;
+
+    return newVertex;
+}
 
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
@@ -225,46 +439,54 @@ class BufferImage : public Buffer2D<PIXEL>
  * designed/implemented by the programmer. 
  **************************************************/
 class Attributes
-{      
-    public:
-        // Obligatory empty constructor
-        Attributes() {}
-
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
-        {
-            // Your Code goes here after clipping is done
-        }
-
-        // Use a map to store the values needed for the attributes. 
-        // TODO: This could be made private later with getters and setters to help.
-        std::map<char, double> var;
-        void* ptrImg; // A pointer for the image
-};	
-
-void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
+  public:
+    // Obligatory empty constructor
+    Attributes() {}
+
+    // Needed by clipping (linearly interpolated Attributes between two others)
+    Attributes(const Attributes &first, const Attributes &second, const double &valueBetween)
+    {
+        // Your Code goes here after clipping is done
+    }
+
+    // Use a map to store the values needed for the attributes.
+    // TODO: This could be made private later with getters and setters to help.
+    std::map<char, double> var;
+    void *ptrImg; // A pointer for the image
+    Matrix transVertex;
+};
+
+void ImageFragShader(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms)
+{
+    BufferImage *bf = (BufferImage *)uniforms.ptrImg;
     int x = vertAttr.var.at('u') * (bf->width() - 1);
     int y = vertAttr.var.at('v') * (bf->height() - 1);
 
     fragment = (*bf)[y][x];
 }
 
- // My Fragment Shader for color interpolation
-void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+// My Fragment Shader for color interpolation
+void ColorFragShader(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms)
 {
     // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.var.at('r') *0xff) << 16;
-    color += (unsigned int)(vertAttr.var.at('g') *0xff) << 8;
-    color += (unsigned int)(vertAttr.var.at('b') *0xff) << 0;
+    color += (unsigned int)(vertAttr.var.at('r') * 0xff) << 16;
+    color += (unsigned int)(vertAttr.var.at('g') * 0xff) << 8;
+    color += (unsigned int)(vertAttr.var.at('b') * 0xff) << 0;
 
     fragment = color;
 }
 
+void transformShader(Vertex & vOut, Attributes & attrOut, const Vertex & vIn, 
+                     const Attributes & vertAttr, const Attributes & uniforms)
+{
+    vOut = uniforms.transVertex * vIn;
+    attrOut = vertAttr;
+}
+
 // Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+void DefaultFragShader(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms)
 {
     // Output our shader color value, in this case red
     fragment = 0xffff0000;
@@ -278,32 +500,31 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
  ******************************************************/
 class FragmentShader
 {
-    public:
- 
-        // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
+  public:
+    // Get, Set implicit
+    void (*FragShader)(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms);
 
-        // Assumes simple monotone RED shader
-        FragmentShader()
-        {
-            FragShader = DefaultFragShader;
-        }
+    // Assumes simple monotone RED shader
+    FragmentShader()
+    {
+        FragShader = DefaultFragShader;
+    }
 
-        // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            setShader(FragSdr);
-        }
+    // Initialize with a fragment callback
+    FragmentShader(void (*FragSdr)(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms))
+    {
+        setShader(FragSdr);
+    }
 
-        // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            FragShader = FragSdr;
-        }
+    // Set the shader to a callback function
+    void setShader(void (*FragSdr)(PIXEL &fragment, const Attributes &vertAttr, const Attributes &uniforms))
+    {
+        FragShader = FragSdr;
+    }
 };
 
 // Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void DefaultVertShader(Vertex &vertOut, Attributes &attrOut, const Vertex &vertIn, const Attributes &vertAttr, const Attributes &uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
@@ -319,27 +540,27 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
  *********************************************************/
 class VertexShader
 {
-    public:
-        // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
+  public:
+    // Get, Set implicit
+    void (*VertShader)(Vertex &vertOut, Attributes &attrOut, const Vertex &vertIn, const Attributes &vertAttr, const Attributes &uniforms);
 
-        // Assumes simple monotone RED shader
-        VertexShader()
-        {
-            VertShader = DefaultVertShader;
-        }
+    // Assumes simple monotone RED shader
+    VertexShader()
+    {
+        VertShader = DefaultVertShader;
+    }
 
-        // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            setShader(VertSdr);
-        }
+    // Initialize with a fragment callback
+    VertexShader(void (*VertSdr)(Vertex &vertOut, Attributes &attrOut, const Vertex &vertIn, const Attributes &vertAttr, const Attributes &uniforms))
+    {
+        setShader(VertSdr);
+    }
 
-        // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            VertShader = VertSdr;
-        }
+    // Set the shader to a callback function
+    void setShader(void (*VertSdr)(Vertex &vertOut, Attributes &attrOut, const Vertex &vertIn, const Attributes &vertAttr, const Attributes &uniforms))
+    {
+        VertShader = VertSdr;
+    }
 };
 
 // Stub for Primitive Drawing function
@@ -347,23 +568,23 @@ class VertexShader
  * DRAW_PRIMITIVE
  * Prototype for main drawing function.
  ***************************************/
-void DrawPrimitive(PRIMITIVES prim, 
-                   Buffer2D<PIXEL>& target,
-                   const Vertex inputVerts[], 
+void DrawPrimitive(PRIMITIVES prim,
+                   Buffer2D<PIXEL> &target,
+                   const Vertex inputVerts[],
                    const Attributes inputAttrs[],
-                   Attributes* const uniforms = NULL,
-                   FragmentShader* const frag = NULL,
-                   VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);
+                   Attributes *const uniforms = NULL,
+                   FragmentShader *const frag = NULL,
+                   VertexShader *const vert = NULL,
+                   Buffer2D<double> *zBuf = NULL);
 
 /****************************************
  * DETERMINANT
  * Find the determinant of a matrix with
  * components A, B, C, D from 2 vectors.
  ***************************************/
-inline double determinant(const double & A, const double & B, const double & C, const double & D)
+inline double determinant(const double &A, const double &B, const double &C, const double &D)
 {
-    return (A*D - B*C);
-}          
-       
+    return (A * D - B * C);
+}
+
 #endif
