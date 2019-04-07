@@ -135,6 +135,25 @@ class Buffer2D
 };
 
 
+// Struct used for reading in RGB values from a bitmap file
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+// The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
+
 /****************************************************
  * BUFFER_IMAGE:
  * PIXEL (Uint32) specific Buffer2D class with .BMP 
@@ -144,7 +163,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate the SDL2 reference?
+    	bool ourBufferData = false;         // Are we using the non-SDL2 allocated memory
 
         // Private intialization setup
         void setupInternal()
@@ -162,11 +182,83 @@ class BufferImage : public Buffer2D<PIXEL>
                 row -= w;                    
             }
         }
+    private:
+
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] =    0xff000000 + 
+                                    ((pixelPtr->r) << 16) +
+                                    ((pixelPtr->g) << 8) +
+                                    ((pixelPtr->b));
+                                    ++pixelPtr;
+                }
+            }
+
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
 
     public:
         // Free dynamic memory
         ~BufferImage()
         {
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+                for(int y = 0; y < h; y++)
+                {
+                    free(grid[y]);
+                }
+            }
+
             // De-Allocate pointers for column references
             free(grid);
 
@@ -204,14 +296,51 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
-            SDL_Surface* tmp = SDL_LoadBMP(path);      
-            SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
-            img = SDL_ConvertSurface(tmp, format, 0);
-            SDL_FreeSurface(tmp);
-            SDL_FreeFormat(format);
-            SDL_LockSurface(img);
-            setupInternal();
+            ourSurfaceInstance = false;
+            if(!readBMP(path))
+            {
+                return;
+            }
+        }
+};
+
+// Matrix Multiply
+class Matrix
+{
+    public:
+        // Create a transformation matrix for rotation, translation, and scaling
+        static void createTransformMatrix(double transform[16], double s, double r, double tx, double ty)
+        {
+            transform [0] = cos(r) * s;
+            transform [1] = 0 - sin(r) * s;
+            transform [2] = s * tx * cos(r) - sin(r) * s * ty;
+            transform [3] = 1;
+
+            transform [4] = sin(r) * s;
+            transform [5] = cos(r) * s;
+            transform [6] = sin(r) * tx * s + cos(r) * ty * s;
+            transform [7] = 1;
+
+            transform [8] = 0;
+            transform [9] = 0;
+            transform [10] = 1;
+            transform [11] = 1;
+
+            transform [12] = 0;
+            transform [13] = 0;
+            transform [14] = 0;
+            transform [15] = 1;
+        }
+        // Multiply a transformation matrix by a vertex
+        void matrixMultiply(const double transform[16], double vertex[4], double result[4])
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                double sum = 0;
+                for (int j = 0; j < 4; j++)
+                    sum += transform[4 * i + j] * vertex[j];
+                result[i] = sum;
+            }
         }
 };
 
@@ -253,11 +382,13 @@ void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attr
 // Color a pixel a specific color
 void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    // 0xaarrggbb
-    fragment = 0xFF00;
-    fragment = (unsigned int)(fragment + vertAttr.attrs[0] * 255) << 8;
-    fragment = (unsigned int)(fragment + vertAttr.attrs[1] * 255) << 8;
-    fragment = (unsigned int)(fragment + vertAttr.attrs[2] * 255);
+   // 0xAARRGGBB 
+    fragment = 0xFF000000;
+
+    // Add each color
+    fragment += (unsigned int)(vertAttr.attrs[0] * 255) << 16;
+    fragment += (unsigned int)(vertAttr.attrs[1] * 255) << 8;
+    fragment += (unsigned int)(vertAttr.attrs[2] * 255) << 0;
 }
 
 // Frag Shader for UV without image (due to SDL2 bug?)
@@ -290,6 +421,25 @@ void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     int x = vertAttr.attrs[0] * (buffer -> width());
     int y = vertAttr.attrs[1] * (buffer -> height());
     fragment = (*buffer)[y][x];
+}
+
+void RandomFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    if (rand() % 2)
+        fragment = 0xFFFFFFFF;
+    else 
+        fragment = 0xFF000000;
+}
+
+void SineFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    BufferImage* buffer = (BufferImage*)uniforms.ptrImg;
+    int x = vertAttr.attrs[0] * (buffer -> width());
+    int y = vertAttr.attrs[1] * (buffer -> height());
+    if (y > sin(x / 10.0) * 10 + 20)
+        fragment = 0xFFFFFFFF;
+    else 
+        fragment = 0xFF00FF00;
 }
 
 /*******************************************************
@@ -329,6 +479,29 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+// Vertex shader to apply a transformation matrix
+void TransformVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    // Create an array for matrix multiplication
+    double vertArray[4] = {
+        vertIn.x,
+        vertIn.y,
+        vertIn.z,
+        vertIn.w
+    };
+
+    // Multiply
+    double outArray[4] = {0};
+    Matrix().matrixMultiply(uniforms.attrs, vertArray, outArray);
+
+    // Return the multiplied values
+    vertOut.x = outArray[0];
+    vertOut.y = outArray[1];
+    vertOut.z = outArray[2];
+    vertOut.w = outArray[3];
     attrOut = vertAttr;
 }
 
