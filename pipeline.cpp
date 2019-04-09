@@ -113,9 +113,10 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
             {
                 Attributes interpAttrs;
 
-                //affine calculation
-                //double affineX = affineCalc(x, minX, maxX);
-                //double affineY = affineCalc(
+                //Interpolate for Color
+                interpAttrs.r = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
+                interpAttrs.g = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
+                interpAttrs.b = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
 
                 //Interpolation
                 interpAttrs.u = interpolate(area, firstDet, secondDet, thirdDet, attrs[0].u, attrs[1].u, attrs[2].u);
@@ -123,9 +124,12 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 double w = interpolate(area, firstDet, secondDet, thirdDet, triangle[0].w, triangle[1].w, triangle[2].w);
 
                 //multiply by the corrected Z or 1/Z
+                interpAttrs.r *= 1/w;
+                interpAttrs.g *= 1/w;
+                interpAttrs.b *= 1/w;
                 interpAttrs.u *= 1/w;
                 interpAttrs.v *= 1/w;
-
+                
                 //Call shader callback
                 frag->FragShader(target[y][x], interpAttrs, *uniforms);
             }
@@ -148,6 +152,13 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
         {
             transformedVerts[i] = inputVerts[i];
             transformedAttrs[i] = inputAttrs[i];
+        }
+    }
+    else
+    {
+        for(int i = 0; i < numIn; i++)
+        {
+            vert->VertShader(transformedVerts[i], transformedAttrs[i], inputVerts[i], inputAttrs[i], uniforms[0]);
         }
     }
 }
@@ -236,7 +247,7 @@ int main()
         clearScreen(frame);
 
         // Test Draw Functions
-        TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);
