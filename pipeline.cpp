@@ -93,41 +93,6 @@ int crossProduct (Vertex vertex1, Vertex vertex2)
  ************************************************************/
 void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* const attrs, Attributes* const uniforms, FragmentShader* const frag)
 {
-   //DrawPoint(target,&(triangle[0]),&(attrs[0]),NULL,NULL);
-   /*
-   // get the bounding box of the triangle 
-   int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
-   int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
-   int maxY = MAX3(triangle[0].y, triangle[1].y, triangle[2].y);
-   int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
-
-    // spanning vectors of edge (v1,v2) and (v1,v3) 
-    Vertex vs1 = {triangle[1].x - triangle[0].x, triangle[1].y - triangle[0].y, 1, 1};
-    Vertex vs2 = {triangle[2].x - triangle[0].x, triangle[2].y - triangle[0].y, 1, 1};
-
-    for (int x = minX; x <= maxX; x++)
-    {
-       for (int y = minY; y <= maxY; y++)
-       {
-         Vertex q = {x - triangle[0].x, y - triangle[0].y};
-
-         float s = (float)crossProduct(q, vs2) / crossProduct(vs1, vs2);
-         float t = (float)crossProduct(vs1, q) / crossProduct(vs1, vs2);
-   
-         Vertex v = {x, y};
-
-         //DrawPoint(target, &v, &(attrs[0]), NULL, NULL);
-
-         //cout << s << ", " << t << "          " << v.x << ", " << v.y << endl;
-
-         if ((s >= 0) && (t >= 0) && (s + t <= 1))
-         {  
-             // inside triangle
-            DrawPoint(target, &v, attrs, NULL, NULL);
-         }
-      }
-   }
-   */
    int minX = MIN3(triangle[0].x, triangle[1].x, triangle[2].x);
    int minY = MIN3(triangle[0].y, triangle[1].y, triangle[2].y);
    int maxX = MAX3(triangle[0].x, triangle[1].x, triangle[2].x);
@@ -191,6 +156,15 @@ void VertexShaderExecuteVertices(const VertexShader* vert, Vertex const inputVer
             transformedAttrs[i] = inputAttrs[i];
         }
     }
+    else
+    {
+        for (int i = 0; i < numIn; i++)
+        {
+            vert -> VertShader(transformedVerts[i], transformedAttrs[i], 
+                               inputVerts[i], inputAttrs[i], *uniforms);
+        }
+    }
+    
 }
 
 /***************************************************************************
@@ -279,7 +253,8 @@ int main()
         //TestDrawTriangle(frame);
         //TestDrawFragments(frame);
         //TestDrawStatic(frame);
-        TestDrawPerspectiveCorrect(frame);
+        //TestDrawPerspectiveCorrect(frame);
+        TestVertexShader(frame);
 
         // Push to the GPU
         SendFrame(GPU_OUTPUT, REN, FRAME_BUF);

@@ -3,9 +3,12 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include <iostream>
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
+
+using namespace std;
 
 /******************************************************
  * DEFINES:
@@ -217,6 +220,45 @@ class BufferImage : public Buffer2D<PIXEL>
         }
 };
 
+//Matrix class
+class Matrix
+{      
+    public:
+        // Default Constructor
+        Matrix()
+        {
+            clear();
+        }
+  
+        // Variables
+        double matrix [4][4];
+
+        // Functions
+        // Sets the matrix to the identity matrix
+        void clear()
+        {
+            for (int x = 0; x < 4; x++)
+            {
+                 for (int y = 0; y < 4; y++)
+                 {
+                    this->matrix[x][y] = (x == y ? 1 : 0);
+                 }
+            } 
+        }
+
+        // Operators
+        // Allows access to the array
+        const double& operator[] (const int i) const
+        {
+            return matrix[i / 4][i % 4];
+        } 
+        // Allows access to the array (non-const)
+        double& operator[] (const int i) 
+        {
+            return matrix[i / 4][i % 4];
+        }              
+};
+
 /***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
@@ -241,7 +283,98 @@ class Attributes
         double u;
         double v;
         void* ptrImg;
+
+        Matrix matrix;
 };
+
+// Vertex multiplication operator
+Vertex operator * (const Matrix& lhs, const Vertex& rhs)
+{ 
+
+    Vertex result = { lhs[0] * rhs.x +  lhs[1] * rhs.y +  lhs[2] * rhs.z +  lhs[3] * rhs.w,
+                      lhs[4] * rhs.x +  lhs[5] * rhs.y +  lhs[6] * rhs.z +  lhs[7] * rhs.w,
+                      lhs[8] * rhs.x +  lhs[9] * rhs.y + lhs[10] * rhs.z + lhs[11] * rhs.w,
+                     lhs[12] * rhs.x + lhs[13] * rhs.y + lhs[14] * rhs.z + lhs[15] * rhs.w };
+    return result;
+}
+
+Matrix operator * (const Matrix& lhs, const Matrix& rhs)
+{
+    Matrix result;
+
+    // Loop through each cell
+    for (int q = 0; q < 16; q++)
+    {
+       int row = 4 * (q / 4);
+       int col = q % 4;
+       
+       double sum = 0.0;
+
+       // Loop 4 times for each row and column
+       for (int k = 0; k < 4; k++)
+       {
+           sum += (lhs[row] * rhs[col]);
+
+           row++;
+           col += 4;
+       }
+
+       result[q] = sum;
+    }
+
+    return result;
+}
+
+// Translation Matrix
+void translateMatrix(Attributes& attr, Vertex v)
+{
+    attr.matrix[3] = v.x;
+    attr.matrix[7] = v.y;
+   attr.matrix[11] = v.z;
+}
+// Scale Matrix
+void scaleMatrix(Attributes& attr, Vertex v)
+{
+    attr.matrix[0] = v.x;
+    attr.matrix[5] = v.y;
+   attr.matrix[10] = v.z;
+}
+// Rotation Matrix
+void rotateMatrix(Attributes& attr, double n)
+{
+    // Conversion to radians
+    n = n * M_PI / 180.0;
+
+    // Do some math
+    double cosN = cos(n);
+    double sinN = sin(n);
+    
+    attr.matrix[0] =  cosN;
+    attr.matrix[1] = -sinN;
+    attr.matrix[4] =  sinN;
+    attr.matrix[5] =  cosN;
+}
+
+void scaleTranslateRotateMatrix(Attributes& attr, Vertex vS, Vertex vT, double rot)
+{
+   Attributes vSattrs;
+   scaleMatrix(vSattrs, vS);
+
+   Attributes vTattrs;
+   translateMatrix(vTattrs, vT);
+   
+   Attributes rotAttrs;
+   rotateMatrix(rotAttrs, rot);
+
+   attr.matrix = rotAttrs.matrix * vTattrs.matrix * vSattrs.matrix;
+}
+
+/*
+int getTheSinOfANumber(int num)
+{
+    return 0;
+}
+*/
 
 // Static Fragment Shader 
 void StaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
@@ -322,6 +455,14 @@ void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & ve
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
+    attrOut = vertAttr;
+}
+
+void VertexFragmentShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+{
+    //cout << "Hello" << endl; 
+
+    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
 
