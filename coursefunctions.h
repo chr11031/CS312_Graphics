@@ -1,13 +1,7 @@
 #include "definitions.h"
-#include <iostream>
 
 #ifndef COURSE_FUNCTIONS_H
 #define COURSE_FUNCTIONS_H
-
-using namespace std;
-
-int x = 0;
-int rng = 0;
 
 /***************************************************
  * Team Activity for week #1.
@@ -39,8 +33,8 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         {
                 for(int x = 0; x < gridW; x++)
                 {
-                   grid[y][x] = (target[y*scaleFactor][x*scaleFactor] == 0xffff0000) ? 1 : 0;
-                   gridTmp[y][x] = grid[y][x];
+                        grid[y][x] = (target[y*scaleFactor][x*scaleFactor] == 0xffff0000) ? 1 : 0;
+                        gridTmp[y][x] = grid[y][x];
                 }
         }
 
@@ -48,64 +42,49 @@ void GameOfLife(Buffer2D<PIXEL> & target)
         SDL_Event e;
         while(SDL_PollEvent(&e)) 
         {
-           int mouseX;
-           int mouseY;
-
-           if(e.type == SDL_MOUSEBUTTONDOWN)
-           {
-              holdDown = true;
-           }
-           
-           if(e.type == SDL_MOUSEBUTTONUP)
-           {
-              holdDown = false;
-           }
-           
-           if(e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN) 
-           {
-              isSetup = !isSetup;
-           }
-           
-           if(holdDown && isSetup)
-           {
-              // Clicking the mouse changes a pixel's color
-              SDL_GetMouseState(&mouseX, &mouseY);
-                        
-              int gridX = mouseX / scaleFactor;
-              int gridY = mouseY / scaleFactor;
-                        
-              if(grid[gridY][gridX] == 1)
-              {
-                 // Dead
-                 grid[gridY][gridX] = 0;
-              }
-              else
-              {
-                 // Alive
-                 grid[gridY][gridX] = 1;
-              }
-           }
+                int mouseX;
+                int mouseY;
+                if(e.type == SDL_MOUSEBUTTONDOWN)
+                {
+                        holdDown = true;
+                }
+                if(e.type == SDL_MOUSEBUTTONUP)
+                {
+                        holdDown = false;
+                }
+                if(e.key.keysym.sym == 'g' && e.type == SDL_KEYDOWN) 
+                {
+                        isSetup = !isSetup;
+                }
+                if(holdDown && isSetup)
+                {
+                        // Clicking the mouse changes a pixel's color
+                        SDL_GetMouseState(&mouseX, &mouseY);
+                        int gridX = mouseX / scaleFactor;
+                        int gridY = mouseY / scaleFactor;
+                        if(grid[gridY][gridX] == 1)
+                        {
+                                // Dead
+                                grid[gridY][gridX] = 0;
+                        }
+                        else
+                        {
+                                // Alive
+                                grid[gridY][gridX] = 1;
+                        }
+                }
         }
+
 
         // Advance the simulation after pressing 'g'
         if(!isSetup)
         {
-               for (int wi = 0; wi < 64; wi++)
-               {
-                  for (int hi = 0; hi < 64; hi++)
-                  {
-                     int neighbors = 0;
-                     
-                     if (grid[wi] [hi])
-                     {
-                     
-                     }
-                  }   
-               }
+                // Your Code goes here
 
                 // Wait a half-second between iterations
                 SDL_Delay(500);
         }
+
 
         // Upscale/blit to screen
         for(int y = 0; y < h; y++)
@@ -114,7 +93,6 @@ void GameOfLife(Buffer2D<PIXEL> & target)
                 {
                         int yScal = y/scaleFactor;
                         int xScal = x/scaleFactor;
-                        
                         if(grid[yScal][xScal] == 0)
                         {
                                 // Dead Color
@@ -144,15 +122,16 @@ void CADView(Buffer2D<PIXEL> & target)
         static Buffer2D<PIXEL> botLeft(halfWid, halfHgt);
         static Buffer2D<PIXEL> botRight(halfWid, halfHgt);
 
-        // Your code goes here
+
+        // Your code goes here 
         // Feel free to copy from other test functions to get started!
+
 
         // Blit four panels to target
         int yStartSrc = 0;
         int xStartSrc = 0;
         int yLimitSrc = topLeft.height();
         int xLimitSrc = topLeft.width();
-
         for(int ySrc = yStartSrc; ySrc < yLimitSrc; ySrc++)
         {
                 for(int xSrc = xStartSrc; xSrc < xLimitSrc; xSrc++)
@@ -173,7 +152,7 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
         Vertex vert = {10, 502, 1, 1};
         Attributes pointAttributes;
         PIXEL color = 0xffff0000;
-        //pointAttributes.color = color;       
+        // Your Code goes here for 'pointAttributes'       
 
         DrawPrimitive(POINT, target, &vert, &pointAttributes);
 }
@@ -183,14 +162,60 @@ void TestDrawPixel(Buffer2D<PIXEL> & target)
  **********************************************/
 void TestDrawTriangle(Buffer2D<PIXEL> & target)
 {
-   /**************************************************
-   * 6 Flat color triangles below
-   *************************************************/
-   /***************************************************
-    * I got rid of this function because it disagreed
-    * with the new attributes class.
-    ************************************************/  
+        /**************************************************
+        * 6 Flat color triangles below
+        *************************************************/
+        Vertex verts[3];
+        Attributes attr[3];
+        verts[0] = {100, 362, 1, 1};
+        verts[1] = {150, 452, 1, 1};
+        verts[2] = {50, 452, 1, 1};
+        PIXEL colors1[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
+
+        verts[0] = {300, 402, 1, 1};
+        verts[1] = {250, 452, 1, 1};
+        verts[2] = {250, 362, 1, 1};
+        PIXEL colors2[3] = {0xffff0000, 0xffff0000, 0xffff0000};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
+
+        verts[0] = {450, 362, 1, 1};
+        verts[1] = {450, 452, 1, 1};
+        verts[2] = {350, 402, 1, 1};
+        PIXEL colors3[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
+        
+        verts[0] = {110, 262, 1, 1};
+        verts[1] = {60, 162, 1, 1};
+        verts[2] = {150, 162, 1, 1};
+        PIXEL colors4[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
+
+        verts[0] = {210, 252, 1, 1};
+        verts[1] = {260, 172, 1, 1};
+        verts[2] = {310, 202, 1, 1};
+        PIXEL colors5[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
+        
+        verts[0] = {370, 202, 1, 1};
+        verts[1] = {430, 162, 1, 1};
+        verts[2] = {470, 252, 1, 1};
+        PIXEL colors6[3] = {0xff00ff00, 0xff00ff00, 0xff00ff00};
+        // Your color code goes here for 'attr'
+
+        DrawPrimitive(TRIANGLE, target, verts, attr);
 }
+
 
 /***********************************************
  * Demonstrate Fragment Shader, linear VBO 
@@ -198,32 +223,46 @@ void TestDrawTriangle(Buffer2D<PIXEL> & target)
  **********************************************/
 void TestDrawFragments(Buffer2D<PIXEL> & target)
 {
-   /**************************************************
-    * 1. Interpolated color triangle
-    *************************************************/
-   /****************************************************
-    * 2. Interpolated image triangle
-    ****************************************************/
-   /***************************************************
-    * I got rid of this function because it disagreed
-    * with the new attributes class.
-    ************************************************/   
-}
+        /**************************************************
+        * 1. Interpolated color triangle
+        *************************************************/
+        Vertex colorTriangle[3];
+        Attributes colorAttributes[3];
+        colorTriangle[0] = {250, 112, 1, 1};
+        colorTriangle[1] = {450, 452, 1, 1};
+        colorTriangle[2] = {50, 452, 1, 1};
+        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff}; // Or {{1.0,0.0,0.0}, {0.0,1.0,0.0}, {0.0,0.0,1.0}}
+        // Your color code goes here for 'colorAttributes'
 
+        FragmentShader myColorFragShader;
+        // Your code for the color fragment shader goes here
 
-/***********************************************
- * Demonstrate Fragment Shader, linear VBO 
- * interpolation for Project 03. 
- **********************************************/
-void TestDrawStatic(Buffer2D<PIXEL> & target)
-{
-   /**************************************************
-    * 1. Interpolated color triangle
-    *************************************************/
-   /***************************************************
-    * I got rid of this function because it disagreed
-    * with the new attributes class.
-    ************************************************/     
+        Attributes colorUniforms;
+        // Your code for the uniform goes here, if any (don't pass NULL here)
+
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader);
+
+        /****************************************************
+         * 2. Interpolated image triangle
+        ****************************************************/
+        Vertex imageTriangle[3];
+        Attributes imageAttributes[3];
+        imageTriangle[0] = {425, 112, 1, 1};
+        imageTriangle[1] = {500, 252, 1, 1};
+        imageTriangle[2] = {350, 252, 1, 1};
+        double coordinates[3][2] = { {1,0}, {1,1}, {0,1} };
+        // Your texture coordinate code goes here for 'imageAttributes'
+
+        BufferImage myImage("image.bmp");
+        // Provide an image in this directory that you would like to use (powers of 2 dimensions)
+
+        Attributes imageUniforms;
+        // Your code for the uniform goes here
+
+        FragmentShader myImageFragShader;
+        // Your code for the image fragment shader goes here
+
+        DrawPrimitive(TRIANGLE, target, imageTriangle, imageAttributes, &imageUniforms, &myImageFragShader);
 }
 
 /************************************************
@@ -232,44 +271,44 @@ void TestDrawStatic(Buffer2D<PIXEL> & target)
  ***********************************************/
 void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
 {
-   /**************************************************
-    * 1. Image quad (2 TRIs) Code (texture interpolated)
-    **************************************************/
-   /***************************************************
-    * I got rid of this function because it disagreed
-    * with the new attributes class.
-    ************************************************/   
+        /**************************************************
+        * 1. Image quad (2 TRIs) Code (texture interpolated)
+        **************************************************/
+        // Artificially projected, viewport transformed
+        double divA = 6;
+        double divB = 40;
+        Vertex quad[] = {{(-1200 / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(1200  / divA) + (S_WIDTH/2), (-1500 / divA) + (S_HEIGHT/2), divA, 1.0/divA },
+                         {(1200  / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB },
+                         {(-1200 / divB) + (S_WIDTH/2), (1500  / divB) + (S_HEIGHT/2), divB, 1.0/divB }};
 
-   // This is for the random pizza image
-   if (x == 0)
-   {
-      rng = rand() % 2;
-   }
-   
-   //rng = 0;
-   
-   //rng = rand() % 2;
+        Vertex verticesImgA[3];
+        Attributes imageAttributesA[3];
+        verticesImgA[0] = quad[0];
+        verticesImgA[1] = quad[1];
+        verticesImgA[2] = quad[2];
 
-   if (rng == 0)
-   {
-      /***************************************************
-       * I got rid of this function because it disagreed
-       * with the new attributes class.
-       ************************************************/      
-   }
-   else if (rng == 1)
-   {
-       /***************************************************
-       * I got rid of this function because it disagreed
-       * with the new attributes class.
-       ************************************************/ 
-   }
-   else
-   {
-      /* code */
-   }
-   
-   x = 100;
+        Vertex verticesImgB[3];        
+        Attributes imageAttributesB[3];
+        verticesImgB[0] = quad[2];
+        verticesImgB[1] = quad[3];
+        verticesImgB[2] = quad[0];
+
+        double coordinates[4][2] = { {0/divA,0/divA}, {1/divA,0/divA}, {1/divB,1/divB}, {0/divB,1/divB} };
+        // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
+
+        BufferImage myImage("checker.bmp");
+        // Ensure the checkboard image is in this directory
+
+        Attributes imageUniforms;
+        // Your code for the uniform goes here
+
+        FragmentShader fragImg;
+        // Your code for the image fragment shader goes here
+                
+        // Draw image triangle 
+        DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg);
+        DrawPrimitive(TRIANGLE, target, verticesImgB, imageAttributesB, &imageUniforms, &fragImg);
 }
 
 /************************************************
@@ -278,13 +317,54 @@ void TestDrawPerspectiveCorrect(Buffer2D<PIXEL> & target)
  ***********************************************/
 void TestVertexShader(Buffer2D<PIXEL> & target)
 {
-   /**************************************************
-    * 1. Interpolated color triangle
-    *************************************************/
-   /***************************************************
-    * I got rid of this function because it disagreed
-    * with the new attributes class.
-    ************************************************/     
+        /**************************************************
+        * 1. Interpolated color triangle
+        *************************************************/
+        Vertex colorTriangle[3];
+        Attributes colorAttributes[3];
+        colorTriangle[0] = { 350, 112, 1, 1};
+        colorTriangle[1] = { 400, 200, 1, 1};
+        colorTriangle[2] = { 300, 200, 1, 1};
+
+        PIXEL colors[3] = {0xffff0000, 0xff00ff00, 0xff0000ff};
+        // Your code for 'colorAttributes' goes here
+
+        FragmentShader myColorFragShader;
+
+        Attributes colorUniforms;
+        // Your code for the uniform goes here, if any (don't pass NULL here)
+        
+        VertexShader myColorVertexShader;
+        // Your code for the vertex shader goes here 
+
+        /******************************************************************
+		 * TRANSLATE (move +100 in the X direction, +50 in the Y direction)
+         *****************************************************************/
+        // Your translating code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+
+		DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+
+        /***********************************
+         * SCALE (scale by a factor of 0.5)
+         ***********************************/
+        // Your scaling code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+
+        /**********************************************
+         * ROTATE 45 degrees in the X-Y plane around Z
+         *********************************************/
+        // Your rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);
+
+        /*************************************************
+         * SCALE-TRANSLATE-ROTATE in left-to-right order
+         * the previous transformations concatenated.
+         ************************************************/
+		// Your scale-translate-rotation code that integrates with 'colorUniforms', used by 'myColorVertexShader' goes here
+		
+        DrawPrimitive(TRIANGLE, target, colorTriangle, colorAttributes, &colorUniforms, &myColorFragShader, &myColorVertexShader);	
 }
 
 /********************************************
@@ -335,47 +415,20 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         double coordinates[4][2] = { {0,0}, {1,0}, {1,1}, {0,1} };
         // Your texture coordinate code goes here for 'imageAttributesA, imageAttributesB'
-        imageAttributesA[0].insertDbl(coordinates[0][0]);
-        imageAttributesA[0].insertDbl(coordinates[0][1]);
-        imageAttributesA[1].insertDbl(coordinates[1][0]);
-        imageAttributesA[1].insertDbl(coordinates[1][1]);
-        imageAttributesA[2].insertDbl(coordinates[2][0]);
-        imageAttributesA[2].insertDbl(coordinates[2][1]);
-
-        imageAttributesB[0].insertDbl(coordinates[2][0]);
-        imageAttributesB[0].insertDbl(coordinates[2][1]);
-        imageAttributesB[1].insertDbl(coordinates[3][0]);
-        imageAttributesB[1].insertDbl(coordinates[3][1]);
-        imageAttributesB[2].insertDbl(coordinates[0][0]);
-        imageAttributesB[2].insertDbl(coordinates[0][1]);
 
         BufferImage myImage("checker.bmp");
         // Ensure the checkboard image is in this directory, you can use another image though
 
         Attributes imageUniforms;
-        //imageUniforms.insertPtr(&myImage); see below
+        // Your code for the uniform goes here
 
         FragmentShader fragImg;
-        fragImg.FragShader = &ImageFragShader;
+        // Your code for the image fragment shader goes here
 
         VertexShader vertImg;
-        vertImg.VertShader = &SimpleVertexShader2;
-
-        // Uniforms
-        // [0] Image reference
-        // [1] Model transformation
-        // [2] View transformation
-        // [3] Perspective transform
-
-        Matrix model = translateMatrix(0, 0, 0);
-        Matrix view  = viewTransform(myCam.x, myCam.y, myCam.z,
-                                     myCam.yaw, myCam.pitch, myCam.roll);
-        Matrix proj  = perspectiveTransform(60.0, 1.0, 1, 200); // FOV, Aspect ratio, Near, Far
-
-        imageUniforms.insertPtr(&myImage);
-        imageUniforms.insertPtr(&model);
-        imageUniforms.insertPtr(&view);
-        imageUniforms.insertPtr(&proj);
+        // Your code for the image vertex shader goes here
+        // NOTE: This must include the at least the 
+        // projection matrix if not more transformations 
                 
         // Draw image triangle 
         DrawPrimitive(TRIANGLE, target, verticesImgA, imageAttributesA, &imageUniforms, &fragImg, &vertImg, &zBuf);
@@ -383,5 +436,7 @@ void TestPipeline(Buffer2D<PIXEL> & target)
 
         // NOTE: To test the Z-Buffer additinonal draw calls/geometry need to be called into this scene
 }
+
+
 
 #endif
