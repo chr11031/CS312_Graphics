@@ -3,6 +3,8 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "math.h"
+#include "graphicMatrix.h"
+//#include "shaders.h"
 
 #ifndef DEFINITIONS_H
 #define DEFINITIONS_H
@@ -22,6 +24,10 @@
 #define MIN3(A,B,C) MIN((MIN(A,B)),C)
 #define MAX3(A,B,C) MAX((MAX(A,B)),C)
 
+//set aside numbers
+#define X_Key 0
+#define y_Key 1
+
 // Max # of vertices after clipping
 #define MAX_VERTICES 8 
 
@@ -36,15 +42,56 @@ enum PRIMITIVES
 };
 
 /****************************************************
- * Describes a geometric point in 3D space. 
- ****************************************************/
-struct Vertex
+ * X, Y, Z enums
+ ***************************************************/
+enum DIMENSION
 {
-    double x;
-    double y;
-    double z;
-    double w;
+    X = 0,
+    Y = 1,
+    Z = 2
 };
+
+/***************************************************
+ * camera controls
+ ***************************************************/
+struct camControls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    double pitch = 0;
+    double yaw = 0;
+    double roll = 0;
+};
+camControls myCam;
+
+/****************************************
+ * determinant (cross product)
+ * Takes vertexes and uses cross product math
+ * to find the determinant
+ ***************************************/
+double determinant(const double & vtx1, const double & vtx2, 
+                    const double & vty1, const double & vty2)//XXYY
+{
+    double determ = 0.0;
+    determ = (vtx1 * vty2) - (vty1 * vtx2);
+    return determ;
+}
+
+/****************************************
+ * Interpolation
+ * returns interpolation math
+ ***************************************/
+double interpolate(double areaTri, double determ1, double determ2, 
+                    double determ3, double attr1, double attr2, double attr3, double zCorrect = 1)
+{
+    //pull weights
+    double w1 = (determ2 / areaTri) * attr1;
+    double w2 = (determ3 / areaTri) * attr2;
+    double w3 = (determ1 / areaTri) * attr3; 
+
+    return zCorrect * (w1 + w2 + w3);//((determ1 * attr1) + (determ2 * attr2) + (determ3 * attr3));
+} 
 
 /******************************************************
  * BUFFER_2D:
@@ -79,6 +126,7 @@ class Buffer2D
         // Free dynamic memory
         ~Buffer2D()
         {
+            if(grid == nullptr) { return; }
             // De-Allocate pointers for column references
             for(int r = 0; r < h; r++)
             {
@@ -134,6 +182,24 @@ class Buffer2D
         }
 };
 
+// Struct used for reading in RGB values from a bitmap file
+struct bmpRGB
+{
+  unsigned char b;
+  unsigned char g; 
+  unsigned char r;
+};
+
+// The portion of the Bitmap header we want to read
+struct bmpLayout
+{
+  int offset;
+  int headerSize;
+  int width;
+  int height;
+  unsigned short colorPlanes;
+  unsigned short bpp;
+};
 
 /****************************************************
  * BUFFER_IMAGE:
@@ -144,7 +210,8 @@ class BufferImage : public Buffer2D<PIXEL>
 {
     protected:       
         SDL_Surface* img;                   // Reference to the Surface in question
-        bool ourSurfaceInstance = false;    // Do we need to de-allocate?
+        bool ourSurfaceInstance = false;    // Do we need to de-allocate? (2dl)
+        bool ourBufferData = false;
 
         // Private intialization setup
         void setupInternal()
@@ -155,7 +222,7 @@ class BufferImage : public Buffer2D<PIXEL>
             grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);                
 
             PIXEL* row = (PIXEL*)img->pixels;
-            row += (w*h);
+            row += (w*(h-1));
             for(int i = 0; i < h; i++)
             {
                 grid[i] = row;
@@ -163,12 +230,85 @@ class BufferImage : public Buffer2D<PIXEL>
             }
         }
 
+        private:
+
+        // Non-SDL2 24BPP, 2^N dimensions BMP reader
+        bool readBMP(const char* fileName)
+        {
+            // Read in Header - check signature
+            FILE * fp = fopen(fileName, "rb");	    
+            char signature[2];
+            fread(signature, 1, 2, fp);
+            if(!(signature[0] == 'B' && signature[1] == 'M'))
+            {
+                printf("Invalid header for file: \"%c%c\"", signature[0], signature[1]);
+                return 1;
+            }
+
+            // Read in BMP formatting - verify type constraints
+            bmpLayout layout;
+            fseek(fp, 8, SEEK_CUR);
+            fread(&layout, sizeof(layout), 1, fp);
+            if(layout.width % 2 != 0 || layout.width <= 4)
+            {
+                printf("Size Width MUST be a power of 2 larger than 4; not %d\n", w);
+                return false;		
+            }
+            if(layout.bpp != 24)
+            {
+                printf("Bits per pixel of image must be 24; not %d\n", layout.bpp);
+                return false;
+            }
+
+            // Copy W+H information
+            w = layout.width;
+            h = layout.height;
+
+            // Initialize internal pointers/memory
+            grid = (PIXEL**)malloc(sizeof(PIXEL*) * h);
+            for(int y = 0; y < h; y++) grid[y] = (PIXEL*)malloc(sizeof(PIXEL) * w);
+
+            // Advance to beginning of pixel data, read values in
+            bmpRGB* pixel = (bmpRGB*)malloc(sizeof(bmpRGB)*w*h);
+            fseek(fp, layout.offset, SEEK_SET);  	
+            fread(pixel, sizeof(bmpRGB), w*h, fp);
+
+            // Convert 24-bit RGB to 32-bit ARGB
+            bmpRGB* pixelPtr = pixel;
+            PIXEL* out = (PIXEL*)malloc(sizeof(PIXEL)*w*h);
+            for(int y = 0; y < h; y++)
+            {
+                for(int x = 0; x < w; x++)
+                {
+                    grid[y][x] =    0xff000000 + 
+                                    ((pixelPtr->r) << 16) +
+                                    ((pixelPtr->g) << 8) +
+                                    ((pixelPtr->b));
+                                    ++pixelPtr;
+                }
+            }
+
+            // Release 24-Bit buffer, release file
+            free(pixel);
+            fclose(fp); 
+            return true;
+        }
+
     public:
         // Free dynamic memory
         ~BufferImage()
         {
+            // De-Allocate non-SDL2 image data
+            if(ourBufferData)
+            {
+                for(int y = 0; y < h; y++)
+                {
+                    free(grid[y]);
+                }
+            }
             // De-Allocate pointers for column references
             free(grid);
+            grid = nullptr;
 
             // De-Allocate this image plane if necessary
             if(ourSurfaceInstance)
@@ -204,14 +344,28 @@ class BufferImage : public Buffer2D<PIXEL>
         // Constructor based on reading in an image - only meant for UINT32 type
         BufferImage(const char* path) 
         {
-            ourSurfaceInstance = true;
+            /*ourSurfaceInstance = true;
             SDL_Surface* tmp = SDL_LoadBMP(path);      
             SDL_PixelFormat* format = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
             img = SDL_ConvertSurface(tmp, format, 0);
             SDL_FreeSurface(tmp);
             SDL_FreeFormat(format);
-            setupInternal();
+            //May need
+            //SDL_LockSurface(img);
+            setupInternal();*/
+            ourSurfaceInstance = false;
+	        if(!readBMP(path))
+	        {
+	            return;
+	        }	  
         }
+};
+
+//Attribute struct union
+union attrib
+{
+    double d;
+    void* ptr;
 };
 
 /***************************************************
@@ -223,109 +377,70 @@ class BufferImage : public Buffer2D<PIXEL>
 class Attributes
 {      
     public:
-        // Obligatory empty constructor
-        Attributes() {}
+        int numMembers = 0;
+        attrib att[16];//0R 1G 2B 3U 4V -- 0U 1V
 
-		PIXEL color;//?Did I do it right?
+        //Matrix trans = Matrix(4,4);
+
+        //for image
+        void* ptrImg = NULL;
+        double size = 3;
+        PIXEL color = 0;
+
+        // Obligatory empty constructor
+        Attributes() { numMembers = 0; }
+
 
         // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
+        Attributes(const Attributes & first, const Attributes & second, const double & along)
         {
-            // Your code goes here when clipping is implemented
+            numMembers = first.numMembers;
+            for (int i = 0; i < numMembers; i++)
+            {
+                att[i].d = (first.att[i].d) + ((second.att[i].d - first.att[i].d) * along); 
+            }
         }
+
+        // interpolate all doubles
+        Attributes(const double & firstDet, const double & secondDet, const double & thirdDet, 
+                   const Attributes & first, const Attributes & second, const Attributes & third,
+                   const double & correctZ, const double& area)
+        {
+            numMembers = 0;
+            while(numMembers < first.numMembers)
+            {
+                att[numMembers].d = interpolate(area, firstDet, secondDet, thirdDet, first.att[numMembers].d, second.att[numMembers].d, third.att[numMembers].d);
+                att[numMembers].d = att[numMembers].d * correctZ;
+                numMembers += 1;
+            }
+        }
+
+        // Const Return operator
+        const double & operator[](const int & i) const
+        {
+            return att[i].d;
+        }
+
+        // Return operator
+        double & operator[](const int & i) 
+        {
+            return att[i].d;
+        }
+
+        // Insert Double Into Container
+        void insertDbl(const double & d)
+        {
+            att[numMembers].d = d;
+            numMembers += 1;
+        }
+    
+        // Insert Pointer Into Container
+        void insertPtr(void * ptr)
+        {
+            att[numMembers].ptr = ptr;
+            numMembers += 1;
+        }
+
 };	
-
-// Example of a fragment shader
-void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    // Output our shader color value, in this case red
-    fragment = 0xffff0000;
-}
-
-/*******************************************************
- * FRAGMENT_SHADER
- * Encapsulates a programmer-specified callback
- * function for shading pixels. See 'DefaultFragShader'
- * for an example. 
- ******************************************************/
-class FragmentShader
-{
-    public:
- 
-        // Get, Set implicit
-        void (*FragShader)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms);
-
-        // Assumes simple monotone RED shader
-        FragmentShader()
-        {
-            FragShader = DefaultFragShader;
-        }
-
-        // Initialize with a fragment callback
-        FragmentShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            setShader(FragSdr);
-        }
-
-        // Set the shader to a callback function
-        void setShader(void (*FragSdr)(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            FragShader = FragSdr;
-        }
-};
-
-// Example of a vertex shader
-void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    // Nothing happens with this vertex, attribute
-    vertOut = vertIn;
-    attrOut = vertAttr;
-}
-
-/**********************************************************
- * VERTEX_SHADER
- * Encapsulates a programmer-specified callback
- * function for transforming vertices and per-vertex
- * attributes. See 'DefaultVertShader' for a pass-through
- * shader example.
- *********************************************************/
-class VertexShader
-{
-    public:
-        // Get, Set implicit
-        void (*VertShader)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms);
-
-        // Assumes simple monotone RED shader
-        VertexShader()
-        {
-            VertShader = DefaultVertShader;
-        }
-
-        // Initialize with a fragment callback
-        VertexShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            setShader(VertSdr);
-        }
-
-        // Set the shader to a callback function
-        void setShader(void (*VertSdr)(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms))
-        {
-            VertShader = VertSdr;
-        }
-};
-
-// Stub for Primitive Drawing function
-/****************************************
- * DRAW_PRIMITIVE
- * Prototype for main drawing function.
- ***************************************/
-void DrawPrimitive(PRIMITIVES prim, 
-                   Buffer2D<PIXEL>& target,
-                   const Vertex inputVerts[], 
-                   const Attributes inputAttrs[],
-                   Attributes* const uniforms = NULL,
-                   FragmentShader* const frag = NULL,
-                   VertexShader* const vert = NULL,
-                   Buffer2D<double>* zBuf = NULL);             
        
 #endif
