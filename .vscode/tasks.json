@@ -8,12 +8,13 @@
             "type": "shell",
             "command": "g++",
             "args": [
-                "-w",
+                "${workspaceRoot}\\gl.cpp",
                 "-g",
-                "${workspaceRoot}\\pipeline.cpp",
+                "-lopengl32",
+                "-lglew32",
+                "-lSDL2",
                 "-o",
                 "${workspaceRoot}\\pipeline.exe",
-                "-lSDL2"
             ],
             "group": {
                 "kind": "build",
@@ -23,3 +24,4 @@
         }
     ]
     }
+    

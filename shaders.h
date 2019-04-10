@@ -5,10 +5,10 @@
 
 void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* imagePtr = (BufferImage*)uniforms.ptrImage;
+    BufferImage* imagePtr = (BufferImage*)uniforms[0].ptr;
 
-    int x = vertAttr.attrValues[0] * (imagePtr->width()  - 1);
-    int y = vertAttr.attrValues[1] * (imagePtr->height() - 1);
+    int x = vertAttr[0].d * (imagePtr->width()  - 1);
+    int y = vertAttr[1].d * (imagePtr->height() - 1);
 
     fragment = (*imagePtr)[y][x];
 }
@@ -16,9 +16,9 @@ void imageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
 void baryInterpolationShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.attrValues[0] * 0xff) << 16;
-    color += (unsigned int)(vertAttr.attrValues[1] * 0xff) << 8;
-    color += (unsigned int)(vertAttr.attrValues[2] * 0xff);
+    color += (unsigned int)(vertAttr[0].d * 0xff) << 16;
+    color += (unsigned int)(vertAttr[1].d * 0xff) << 8;
+    color += (unsigned int)(vertAttr[2].d * 0xff);
 
     fragment = color;
 }
@@ -55,10 +55,21 @@ void GrayScaleShader(PIXEL & fragment, const Attributes & vertAttr, const Attrib
     fragment = 0xff000000 + (avgScale << 16) + (avgScale << 8) + avgScale;
 }
 
-void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
+void TransformVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
 {
-    vertOut = vertIn * uniforms.matrix;
-    attrOut = vertAttr;
+    vertOut = uniforms.matrix * vertIn;
+    attrOut = attrIn;
+}
+
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+    Matrix* model = (Matrix*)uniforms[1].ptr;
+    Matrix* view = (Matrix*)uniforms[2].ptr;
+    Matrix* proj = (Matrix*)uniforms[3].ptr;
+
+    vertOut = (*proj) * (*view) * (*model) * vertIn;
+
+    attrOut = attrIn;
 }
 
 #endif
