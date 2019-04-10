@@ -160,6 +160,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     //Time to get the area of the whole triangle
     double areaTriangle = determinant(firstVector[X_KEY], -thirdVector[X_KEY], firstVector[Y_KEY], -thirdVector[Y_KEY]);
 
+
     //Everything up to the for loop is for computing perspective correct attributes
     Attributes correct [3];
     //divide attribute by the z coordinate this is for color
@@ -194,6 +195,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
     inverted_Zs [1] = 1 / triangle[1].z;
     inverted_Zs [2] = 1 / triangle[2].z;
 
+
     for (int x = minX; x <= maxX; x++)
     {
         for (int y = minY; y <= maxY; y++)
@@ -219,6 +221,7 @@ void DrawTriangle(Buffer2D<PIXEL> & target, Vertex* const triangle, Attributes* 
                 interpolatedAttribs.r = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].r, attrs[1].r, attrs[2].r);
                 interpolatedAttribs.g = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].g, attrs[1].g, attrs[2].g);
                 interpolatedAttribs.b = interp(areaTriangle, firstDet, secndDet, thirdDet, attrs[0].b, attrs[1].b, attrs[2].b);
+
 
                 //Now its time for image interpolation
                 //firstDet * u1 + secondDet * u2 + thirdDet * u3;
