@@ -10,9 +10,11 @@ varying vec3 v_Normal;
 
 void main()
 {
+	//Vertex Shaders
 	v_Position = a_Position;
 	v_UV = a_UV;
 	v_Normal = a_Normal;
 
+	//Matrix and Position
 	gl_Position = u_Matrix * vec4(a_Position, 1.0);
 }
