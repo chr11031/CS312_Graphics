@@ -52,6 +52,22 @@ struct Vertex
     double w;
 };
 
+/****************************************************
+ * The most descriptive name for the camera controls. 
+ ****************************************************/
+struct sixDoubles //Camera Controls
+{
+    double x = 0;
+    double y = 0;
+    double z = 0;
+
+    double pitch = 0;
+    double yaw = 0;
+    double roll = 0;
+};
+
+sixDoubles myCam;
+
 /******************************************************
  * BUFFER_2D:
  * Used for 2D buffers including render targets, images
@@ -260,6 +276,24 @@ class Matrix
 };
 
 /***************************************************
+ * Creates either a pointer or a double. 
+ **************************************************/
+inline double lerp(double a, double b, double lerpAmount)
+{
+   return a + (b - a) * lerpAmount;
+}
+
+/***************************************************
+ * Creates either a pointer or a double. 
+ **************************************************/
+union attrib
+{
+    double d;
+
+    void* ptr;
+};
+
+/***************************************************
  * ATTRIBUTES (shadows OpenGL VAO, VBO)
  * The attributes associated with a rendered 
  * primitive as a whole OR per-vertex. Will be 
@@ -268,26 +302,75 @@ class Matrix
 class Attributes
 {      
     public:
-        // Obligatory empty constructor
-        Attributes() {}
+       // Members
+       int numMembers = 0;
+       attrib arr[16];
 
-        // Needed by clipping (linearly interpolated Attributes between two others)
-        Attributes(const Attributes & first, const Attributes & second, const double & valueBetween)
-        {
-            // Your code goes here when clipping is implemented
-        }
-        PIXEL color;
-        double r;
-        double g;
-        double b;
-        double u;
-        double v;
-        void* ptrImg;
+       // Obligatory empty constructor
+       Attributes() {numMembers = 0;}
 
-        Matrix matrix;
+       // Interpolation Constructor
+       Attributes(const double & areaTriangle, 
+                  const double & firstDet, 
+                  const double & secndDet, 
+                  const double & thirdDet,
+                  const Attributes & first, 
+                  const Attributes & secnd, 
+                  const Attributes & third, 
+                  const double interpZ)
+       {
+           while(numMembers < first.numMembers)
+           {
+               arr[numMembers].d =  (firstDet/areaTriangle) * (third.arr[numMembers].d);
+               arr[numMembers].d += (secndDet/areaTriangle) * (first.arr[numMembers].d);
+               arr[numMembers].d += (thirdDet/areaTriangle) * (secnd.arr[numMembers].d);
+               arr[numMembers].d *= interpZ;
+               
+               numMembers += 1;
+           }
+       }
+
+       // Needed by clipping (linearly interpolated Attributes between two others)
+       Attributes(const Attributes & first, const Attributes & second, const double & along)
+       {
+           numMembers = first.numMembers;
+           for (int i = 0; i < numMembers; i++)
+           {
+              arr[i].d = lerp(first[i].d, second[i].d, along);
+           }               
+       }
+       
+       //Operators
+       // Const Return operator
+       const attrib & operator[](const int & i) const
+       {
+           return arr[i];
+       }
+
+       // Return operator
+       attrib & operator[](const int & i)
+       {
+           return arr[i];
+       }
+
+       // Insert Double Into Container
+       void insertDbl(const double & d)
+       {
+           arr[numMembers].d = d;
+           numMembers += 1;
+       }
+
+       // Insert Pointer Into Container
+       void insertPtr(void * ptr)
+       {
+           arr[numMembers].ptr = ptr;
+           numMembers += 1;
+       }
 };
 
-// Vertex multiplication operator
+/***************************************************
+ * Vertex Multiplication Operator
+ **************************************************/
 Vertex operator * (const Matrix& lhs, const Vertex& rhs)
 { 
 
@@ -298,6 +381,9 @@ Vertex operator * (const Matrix& lhs, const Vertex& rhs)
     return result;
 }
 
+/***************************************************
+ * Matrix Multiplication Operator
+ **************************************************/
 Matrix operator * (const Matrix& lhs, const Matrix& rhs)
 {
     Matrix result;
@@ -325,58 +411,124 @@ Matrix operator * (const Matrix& lhs, const Matrix& rhs)
     return result;
 }
 
-// Translation Matrix
-void translateMatrix(Attributes& attr, Vertex v)
+/***************************************************
+ * Translation Matrix
+ **************************************************/
+Matrix translateMatrix(const double& x, const double& y, const double& z)
 {
-    attr.matrix[3] = v.x;
-    attr.matrix[7] = v.y;
-   attr.matrix[11] = v.z;
-}
-// Scale Matrix
-void scaleMatrix(Attributes& attr, Vertex v)
-{
-    attr.matrix[0] = v.x;
-    attr.matrix[5] = v.y;
-   attr.matrix[10] = v.z;
-}
-// Rotation Matrix
-void rotateMatrix(Attributes& attr, double n)
-{
-    // Conversion to radians
-    n = n * M_PI / 180.0;
+    Matrix matrix;
 
-    // Do some math
-    double cosN = cos(n);
-    double sinN = sin(n);
+    matrix[3]  = x;
+    matrix[7]  = y;
+    matrix[11] = z;
+
+    return matrix;
+}
+
+/***************************************************
+ * Scale Matrix
+ **************************************************/
+Matrix scaleMatrix(Attributes& attr, Vertex v)
+{
+    Matrix matrix;
+
+    matrix[0] = v.x;
+    matrix[5] = v.y;
+    matrix[10] = v.z;
+
+    return matrix;
+}
+
+/***************************************************
+ * AXIS Enumeration
+ **************************************************/
+enum AXIS 
+{
+    X,
+    Y,
+    Z
+};
+
+/***************************************************
+ * Rotation Matrix
+ **************************************************/
+// Takes an angle in radians and the axis to rotate around
+Matrix rotateMatrix(AXIS axis, const double& angle) 
+{
+    Matrix matrix;
+
+    double sinangle = sin(angle);
+    double cosangle = cos(angle);
     
-    attr.matrix[0] =  cosN;
-    attr.matrix[1] = -sinN;
-    attr.matrix[4] =  sinN;
-    attr.matrix[5] =  cosN;
+    switch (axis) 
+    {
+        case X:
+        matrix[5]  = cosangle;
+        matrix[6]  = -sinangle;
+        matrix[9]  = sinangle;
+        matrix[10] = cosangle;
+        break;
+        
+        case Y:
+        matrix[0]  = cosangle;
+        matrix[2]  = sinangle;
+        matrix[8]  = -sinangle;
+        matrix[10] = cosangle;
+        break;
+        
+        case Z:
+        matrix[0]  = cosangle;
+        matrix[1]  = -sinangle;
+        matrix[4]  = sinangle;
+        matrix[5]  = cosangle;
+        break;
+    }
+    return matrix;
 }
 
-void scaleTranslateRotateMatrix(Attributes& attr, Vertex vS, Vertex vT, double rot)
+// View Transform
+Matrix viewTransform(const double& offX, const double& offY, const double& offZ,
+                     const double& yaw, const double& pitch, const double& roll) {
+    // x = pitch
+    // y = yaw
+    // z = roll
+    Matrix matrix;
+
+    Matrix translate = translateMatrix(-offX, -offY, -offZ);
+    
+    // First do pitch, then yaw (roll is optional)
+    double pitchRad = pitch * M_PI / 180.0;
+    double yawRad   = yaw   * M_PI / 180.0;
+    
+    Matrix rotX = rotateMatrix(X, pitchRad);
+    Matrix rotY = rotateMatrix(Y, yawRad);
+
+    matrix = rotX * rotY * translate;
+    
+    return matrix;
+}
+
+Matrix perspectiveTransform(const double& fovYDegrees, const double& aspectRatio,
+                            const double& near, const double& far)
 {
-   Attributes vSattrs;
-   scaleMatrix(vSattrs, vS);
+    Matrix matrix; // this starts off as an identity matrix
 
-   Attributes vTattrs;
-   translateMatrix(vTattrs, vT);
-   
-   Attributes rotAttrs;
-   rotateMatrix(rotAttrs, rot);
+    double top = near * tan(fovYDegrees * M_PI / 180.0 / 2.0);
+    double right = aspectRatio * top;
+    
+    matrix[0]  = near / right;
+    matrix[5]  = near / top;
+    matrix[10] = (far + near) / (far - near);
+    matrix[11] = (-2 * far * near) / (far - near);
+    matrix[14] = 1;
+    matrix[15] = 0;
 
-   attr.matrix = rotAttrs.matrix * vTattrs.matrix * vSattrs.matrix;
+    return matrix;
 }
 
-/*
-int getTheSinOfANumber(int num)
-{
-    return 0;
-}
-*/
-
-// Static Fragment Shader 
+/***************************************************
+ * Static Fragment Shader 
+ **************************************************/
 void StaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
@@ -388,30 +540,80 @@ void StaticFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attri
     fragment = color;
 }
 
-// Image Fragment Shader 
+/***************************************************
+ * Simple Vertex Shader 
+ **************************************************/
+void SimpleVertexShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+   Matrix* trans = (Matrix*)uniforms[0].ptr;
+   vertOut = (*trans) * vertIn;
+
+   // Pass through attributes
+   attrOut = attrIn;
+}
+
+/***************************************************
+ * Another Simple Vertex Shader 
+ **************************************************/
+void SimpleVertexShader2(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & attrIn, const Attributes & uniforms)
+{
+   Matrix* model = (Matrix*)uniforms[1].ptr;
+   Matrix* view = (Matrix*)uniforms[2].ptr;
+   Matrix* proj = (Matrix*)uniforms[3].ptr;
+
+   vertOut = (*proj) * (*view) * (*model) * vertIn;
+
+   // Pass through attributes
+   attrOut = attrIn;
+}
+
+/***************************************************
+ * Image Fragment Shader 
+ **************************************************/ 
 void ImageFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-    BufferImage* bf = (BufferImage*)uniforms.ptrImg;
-    int x = vertAttr.u * (bf->width()-1);
-    int y = vertAttr.v * (bf->height()-1);
+    /*
+    // Figure out which X/Y square our UV would fall on
+    int xSquare = vertAttr[0].d * 8;
+    int ySquare = vertAttr[1].d * 8;
+	// Is the X square position even? The Y? 
+    bool evenXSquare = (xSquare % 2) == 0;
+    bool evenYSquare = (ySquare % 2) == 0;
+    // Both even or both odd - red square
+    if( (evenXSquare && evenYSquare) || (!evenXSquare && !evenYSquare) )
+    {
+        fragment = 0xffff0000;
+    }
+    // One even, one odd - white square
+    else
+    {
+        fragment = 0xffffffff;
+    }
+    */
+    BufferImage* bf = (BufferImage*)uniforms[0].ptr;
+    int x = vertAttr[0].d * (bf->width()-1);
+    int y = vertAttr[1].d * (bf->height()-1);
 
     fragment = (*bf)[y][x];
 }
 
-// My Fragment Shader for color interpolation
-void ColorFragmentShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniform)
+/***************************************************
+ * My Fragment Shader for color interpolation
+ **************************************************/ 
+void ColorFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
-
     // Output our shader color value, in this case red
     PIXEL color = 0xff000000;
-    color += (unsigned int)(vertAttr.r *0xff) << 16;
-    color += (unsigned int)(vertAttr.g *0xff) << 8;
-    color += (unsigned int)(vertAttr.b *0xff) << 0;
-
+    color += (unsigned int)(vertAttr[0].d *0xff) << 16;
+    color += (unsigned int)(vertAttr[1].d *0xff) << 8;
+    color += (unsigned int)(vertAttr[2].d *0xff) << 0;
+    
     fragment = color;
 }
 
-// Example of a fragment shader
+/***************************************************
+ * Example of a  default fragment shader
+ **************************************************/
 void DefaultFragShader(PIXEL & fragment, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Output our shader color value, in this case red
@@ -450,19 +652,13 @@ class FragmentShader
         }
 };
 
-// Example of a vertex shader
+/***************************************************
+ * Example of a  default fragment shader
+ **************************************************/
 void DefaultVertShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
 {
     // Nothing happens with this vertex, attribute
     vertOut = vertIn;
-    attrOut = vertAttr;
-}
-
-void VertexFragmentShader(Vertex & vertOut, Attributes & attrOut, const Vertex & vertIn, const Attributes & vertAttr, const Attributes & uniforms)
-{
-    //cout << "Hello" << endl; 
-
-    vertOut = uniforms.matrix * vertIn;
     attrOut = vertAttr;
 }
 
@@ -514,7 +710,7 @@ void DrawPrimitive(PRIMITIVES prim,
 
 /****************************************
  * DETERMINANT
- * Find the determinant of a matrix with
+ * Find the determinant of a Matrix with
  * components A, B, C, D from 2 vectors.
  ***************************************/
 inline double determinant(const double & A, const double & B, const double & C, const double & D)
@@ -530,5 +726,14 @@ inline double determinant(const double & A, const double & B, const double & C, 
  {
     return (attr2 * firstDet + attr0 * secndDet + attr1 * thirdDet) / areaTriangle;    
  }
+
+ /***************************************************
+ * THIS IS THE GREATEST FUNCTION EVER
+ **************************************************//*
+int getTheSinOfANumber(int num)
+{
+    return 0;
+}
+*/
 
 #endif
